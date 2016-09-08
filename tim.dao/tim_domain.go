@@ -2,7 +2,7 @@ package dao
 
 /**
 tablename:tim_domain
-datetime :2016-06-10 00:59:53
+datetime :2016-09-07 11:32:22
 */
 import (
 	"github.com/donnie4w/gdao"
@@ -67,30 +67,10 @@ func (c *tim_domain_Createtime) Value() interface{} {
 
 type Tim_domain struct {
 	gdao.Table
-	Id *tim_domain_Id
 	Domain *tim_domain_Domain
 	Createtime *tim_domain_Createtime
 	Remark *tim_domain_Remark
-}
-
-func (u *Tim_domain) GetId() int32 {
-	return *u.Id.FieldValue
-}
-
-func (u *Tim_domain) SetId(arg int64) {
-	u.Table.ModifyMap[u.Id.fieldName] = arg
-	v := int32(arg)
-	u.Id.FieldValue = &v
-}
-
-func (u *Tim_domain) GetDomain() string {
-	return *u.Domain.FieldValue
-}
-
-func (u *Tim_domain) SetDomain(arg string) {
-	u.Table.ModifyMap[u.Domain.fieldName] = arg
-	v := string(arg)
-	u.Domain.FieldValue = &v
+	Id *tim_domain_Id
 }
 
 func (u *Tim_domain) GetCreatetime() string {
@@ -113,9 +93,29 @@ func (u *Tim_domain) SetRemark(arg string) {
 	u.Remark.FieldValue = &v
 }
 
+func (u *Tim_domain) GetId() int32 {
+	return *u.Id.FieldValue
+}
+
+func (u *Tim_domain) SetId(arg int64) {
+	u.Table.ModifyMap[u.Id.fieldName] = arg
+	v := int32(arg)
+	u.Id.FieldValue = &v
+}
+
+func (u *Tim_domain) GetDomain() string {
+	return *u.Domain.FieldValue
+}
+
+func (u *Tim_domain) SetDomain(arg string) {
+	u.Table.ModifyMap[u.Domain.fieldName] = arg
+	v := string(arg)
+	u.Domain.FieldValue = &v
+}
+
 func (t *Tim_domain) Query(columns ...gdao.Column) ([]Tim_domain,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Id,t.Domain,t.Createtime,t.Remark}
+		columns = []gdao.Column{ t.Remark,t.Id,t.Domain,t.Createtime}
 	}
 	rs,err := t.Table.Query(columns...)
 	if rs == nil || err != nil {
@@ -146,7 +146,7 @@ func copyTim_domain(channle chan int16, rows []interface{}, t *Tim_domain, colum
 
 func (t *Tim_domain) QuerySingle(columns ...gdao.Column) (*Tim_domain,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Id,t.Domain,t.Createtime,t.Remark}
+		columns = []gdao.Column{ t.Remark,t.Id,t.Domain,t.Createtime}
 	}
 	rs,err := t.Table.QuerySingle(columns...)
 	if rs == nil || err != nil {
@@ -166,7 +166,7 @@ func (t *Tim_domain) QuerySingle(columns ...gdao.Column) (*Tim_domain,error) {
 
 func (t *Tim_domain) Select(columns ...gdao.Column) (*Tim_domain,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Id,t.Domain,t.Createtime,t.Remark}
+		columns = []gdao.Column{ t.Remark,t.Id,t.Domain,t.Createtime}
 	}
 	rows,err := t.Table.Selects(columns...)
 	defer rows.Close()
@@ -188,7 +188,7 @@ func (t *Tim_domain) Select(columns ...gdao.Column) (*Tim_domain,error) {
 
 func (t *Tim_domain) Selects(columns ...gdao.Column) ([]*Tim_domain,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Id,t.Domain,t.Createtime,t.Remark}
+		columns = []gdao.Column{ t.Remark,t.Id,t.Domain,t.Createtime}
 	}
 	rows,err := t.Table.Selects(columns...)
 	defer rows.Close()
@@ -213,28 +213,28 @@ func  cpTim_domain(buff []interface{}, t *Tim_domain, columns []gdao.Column) {
 	for i, column := range columns {
 		field := column.Name()
 		switch field {
+		case "id":
+			buff[i] = &t.Id.FieldValue
 		case "domain":
 			buff[i] = &t.Domain.FieldValue
 		case "createtime":
 			buff[i] = &t.Createtime.FieldValue
 		case "remark":
 			buff[i] = &t.Remark.FieldValue
-		case "id":
-			buff[i] = &t.Id.FieldValue
 		}
 	}
 }
 
 func NewTim_domain(tableName ...string) *Tim_domain {
-	createtime := &tim_domain_Createtime{fieldName: "createtime"}
-	createtime.Field.FieldName = "createtime"
-	remark := &tim_domain_Remark{fieldName: "remark"}
-	remark.Field.FieldName = "remark"
 	id := &tim_domain_Id{fieldName: "id"}
 	id.Field.FieldName = "id"
 	domain := &tim_domain_Domain{fieldName: "domain"}
 	domain.Field.FieldName = "domain"
-	table := &Tim_domain{Id:id,Domain:domain,Createtime:createtime,Remark:remark}
+	createtime := &tim_domain_Createtime{fieldName: "createtime"}
+	createtime.Field.FieldName = "createtime"
+	remark := &tim_domain_Remark{fieldName: "remark"}
+	remark.Field.FieldName = "remark"
+	table := &Tim_domain{Createtime:createtime,Remark:remark,Id:id,Domain:domain}
 	table.Table.ModifyMap = make(map[string]interface{})
 	if len(tableName) == 1 {
 		table.Table.TableName = tableName[0]

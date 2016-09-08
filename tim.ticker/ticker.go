@@ -9,10 +9,8 @@ import (
 
 	"github.com/donnie4w/go-logger/logger"
 	"tim.daoService"
-	"tim.utils"
+	//	"tim.utils"
 )
-
-var tickerDay string = utils.NowDate()
 
 func TickerStart() {
 	defer func() {
@@ -21,13 +19,8 @@ func TickerStart() {
 			logger.Error(string(debug.Stack()))
 		}
 	}()
-	//logger.Info("tickerStart")
 	logger.Debug("-------------tickerStart----------------")
 	go Ticker4min(5, daoService.AddConf)
-	//	go Ticker4min(12, insertLuckyDrawUsers4song100)
-	//	go Ticker4min(50, reInitPopupCache)
-	//	go Ticker4min(20, insertLuckyDrawUsersL4ThaiKiss)
-	//	go Ticker4min(16, insertLuckyDrawUsers4song1000)
 }
 
 func Ticker4min(min int, function func()) {

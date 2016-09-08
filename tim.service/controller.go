@@ -6,7 +6,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"log"
 	"runtime/debug"
 	"strconv"
 	"sync"
@@ -15,10 +14,14 @@ import (
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/donnie4w/go-logger/logger"
 	"tim.FW"
+	"tim.cluster"
+	"tim.clusterRoute"
+	"tim.clusterServer"
 	. "tim.common"
 	. "tim.connect"
 	. "tim.impl"
 	. "tim.protocol"
+	"tim.route"
 	"tim.thriftserver"
 	"tim.utils"
 )
@@ -31,7 +34,10 @@ type Controlloer struct {
 func ServerStart() {
 	go Httpserver()
 	s := new(Controlloer)
-	s.SetAddr(ConfBean.GetIp())
+	s.SetAddr(CF.GetIp())
+	if cluster.IsCluster() {
+		go clusterServer.ServerStart()
+	}
 	s.Server()
 }
 
@@ -55,9 +61,7 @@ func (t *Controlloer) Server() {
 	handler := new(TimImpl)
 	processor := NewITimProcessor(handler)
 	server := thriftserver.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
-	logger.Info("server listen:", t.ListenAddr())
-	//go TP.Run()
-	//time.Sleep(1 * time.Second)
+	fmt.Println("server listen:", t.ListenAddr())
 	Listen(server, 100)
 	if err == nil {
 		for {
@@ -103,68 +107,98 @@ func controllerHandler(tt thrift.TTransport) {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error("controllerHandler,", err)
-			logger.Error(string(debug.Stack()))
+			//			logger.Error(string(debug.Stack()))
 			*gorutineclose = true
 		}
 	}()
-	tu := &TimUser{Client: NewTimClient(tt), OverLimit: 3, Fw: FW.CONNECT, IdCardNo: utils.TimeMills(), Sendflag: make(chan string), Sync: new(sync.Mutex)}
-	//	TP.Register <- tu
+	tu := &TimUser{Client: NewTimClient(tt), OverLimit: 3, Fw: FW.CONNECT, IdCardNo: utils.TimeMills(), Sendflag: make(chan string, 0), Sync: new(sync.Mutex)}
+	//	tu.Interflow = 1
 	TP.AddConnect(tu)
-	//	defer func() { TP.Unregister <- tu }()
-	defer func() { TP.DeleteTimUser(tu) }()
+	defer func() {
+		if cluster.IsCluster() && tu.UserTid != nil {
+			loginname, err := GetLoginName(tu.UserTid)
+			if loginname != "" && err == nil {
+				cluster.DelLoginnameFromCluter(loginname)
+			}
+			if CF.Presence == 1 {
+				p := OfflinePBean(tu.UserTid)
+				go clusterRoute.ClusterRoutePBean(p)
+			} else {
+				go route.RoutePBean(OfflinePBean(tu.UserTid))
+			}
+		} else if tu.UserTid != nil && CF.Presence == 1 {
+			go route.RoutePBean(OfflinePBean(tu.UserTid))
+		}
+		TP.DeleteTimUser(tu)
+	}()
 	defer func() { tt.Close() }()
 	monitorChan := make(chan string, 2)
-	heartbeat := ConfBean.HeartBeat
-	if heartbeat > 0 {
-		go func() {
-			defer func() {
-				if err := recover(); err != nil {
-					logger.Error(string(debug.Stack()))
-				}
-			}()
-			defer func() {
-				if err := recover(); err != nil {
-				}
-				*gorutineclose = true
-				monitorChan <- "ping end"
-			}()
-			for {
+	heartbeat := CF.HeartBeat
+	if heartbeat == 0 {
+		heartbeat = 30 * 60
+	}
+	//	if heartbeat > 0 {
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				logger.Error(string(debug.Stack()))
+			}
+		}()
+		defer func() {
+			if err := recover(); err != nil {
+			}
+			*gorutineclose = true
+			monitorChan <- "ping end"
+		}()
+		checkinCluster := 0
+		for {
+			if *gorutineclose {
+				break
+			}
+			for i := 0; i < heartbeat; i++ {
+				time.Sleep(1 * time.Second)
 				if *gorutineclose {
-					break
+					goto END
 				}
-				for i := 0; i < heartbeat; i++ {
-					time.Sleep(1 * time.Second)
-					if *gorutineclose {
-						goto END
-					}
-					if tu.OverLimit <= 0 {
-						goto END
-					}
-					if tu.Fw == FW.CLOSE {
-						goto END
-					}
-				}
-				if tu.Fw == FW.AUTH {
-					er := tu.Client.TimPing(fmt.Sprint(utils.TimeMills()))
-					if er != nil {
-						logger.Error("ping err", er.Error())
-						panic("ping err")
-					}
-					tu.OverLimit--
-				} else {
-					logger.Error("auth over time")
+				if tu.OverLimit <= 0 {
 					goto END
 				}
 				if tu.Fw == FW.CLOSE {
-					break
+					goto END
+				}
+				checkinCluster++
+				if checkinCluster >= ClusterConf.Keytimeout/3 {
+					checkinCluster = 0
+					if cluster.IsCluster() && tu.UserTid != nil {
+						loginname, err := GetLoginName(tu.UserTid)
+						if loginname != "" && err == nil {
+							cluster.SetLoginnameToCluster(loginname)
+						}
+					}
 				}
 			}
-		END:
-		}()
-	}
+			if tu.Fw == FW.AUTH {
+				er := tu.Ping()
+				if er != nil {
+					logger.Error("ping err", er.Error())
+					panic("ping err")
+				}
+				tu.OverLimit--
+			} else {
+				logger.Error("auth over time")
+				goto END
+			}
+			if tu.Fw == FW.CLOSE {
+				break
+			}
+		}
+	END:
+	}()
+	//	}
 	go TimProcessor(tt, tu, gorutineclose, monitorChan)
-	errormsg := <-monitorChan
-	logger.Error("errormsg:", errormsg)
+	<-monitorChan
+	//	errormsg := <-monitorChan
+	//	logger.Error("errormsg:", errormsg)
 }
 
 func NewTimClient(tt thrift.TTransport) *ITimClient {
@@ -177,13 +211,15 @@ func NewTimClient(tt thrift.TTransport) *ITimClient {
 func TimProcessor(client thrift.TTransport, tu *TimUser, gorutineclose *bool, monitorChan chan string) error {
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Error(string(debug.Stack()))
+			//			logger.Error(string(debug.Stack()))
+			logger.Warn("processor:", err)
 		}
 	}()
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Error("TimProcessor error", err)
-			logger.Error(string(debug.Stack()))
+			//			logger.Error("TimProcessor error", err)
+			//			logger.Error(string(debug.Stack()))
+			logger.Warn("processor:", err)
 		}
 		*gorutineclose = true
 		monitorChan <- "timProcessor end"
@@ -197,11 +233,10 @@ func TimProcessor(client thrift.TTransport, tu *TimUser, gorutineclose *bool, mo
 		if err, ok := err.(thrift.TTransportException); ok && err.TypeId() == thrift.END_OF_FILE {
 			return nil
 		} else if err != nil {
-			log.Printf("error processing request: %s", err)
 			return err
 		}
 		if !ok {
-			logger.Debug("is not ok", ok, err)
+			logger.Error("Processor error:", err)
 			break
 		}
 		if tu.Fw == FW.CLOSE || tu.OverLimit <= 0 {

@@ -2,12 +2,54 @@ package dao
 
 /**
 tablename:tim_mucmessage
-datetime :2016-06-10 00:59:53
+datetime :2016-09-07 11:32:22
 */
 import (
 	"github.com/donnie4w/gdao"
 	"reflect"
 )
+
+type tim_mucmessage_Stanza struct {
+	gdao.Field
+	fieldName  string
+	FieldValue *string
+}
+
+func (c *tim_mucmessage_Stanza) Name() string {
+	return c.fieldName
+}
+
+func (c *tim_mucmessage_Stanza) Value() interface{} {
+	return c.FieldValue
+}
+
+type tim_mucmessage_Createtime struct {
+	gdao.Field
+	fieldName  string
+	FieldValue *string
+}
+
+func (c *tim_mucmessage_Createtime) Name() string {
+	return c.fieldName
+}
+
+func (c *tim_mucmessage_Createtime) Value() interface{} {
+	return c.FieldValue
+}
+
+type tim_mucmessage_Id struct {
+	gdao.Field
+	fieldName  string
+	FieldValue *int32
+}
+
+func (c *tim_mucmessage_Id) Name() string {
+	return c.fieldName
+}
+
+func (c *tim_mucmessage_Id) Value() interface{} {
+	return c.FieldValue
+}
 
 type tim_mucmessage_Stamp struct {
 	gdao.Field
@@ -79,50 +121,9 @@ func (c *tim_mucmessage_Msgtype) Value() interface{} {
 	return c.FieldValue
 }
 
-type tim_mucmessage_Stanza struct {
-	gdao.Field
-	fieldName  string
-	FieldValue *string
-}
-
-func (c *tim_mucmessage_Stanza) Name() string {
-	return c.fieldName
-}
-
-func (c *tim_mucmessage_Stanza) Value() interface{} {
-	return c.FieldValue
-}
-
-type tim_mucmessage_Createtime struct {
-	gdao.Field
-	fieldName  string
-	FieldValue *string
-}
-
-func (c *tim_mucmessage_Createtime) Name() string {
-	return c.fieldName
-}
-
-func (c *tim_mucmessage_Createtime) Value() interface{} {
-	return c.FieldValue
-}
-
-type tim_mucmessage_Id struct {
-	gdao.Field
-	fieldName  string
-	FieldValue *int32
-}
-
-func (c *tim_mucmessage_Id) Name() string {
-	return c.fieldName
-}
-
-func (c *tim_mucmessage_Id) Value() interface{} {
-	return c.FieldValue
-}
-
 type Tim_mucmessage struct {
 	gdao.Table
+	Roomtidname *tim_mucmessage_Roomtidname
 	Domain *tim_mucmessage_Domain
 	Msgtype *tim_mucmessage_Msgtype
 	Stanza *tim_mucmessage_Stanza
@@ -130,7 +131,16 @@ type Tim_mucmessage struct {
 	Id *tim_mucmessage_Id
 	Stamp *tim_mucmessage_Stamp
 	Fromuser *tim_mucmessage_Fromuser
-	Roomtidname *tim_mucmessage_Roomtidname
+}
+
+func (u *Tim_mucmessage) GetStanza() string {
+	return *u.Stanza.FieldValue
+}
+
+func (u *Tim_mucmessage) SetStanza(arg string) {
+	u.Table.ModifyMap[u.Stanza.fieldName] = arg
+	v := string(arg)
+	u.Stanza.FieldValue = &v
 }
 
 func (u *Tim_mucmessage) GetCreatetime() string {
@@ -203,19 +213,9 @@ func (u *Tim_mucmessage) SetMsgtype(arg int64) {
 	u.Msgtype.FieldValue = &v
 }
 
-func (u *Tim_mucmessage) GetStanza() string {
-	return *u.Stanza.FieldValue
-}
-
-func (u *Tim_mucmessage) SetStanza(arg string) {
-	u.Table.ModifyMap[u.Stanza.fieldName] = arg
-	v := string(arg)
-	u.Stanza.FieldValue = &v
-}
-
 func (t *Tim_mucmessage) Query(columns ...gdao.Column) ([]Tim_mucmessage,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Stanza,t.Createtime,t.Id,t.Stamp,t.Fromuser,t.Roomtidname,t.Domain,t.Msgtype}
+		columns = []gdao.Column{ t.Domain,t.Msgtype,t.Stanza,t.Createtime,t.Id,t.Stamp,t.Fromuser,t.Roomtidname}
 	}
 	rs,err := t.Table.Query(columns...)
 	if rs == nil || err != nil {
@@ -246,7 +246,7 @@ func copyTim_mucmessage(channle chan int16, rows []interface{}, t *Tim_mucmessag
 
 func (t *Tim_mucmessage) QuerySingle(columns ...gdao.Column) (*Tim_mucmessage,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Stanza,t.Createtime,t.Id,t.Stamp,t.Fromuser,t.Roomtidname,t.Domain,t.Msgtype}
+		columns = []gdao.Column{ t.Domain,t.Msgtype,t.Stanza,t.Createtime,t.Id,t.Stamp,t.Fromuser,t.Roomtidname}
 	}
 	rs,err := t.Table.QuerySingle(columns...)
 	if rs == nil || err != nil {
@@ -266,7 +266,7 @@ func (t *Tim_mucmessage) QuerySingle(columns ...gdao.Column) (*Tim_mucmessage,er
 
 func (t *Tim_mucmessage) Select(columns ...gdao.Column) (*Tim_mucmessage,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Stanza,t.Createtime,t.Id,t.Stamp,t.Fromuser,t.Roomtidname,t.Domain,t.Msgtype}
+		columns = []gdao.Column{ t.Domain,t.Msgtype,t.Stanza,t.Createtime,t.Id,t.Stamp,t.Fromuser,t.Roomtidname}
 	}
 	rows,err := t.Table.Selects(columns...)
 	defer rows.Close()
@@ -288,7 +288,7 @@ func (t *Tim_mucmessage) Select(columns ...gdao.Column) (*Tim_mucmessage,error) 
 
 func (t *Tim_mucmessage) Selects(columns ...gdao.Column) ([]*Tim_mucmessage,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Stanza,t.Createtime,t.Id,t.Stamp,t.Fromuser,t.Roomtidname,t.Domain,t.Msgtype}
+		columns = []gdao.Column{ t.Domain,t.Msgtype,t.Stanza,t.Createtime,t.Id,t.Stamp,t.Fromuser,t.Roomtidname}
 	}
 	rows,err := t.Table.Selects(columns...)
 	defer rows.Close()
@@ -313,8 +313,6 @@ func  cpTim_mucmessage(buff []interface{}, t *Tim_mucmessage, columns []gdao.Col
 	for i, column := range columns {
 		field := column.Name()
 		switch field {
-		case "stanza":
-			buff[i] = &t.Stanza.FieldValue
 		case "createtime":
 			buff[i] = &t.Createtime.FieldValue
 		case "id":
@@ -329,13 +327,13 @@ func  cpTim_mucmessage(buff []interface{}, t *Tim_mucmessage, columns []gdao.Col
 			buff[i] = &t.Domain.FieldValue
 		case "msgtype":
 			buff[i] = &t.Msgtype.FieldValue
+		case "stanza":
+			buff[i] = &t.Stanza.FieldValue
 		}
 	}
 }
 
 func NewTim_mucmessage(tableName ...string) *Tim_mucmessage {
-	id := &tim_mucmessage_Id{fieldName: "id"}
-	id.Field.FieldName = "id"
 	stamp := &tim_mucmessage_Stamp{fieldName: "stamp"}
 	stamp.Field.FieldName = "stamp"
 	fromuser := &tim_mucmessage_Fromuser{fieldName: "fromuser"}
@@ -350,7 +348,9 @@ func NewTim_mucmessage(tableName ...string) *Tim_mucmessage {
 	stanza.Field.FieldName = "stanza"
 	createtime := &tim_mucmessage_Createtime{fieldName: "createtime"}
 	createtime.Field.FieldName = "createtime"
-	table := &Tim_mucmessage{Createtime:createtime,Id:id,Stamp:stamp,Fromuser:fromuser,Roomtidname:roomtidname,Domain:domain,Msgtype:msgtype_,Stanza:stanza}
+	id := &tim_mucmessage_Id{fieldName: "id"}
+	id.Field.FieldName = "id"
+	table := &Tim_mucmessage{Id:id,Stamp:stamp,Fromuser:fromuser,Roomtidname:roomtidname,Domain:domain,Msgtype:msgtype_,Stanza:stanza,Createtime:createtime}
 	table.Table.ModifyMap = make(map[string]interface{})
 	if len(tableName) == 1 {
 		table.Table.TableName = tableName[0]

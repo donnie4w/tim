@@ -2,26 +2,12 @@ package dao
 
 /**
 tablename:tim_property
-datetime :2016-06-10 00:59:53
+datetime :2016-09-07 11:32:22
 */
 import (
 	"github.com/donnie4w/gdao"
 	"reflect"
 )
-
-type tim_property_Remark struct {
-	gdao.Field
-	fieldName  string
-	FieldValue *string
-}
-
-func (c *tim_property_Remark) Name() string {
-	return c.fieldName
-}
-
-func (c *tim_property_Remark) Value() interface{} {
-	return c.FieldValue
-}
 
 type tim_property_Id struct {
 	gdao.Field
@@ -79,13 +65,47 @@ func (c *tim_property_Valuestr) Value() interface{} {
 	return c.FieldValue
 }
 
+type tim_property_Remark struct {
+	gdao.Field
+	fieldName  string
+	FieldValue *string
+}
+
+func (c *tim_property_Remark) Name() string {
+	return c.fieldName
+}
+
+func (c *tim_property_Remark) Value() interface{} {
+	return c.FieldValue
+}
+
 type Tim_property struct {
 	gdao.Table
-	Id *tim_property_Id
-	Keyword *tim_property_Keyword
 	Valueint *tim_property_Valueint
 	Valuestr *tim_property_Valuestr
 	Remark *tim_property_Remark
+	Id *tim_property_Id
+	Keyword *tim_property_Keyword
+}
+
+func (u *Tim_property) GetValuestr() string {
+	return *u.Valuestr.FieldValue
+}
+
+func (u *Tim_property) SetValuestr(arg string) {
+	u.Table.ModifyMap[u.Valuestr.fieldName] = arg
+	v := string(arg)
+	u.Valuestr.FieldValue = &v
+}
+
+func (u *Tim_property) GetRemark() string {
+	return *u.Remark.FieldValue
+}
+
+func (u *Tim_property) SetRemark(arg string) {
+	u.Table.ModifyMap[u.Remark.fieldName] = arg
+	v := string(arg)
+	u.Remark.FieldValue = &v
 }
 
 func (u *Tim_property) GetId() int32 {
@@ -116,26 +136,6 @@ func (u *Tim_property) SetValueint(arg int64) {
 	u.Table.ModifyMap[u.Valueint.fieldName] = arg
 	v := int32(arg)
 	u.Valueint.FieldValue = &v
-}
-
-func (u *Tim_property) GetValuestr() string {
-	return *u.Valuestr.FieldValue
-}
-
-func (u *Tim_property) SetValuestr(arg string) {
-	u.Table.ModifyMap[u.Valuestr.fieldName] = arg
-	v := string(arg)
-	u.Valuestr.FieldValue = &v
-}
-
-func (u *Tim_property) GetRemark() string {
-	return *u.Remark.FieldValue
-}
-
-func (u *Tim_property) SetRemark(arg string) {
-	u.Table.ModifyMap[u.Remark.fieldName] = arg
-	v := string(arg)
-	u.Remark.FieldValue = &v
 }
 
 func (t *Tim_property) Query(columns ...gdao.Column) ([]Tim_property,error) {
@@ -238,23 +238,21 @@ func  cpTim_property(buff []interface{}, t *Tim_property, columns []gdao.Column)
 	for i, column := range columns {
 		field := column.Name()
 		switch field {
+		case "keyword":
+			buff[i] = &t.Keyword.FieldValue
+		case "valueint":
+			buff[i] = &t.Valueint.FieldValue
 		case "valuestr":
 			buff[i] = &t.Valuestr.FieldValue
 		case "remark":
 			buff[i] = &t.Remark.FieldValue
 		case "id":
 			buff[i] = &t.Id.FieldValue
-		case "keyword":
-			buff[i] = &t.Keyword.FieldValue
-		case "valueint":
-			buff[i] = &t.Valueint.FieldValue
 		}
 	}
 }
 
 func NewTim_property(tableName ...string) *Tim_property {
-	keyword := &tim_property_Keyword{fieldName: "keyword"}
-	keyword.Field.FieldName = "keyword"
 	valueint := &tim_property_Valueint{fieldName: "valueint"}
 	valueint.Field.FieldName = "valueint"
 	valuestr := &tim_property_Valuestr{fieldName: "valuestr"}
@@ -263,7 +261,9 @@ func NewTim_property(tableName ...string) *Tim_property {
 	remark.Field.FieldName = "remark"
 	id := &tim_property_Id{fieldName: "id"}
 	id.Field.FieldName = "id"
-	table := &Tim_property{Valueint:valueint,Valuestr:valuestr,Remark:remark,Id:id,Keyword:keyword}
+	keyword := &tim_property_Keyword{fieldName: "keyword"}
+	keyword.Field.FieldName = "keyword"
+	table := &Tim_property{Id:id,Keyword:keyword,Valueint:valueint,Valuestr:valuestr,Remark:remark}
 	table.Table.ModifyMap = make(map[string]interface{})
 	if len(tableName) == 1 {
 		table.Table.TableName = tableName[0]

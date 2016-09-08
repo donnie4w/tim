@@ -31,3 +31,22 @@ func int2addr(num int) string {
 	value := fmt.Sprint(i8, ".", i16, ".", i24, ".", i32)
 	return value
 }
+
+func parseAddr(oldaddr string) string {
+	ss := strings.Split(oldaddr, ":")
+	if len(ss) == 2 {
+		return fmt.Sprint(addr2int(ss[0]), ":", ss[1])
+	}
+	return oldaddr
+}
+
+func formatAddr(newaddr string) string {
+	ss := strings.Split(newaddr, ":")
+	if len(ss) == 2 {
+		i, err := strconv.Atoi(ss[0])
+		if err == nil {
+			return fmt.Sprint(int2addr(i), ":", ss[1])
+		}
+	}
+	return newaddr
+}

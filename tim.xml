@@ -1,5 +1,5 @@
 <tim>
-	<Port>3737</Port>
+	<Port>6666</Port>
 	<Addr>0.0.0.0</Addr>
 	<HeartBeat>120</HeartBeat>
 	<Logdir>C:/Users/dong/Desktop/tim</Logdir>
@@ -7,8 +7,11 @@
 	<Db_dataSourceName>root:123456@tcp(127.0.0.1:3306)/tim</Db_dataSourceName>
 	<Db_MaxOpenConns>20</Db_MaxOpenConns>
 	<Db_MaxIdleConns>5</Db_MaxIdleConns>
-	<HttpPort>3939</HttpPort>
+	<HttpPort>0</HttpPort>
 	<Db_Exsit>1</Db_Exsit>
-	<Presence>0</Presence>
-	<ConfirmAck>1</ConfirmAck>
+	<Presence>1</Presence>
+	<ConfirmAck>0</ConfirmAck>
+	<MustAuth>0</MustAuth>
+	<SingleClient>1</SingleClient>
+	<Interflow>0</Interflow>
 </tim>

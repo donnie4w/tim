@@ -1,0 +1,165 @@
+digraph "tim" {
+node [style=filled, shape=record];
+edge [arrowsize=0.5];
+rankdir=LR
+node [fillcolor=beige];
+TimError [label="struct TimError|<field_errCode>errCode :: i32|<field_errMsg>errMsg :: string"];
+node [fillcolor=beige];
+TimNode [label="struct TimNode|<field_key>key :: string|<field_value>value :: string"];
+node [fillcolor=beige];
+TimAckBean [label="struct TimAckBean|<field_id>id :: string|<field_ackType>ackType :: string|<field_ackStatus>ackStatus :: string|<field_extraList>extraList :: list\<TimNode\>|<field_err>err :: TimError|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimHBean [label="struct TimHBean|<field_chl>chl :: i32|<field_platform>platform :: i32|<field_version>version :: i16"];
+node [fillcolor=beige];
+TimParam [label="struct TimParam|<field_timestamp>timestamp :: string|<field_version>version :: i16|<field_lang>lang :: string|<field_extraList>extraList :: list\<TimNode\>|<field_extraMap>extraMap :: map\<string, string\>|<field_interflow>interflow :: string|<field_tls>tls :: string"];
+node [fillcolor=beige];
+TimTime [label="struct TimTime|<field_timestamp>timestamp :: string|<field_formattime>formattime :: string"];
+node [fillcolor=beige];
+TimArea [label="struct TimArea|<field_country>country :: string|<field_province>province :: string|<field_city>city :: string|<field_extraList>extraList :: list\<TimNode\>|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+Tid [label="struct Tid|<field_name>name :: string|<field_domain>domain :: string|<field_resource>resource :: string|<field_type>type :: string|<field_extraList>extraList :: list\<TimNode\>|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimUserBean [label="struct TimUserBean|<field_tid>tid :: Tid|<field_nickname>nickname :: string|<field_remarkname>remarkname :: string|<field_brithday>brithday :: string|<field_gender>gender :: i16|<field_headurl>headurl :: string|<field_area>area :: TimArea|<field_headbyte>headbyte :: binary|<field_photoBytes>photoBytes :: list\<binary\>|<field_extraList>extraList :: list\<TimNode\>|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimRoom [label="struct TimRoom|<field_tid>tid :: Tid|<field_founderTid>founderTid :: Tid|<field_HostsTid>HostsTid :: list\<Tid\>|<field_membersTid>membersTid :: list\<Tid\>|<field_headurl>headurl :: string|<field_roomName>roomName :: string|<field_desc>desc :: string|<field_createTime>createTime :: TimTime|<field_extraList>extraList :: list\<TimNode\>|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimPBean [label="struct TimPBean|<field_threadId>threadId :: string|<field_fromTid>fromTid :: Tid|<field_toTid>toTid :: Tid|<field_status>status :: string|<field_type>type :: string|<field_priority>priority :: i32|<field_show>show :: string|<field_leaguerTid>leaguerTid :: Tid|<field_extraList>extraList :: list\<TimNode\>|<field_error>error :: TimError|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimMBean [label="struct TimMBean|<field_threadId>threadId :: string|<field_mid>mid :: string|<field_fromTid>fromTid :: Tid|<field_toTid>toTid :: Tid|<field_body>body :: string|<field_type>type :: string|<field_msgType>msgType :: i16|<field_offline>offline :: TimTime|<field_leaguerTid>leaguerTid :: Tid|<field_extraList>extraList :: list\<TimNode\>|<field_timestamp>timestamp :: string|<field_error>error :: TimError|<field_extraMap>extraMap :: map\<string, string\>|<field_readstatus>readstatus :: i16"];
+node [fillcolor=beige];
+TimIqBean [label="struct TimIqBean|<field_threadId>threadId :: string|<field_fromTid>fromTid :: Tid|<field_toTid>toTid :: Tid|<field_type>type :: string|<field_extraList>extraList :: list\<TimNode\>|<field_error>error :: TimError|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimRoster [label="struct TimRoster|<field_subscription>subscription :: string|<field_tid>tid :: Tid|<field_name>name :: string|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimRemoteUserBean [label="struct TimRemoteUserBean|<field_error>error :: TimError|<field_ub>ub :: TimUserBean|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimRemoteRoom [label="struct TimRemoteRoom|<field_error>error :: TimError|<field_room>room :: TimRoom|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimResponseBean [label="struct TimResponseBean|<field_threadId>threadId :: string|<field_error>error :: TimError|<field_extraList>extraList :: list\<TimNode\>|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimSock5Bean [label="struct TimSock5Bean|<field_fromTid>fromTid :: Tid|<field_toTid>toTid :: Tid|<field_addr>addr :: string|<field_port>port :: i32|<field_transport>transport :: i16|<field_pubId>pubId :: string|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimSock5Bytes [label="struct TimSock5Bytes|<field_pubId>pubId :: string|<field_index>index :: i32|<field_bytes>bytes :: list\<binary\>|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimPage [label="struct TimPage|<field_fromTimeStamp>fromTimeStamp :: string|<field_toTimeStamp>toTimeStamp :: string|<field_limitCount>limitCount :: i32|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimMessageIq [label="struct TimMessageIq|<field_tidlist>tidlist :: list\<string\>|<field_timPage>timPage :: TimPage|<field_midlist>midlist :: list\<string\>|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimAuth [label="struct TimAuth|<field_domain>domain :: string|<field_username>username :: string|<field_pwd>pwd :: string"];
+node [fillcolor=beige];
+TimMBeanList [label="struct TimMBeanList|<field_threadId>threadId :: string|<field_timMBeanList>timMBeanList :: list\<TimMBean\>|<field_reqType>reqType :: string|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimPBeanList [label="struct TimPBeanList|<field_threadId>threadId :: string|<field_timPBeanList>timPBeanList :: list\<TimPBean\>|<field_reqType>reqType :: string|<field_extraMap>extraMap :: map\<string, string\>"];
+node [fillcolor=beige];
+TimPropertyBean [label="struct TimPropertyBean|<field_threadId>threadId :: string|<field_interflow>interflow :: string|<field_tls>tls :: string"];
+node [fillcolor=aliceblue];
+const_protocolversion [label="protocolversion = 2 :: i32"];
+subgraph cluster_ITim {
+node [fillcolor=bisque];
+style=dashed;
+label = "ITim service";
+function_ITimtimStream[label="<return_type>function timStream :: void|<param_param>param :: TimParam"];
+function_ITimtimStarttls[label="<return_type>function timStarttls :: void"];
+function_ITimtimLogin[label="<return_type>function timLogin :: void|<param_tid>tid :: Tid|<param_pwd>pwd :: string"];
+function_ITimtimAck[label="<return_type>function timAck :: void|<param_ab>ab :: TimAckBean"];
+function_ITimtimPresence[label="<return_type>function timPresence :: void|<param_pbean>pbean :: TimPBean"];
+function_ITimtimMessage[label="<return_type>function timMessage :: void|<param_mbean>mbean :: TimMBean"];
+function_ITimtimPing[label="<return_type>function timPing :: void|<param_threadId>threadId :: string"];
+function_ITimtimError[label="<return_type>function timError :: void|<param_e>e :: TimError"];
+function_ITimtimLogout[label="<return_type>function timLogout :: void"];
+function_ITimtimRegist[label="<return_type>function timRegist :: void|<param_tid>tid :: Tid|<param_auth>auth :: string"];
+function_ITimtimRoser[label="<return_type>function timRoser :: void|<param_roster>roster :: TimRoster"];
+function_ITimtimMessageList[label="<return_type>function timMessageList :: void|<param_mbeanList>mbeanList :: TimMBeanList"];
+function_ITimtimPresenceList[label="<return_type>function timPresenceList :: void|<param_pbeanList>pbeanList :: TimPBeanList"];
+function_ITimtimMessageIq[label="<return_type>function timMessageIq :: void|<param_timMsgIq>timMsgIq :: TimMessageIq|<param_iqType>iqType :: string"];
+function_ITimtimMessageResult[label="<return_type>function timMessageResult :: void|<param_mbean>mbean :: TimMBean"];
+function_ITimtimProperty[label="<return_type>function timProperty :: void|<param_tpb>tpb :: TimPropertyBean"];
+function_ITimtimRemoteUserAuth[label="<return_type>function timRemoteUserAuth :: TimRemoteUserBean|<param_tid>tid :: Tid|<param_pwd>pwd :: string|<param_auth>auth :: TimAuth"];
+function_ITimtimRemoteUserGet[label="<return_type>function timRemoteUserGet :: TimRemoteUserBean|<param_tid>tid :: Tid|<param_auth>auth :: TimAuth"];
+function_ITimtimRemoteUserEdit[label="<return_type>function timRemoteUserEdit :: TimRemoteUserBean|<param_tid>tid :: Tid|<param_ub>ub :: TimUserBean|<param_auth>auth :: TimAuth"];
+function_ITimtimResponsePresence[label="<return_type>function timResponsePresence :: TimResponseBean|<param_pbean>pbean :: TimPBean|<param_auth>auth :: TimAuth"];
+function_ITimtimResponseMessage[label="<return_type>function timResponseMessage :: TimResponseBean|<param_mbean>mbean :: TimMBean|<param_auth>auth :: TimAuth"];
+function_ITimtimResponseMessageIq[label="<return_type>function timResponseMessageIq :: TimMBeanList|<param_timMsgIq>timMsgIq :: TimMessageIq|<param_iqType>iqType :: string|<param_auth>auth :: TimAuth"];
+function_ITimtimResponsePresenceList[label="<return_type>function timResponsePresenceList :: TimResponseBean|<param_pbeanList>pbeanList :: TimPBeanList|<param_auth>auth :: TimAuth"];
+function_ITimtimResponseMessageList[label="<return_type>function timResponseMessageList :: TimResponseBean|<param_mbeanList>mbeanList :: TimMBeanList|<param_auth>auth :: TimAuth"];
+ }
+TimAckBean:field_extraList -> TimNode
+TimAckBean:field_err -> TimError
+TimParam:field_extraList -> TimNode
+TimArea:field_extraList -> TimNode
+Tid:field_extraList -> TimNode
+TimUserBean:field_tid -> Tid
+TimUserBean:field_area -> TimArea
+TimUserBean:field_extraList -> TimNode
+TimRoom:field_tid -> Tid
+TimRoom:field_founderTid -> Tid
+TimRoom:field_HostsTid -> Tid
+TimRoom:field_membersTid -> Tid
+TimRoom:field_createTime -> TimTime
+TimRoom:field_extraList -> TimNode
+TimPBean:field_fromTid -> Tid
+TimPBean:field_toTid -> Tid
+TimPBean:field_leaguerTid -> Tid
+TimPBean:field_extraList -> TimNode
+TimPBean:field_error -> TimError
+TimMBean:field_fromTid -> Tid
+TimMBean:field_toTid -> Tid
+TimMBean:field_offline -> TimTime
+TimMBean:field_leaguerTid -> Tid
+TimMBean:field_extraList -> TimNode
+TimMBean:field_error -> TimError
+TimIqBean:field_fromTid -> Tid
+TimIqBean:field_toTid -> Tid
+TimIqBean:field_extraList -> TimNode
+TimIqBean:field_error -> TimError
+TimRoster:field_tid -> Tid
+TimRemoteUserBean:field_error -> TimError
+TimRemoteUserBean:field_ub -> TimUserBean
+TimRemoteRoom:field_error -> TimError
+TimRemoteRoom:field_room -> TimRoom
+TimResponseBean:field_error -> TimError
+TimResponseBean:field_extraList -> TimNode
+TimSock5Bean:field_fromTid -> Tid
+TimSock5Bean:field_toTid -> Tid
+TimMessageIq:field_timPage -> TimPage
+TimMBeanList:field_timMBeanList -> TimMBean
+TimPBeanList:field_timPBeanList -> TimPBean
+function_ITimtimStream:param_param -> TimParam
+function_ITimtimLogin:param_tid -> Tid
+function_ITimtimAck:param_ab -> TimAckBean
+function_ITimtimPresence:param_pbean -> TimPBean
+function_ITimtimMessage:param_mbean -> TimMBean
+function_ITimtimError:param_e -> TimError
+function_ITimtimRegist:param_tid -> Tid
+function_ITimtimRoser:param_roster -> TimRoster
+function_ITimtimMessageList:param_mbeanList -> TimMBeanList
+function_ITimtimPresenceList:param_pbeanList -> TimPBeanList
+function_ITimtimMessageIq:param_timMsgIq -> TimMessageIq
+function_ITimtimMessageResult:param_mbean -> TimMBean
+function_ITimtimProperty:param_tpb -> TimPropertyBean
+function_ITimtimRemoteUserAuth:return_type -> TimRemoteUserBean
+function_ITimtimRemoteUserAuth:param_tid -> Tid
+function_ITimtimRemoteUserAuth:param_auth -> TimAuth
+function_ITimtimRemoteUserGet:return_type -> TimRemoteUserBean
+function_ITimtimRemoteUserGet:param_tid -> Tid
+function_ITimtimRemoteUserGet:param_auth -> TimAuth
+function_ITimtimRemoteUserEdit:return_type -> TimRemoteUserBean
+function_ITimtimRemoteUserEdit:param_tid -> Tid
+function_ITimtimRemoteUserEdit:param_ub -> TimUserBean
+function_ITimtimRemoteUserEdit:param_auth -> TimAuth
+function_ITimtimResponsePresence:return_type -> TimResponseBean
+function_ITimtimResponsePresence:param_pbean -> TimPBean
+function_ITimtimResponsePresence:param_auth -> TimAuth
+function_ITimtimResponseMessage:return_type -> TimResponseBean
+function_ITimtimResponseMessage:param_mbean -> TimMBean
+function_ITimtimResponseMessage:param_auth -> TimAuth
+function_ITimtimResponseMessageIq:return_type -> TimMBeanList
+function_ITimtimResponseMessageIq:param_timMsgIq -> TimMessageIq
+function_ITimtimResponseMessageIq:param_auth -> TimAuth
+function_ITimtimResponsePresenceList:return_type -> TimResponseBean
+function_ITimtimResponsePresenceList:param_pbeanList -> TimPBeanList
+function_ITimtimResponsePresenceList:param_auth -> TimAuth
+function_ITimtimResponseMessageList:return_type -> TimResponseBean
+function_ITimtimResponseMessageList:param_mbeanList -> TimMBeanList
+function_ITimtimResponseMessageList:param_auth -> TimAuth
+}

@@ -21,16 +21,19 @@ import (
 )
 
 func Httpserver() {
+	if CF.GetHttpPort() <= 0 {
+		return
+	}
 	http.HandleFunc("/tim", tim)
 	http.HandleFunc("/info", info)
 	http.HandleFunc("/uinfo", userInfo)
 	s := &http.Server{
-		Addr:           fmt.Sprint(":", ConfBean.GetHttpPort()),
+		Addr:           fmt.Sprint(":", CF.GetHttpPort()),
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	logger.Info("httpserver start listen:", ConfBean.GetHttpPort())
+	logger.Info("httpserver start listen:", CF.GetHttpPort())
 	s.ListenAndServe()
 }
 

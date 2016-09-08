@@ -2,40 +2,12 @@ package dao
 
 /**
 tablename:tim_config
-datetime :2016-06-10 00:59:53
+datetime :2016-09-07 11:32:22
 */
 import (
 	"github.com/donnie4w/gdao"
 	"reflect"
 )
-
-type tim_config_Id struct {
-	gdao.Field
-	fieldName  string
-	FieldValue *int32
-}
-
-func (c *tim_config_Id) Name() string {
-	return c.fieldName
-}
-
-func (c *tim_config_Id) Value() interface{} {
-	return c.FieldValue
-}
-
-type tim_config_Keyword struct {
-	gdao.Field
-	fieldName  string
-	FieldValue *string
-}
-
-func (c *tim_config_Keyword) Name() string {
-	return c.fieldName
-}
-
-func (c *tim_config_Keyword) Value() interface{} {
-	return c.FieldValue
-}
 
 type tim_config_Valuestr struct {
 	gdao.Field
@@ -79,13 +51,41 @@ func (c *tim_config_Remark) Value() interface{} {
 	return c.FieldValue
 }
 
+type tim_config_Id struct {
+	gdao.Field
+	fieldName  string
+	FieldValue *int32
+}
+
+func (c *tim_config_Id) Name() string {
+	return c.fieldName
+}
+
+func (c *tim_config_Id) Value() interface{} {
+	return c.FieldValue
+}
+
+type tim_config_Keyword struct {
+	gdao.Field
+	fieldName  string
+	FieldValue *string
+}
+
+func (c *tim_config_Keyword) Name() string {
+	return c.fieldName
+}
+
+func (c *tim_config_Keyword) Value() interface{} {
+	return c.FieldValue
+}
+
 type Tim_config struct {
 	gdao.Table
-	Remark *tim_config_Remark
 	Id *tim_config_Id
 	Keyword *tim_config_Keyword
 	Valuestr *tim_config_Valuestr
 	Createtime *tim_config_Createtime
+	Remark *tim_config_Remark
 }
 
 func (u *Tim_config) GetId() int32 {
@@ -140,7 +140,7 @@ func (u *Tim_config) SetRemark(arg string) {
 
 func (t *Tim_config) Query(columns ...gdao.Column) ([]Tim_config,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Id,t.Keyword,t.Valuestr,t.Createtime,t.Remark}
+		columns = []gdao.Column{ t.Createtime,t.Remark,t.Id,t.Keyword,t.Valuestr}
 	}
 	rs,err := t.Table.Query(columns...)
 	if rs == nil || err != nil {
@@ -171,7 +171,7 @@ func copyTim_config(channle chan int16, rows []interface{}, t *Tim_config, colum
 
 func (t *Tim_config) QuerySingle(columns ...gdao.Column) (*Tim_config,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Id,t.Keyword,t.Valuestr,t.Createtime,t.Remark}
+		columns = []gdao.Column{ t.Createtime,t.Remark,t.Id,t.Keyword,t.Valuestr}
 	}
 	rs,err := t.Table.QuerySingle(columns...)
 	if rs == nil || err != nil {
@@ -191,7 +191,7 @@ func (t *Tim_config) QuerySingle(columns ...gdao.Column) (*Tim_config,error) {
 
 func (t *Tim_config) Select(columns ...gdao.Column) (*Tim_config,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Id,t.Keyword,t.Valuestr,t.Createtime,t.Remark}
+		columns = []gdao.Column{ t.Createtime,t.Remark,t.Id,t.Keyword,t.Valuestr}
 	}
 	rows,err := t.Table.Selects(columns...)
 	defer rows.Close()
@@ -213,7 +213,7 @@ func (t *Tim_config) Select(columns ...gdao.Column) (*Tim_config,error) {
 
 func (t *Tim_config) Selects(columns ...gdao.Column) ([]*Tim_config,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Id,t.Keyword,t.Valuestr,t.Createtime,t.Remark}
+		columns = []gdao.Column{ t.Createtime,t.Remark,t.Id,t.Keyword,t.Valuestr}
 	}
 	rows,err := t.Table.Selects(columns...)
 	defer rows.Close()
@@ -238,32 +238,32 @@ func  cpTim_config(buff []interface{}, t *Tim_config, columns []gdao.Column) {
 	for i, column := range columns {
 		field := column.Name()
 		switch field {
-		case "createtime":
-			buff[i] = &t.Createtime.FieldValue
-		case "remark":
-			buff[i] = &t.Remark.FieldValue
 		case "id":
 			buff[i] = &t.Id.FieldValue
 		case "keyword":
 			buff[i] = &t.Keyword.FieldValue
 		case "valuestr":
 			buff[i] = &t.Valuestr.FieldValue
+		case "createtime":
+			buff[i] = &t.Createtime.FieldValue
+		case "remark":
+			buff[i] = &t.Remark.FieldValue
 		}
 	}
 }
 
 func NewTim_config(tableName ...string) *Tim_config {
-	keyword := &tim_config_Keyword{fieldName: "keyword"}
-	keyword.Field.FieldName = "keyword"
-	valuestr := &tim_config_Valuestr{fieldName: "valuestr"}
-	valuestr.Field.FieldName = "valuestr"
 	createtime := &tim_config_Createtime{fieldName: "createtime"}
 	createtime.Field.FieldName = "createtime"
 	remark := &tim_config_Remark{fieldName: "remark"}
 	remark.Field.FieldName = "remark"
 	id := &tim_config_Id{fieldName: "id"}
 	id.Field.FieldName = "id"
-	table := &Tim_config{Id:id,Keyword:keyword,Valuestr:valuestr,Createtime:createtime,Remark:remark}
+	keyword := &tim_config_Keyword{fieldName: "keyword"}
+	keyword.Field.FieldName = "keyword"
+	valuestr := &tim_config_Valuestr{fieldName: "valuestr"}
+	valuestr.Field.FieldName = "valuestr"
+	table := &Tim_config{Keyword:keyword,Valuestr:valuestr,Createtime:createtime,Remark:remark,Id:id}
 	table.Table.ModifyMap = make(map[string]interface{})
 	if len(tableName) == 1 {
 		table.Table.TableName = tableName[0]

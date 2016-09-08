@@ -1,6 +1,12 @@
 <tim>
 	<RedisAddr>127.0.0.1:6379</RedisAddr>  
-	<RedisPwd>123456</RedisPwd>   
-	<RequestAddr>127.0.0.1</RequestAddr>   
-	<RequestType>http</RequestType>  
+	<RedisPwd>wuxiaodong</RedisPwd>   
+	<RedisDB>1</RedisDB>
+	<RequestAddr>127.0.0.1:2426</RequestAddr>
+	<Domain>clusterdomin</Domain>
+	<Username>admin</Username>
+	<Password>123456</Password>
+	<IsCluster>1</IsCluster>
+	<Interflow>1000</Interflow>
+	<Keytimeout>1800</Keytimeout>
 </tim>

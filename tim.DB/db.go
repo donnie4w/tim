@@ -21,15 +21,23 @@ func Init() {
 func initmaster() {
 	if Master == nil {
 		logger.Info("master init")
-		dataSourceName, maxOpenConns, maxIdleConns := ConfBean.GetDB()
-		db, err := sql.Open("mysql", dataSourceName)
+		dataSourceName, maxOpenConns, maxIdleConns := CF.GetDB()
+		var err error
+		Master, err = GetDB(dataSourceName, maxOpenConns, maxIdleConns)
 		if err != nil {
 			logger.Info("any error on open database ", err.Error())
 			os.Exit(1)
 			return
 		}
+	}
+}
+
+func GetDB(dataSourceName string, maxOpenConns, maxIdleConns int) (db *sql.DB, err error) {
+	logger.Info("init")
+	db, err = sql.Open("mysql", dataSourceName)
+	if err == nil {
 		db.SetMaxOpenConns(maxOpenConns)
 		db.SetMaxIdleConns(maxIdleConns)
-		Master = db
 	}
+	return
 }

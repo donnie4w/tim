@@ -6,6 +6,7 @@ package utils
 
 import (
 	"crypto/md5"
+	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
@@ -64,10 +65,23 @@ func MD5(s string) string {
 	return strings.ToUpper(hex.EncodeToString(m.Sum(nil)))
 }
 
+func Sha1(s string) string {
+	m := sha1.New()
+	m.Write([]byte(s))
+	return strings.ToUpper(hex.EncodeToString(m.Sum(nil)))
+}
+
 //-----------------------------------20150525--------------------------------------
 // 毫秒
 func TimeMills() string {
 	return fmt.Sprint(time.Now().UnixNano() / 1000000)
+}
+
+//
+func TimeMillsInt64() int64 {
+	//	s := fmt.Sprint(time.Now().UnixNano() / 1000000)
+	//	i, _ := strconv.ParseInt(s, 10, 64)
+	return time.Now().UnixNano() / 1000000
 }
 
 //  毫秒转换为格式化时间

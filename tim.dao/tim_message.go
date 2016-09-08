@@ -2,7 +2,7 @@ package dao
 
 /**
 tablename:tim_message
-datetime :2016-06-10 00:59:53
+datetime :2016-09-07 11:32:22
 */
 import (
 	"github.com/donnie4w/gdao"
@@ -79,17 +79,31 @@ func (c *tim_message_Msgtype) Value() interface{} {
 	return c.FieldValue
 }
 
-type tim_message_Msgmode struct {
+type tim_message_Gname struct {
+	gdao.Field
+	fieldName  string
+	FieldValue *string
+}
+
+func (c *tim_message_Gname) Name() string {
+	return c.fieldName
+}
+
+func (c *tim_message_Gname) Value() interface{} {
+	return c.FieldValue
+}
+
+type tim_message_Small struct {
 	gdao.Field
 	fieldName  string
 	FieldValue *int32
 }
 
-func (c *tim_message_Msgmode) Name() string {
+func (c *tim_message_Small) Name() string {
 	return c.fieldName
 }
 
-func (c *tim_message_Msgmode) Value() interface{} {
+func (c *tim_message_Small) Value() interface{} {
 	return c.FieldValue
 }
 
@@ -149,98 +163,34 @@ func (c *tim_message_Touser) Value() interface{} {
 	return c.FieldValue
 }
 
-type tim_message_Gname struct {
-	gdao.Field
-	fieldName  string
-	FieldValue *string
-}
-
-func (c *tim_message_Gname) Name() string {
-	return c.fieldName
-}
-
-func (c *tim_message_Gname) Value() interface{} {
-	return c.FieldValue
-}
-
-type tim_message_Small struct {
+type tim_message_Msgmode struct {
 	gdao.Field
 	fieldName  string
 	FieldValue *int32
 }
 
-func (c *tim_message_Small) Name() string {
+func (c *tim_message_Msgmode) Name() string {
 	return c.fieldName
 }
 
-func (c *tim_message_Small) Value() interface{} {
+func (c *tim_message_Msgmode) Value() interface{} {
 	return c.FieldValue
 }
 
 type Tim_message struct {
 	gdao.Table
-	Gname *tim_message_Gname
-	Small *tim_message_Small
-	Id *tim_message_Id
 	Stamp *tim_message_Stamp
 	Touser *tim_message_Touser
 	Msgmode *tim_message_Msgmode
+	Small *tim_message_Small
 	Large *tim_message_Large
+	Id *tim_message_Id
+	Fromuser *tim_message_Fromuser
+	Msgtype *tim_message_Msgtype
+	Gname *tim_message_Gname
 	Stanza *tim_message_Stanza
 	Createtime *tim_message_Createtime
 	Chatid *tim_message_Chatid
-	Fromuser *tim_message_Fromuser
-	Msgtype *tim_message_Msgtype
-}
-
-func (u *Tim_message) GetFromuser() string {
-	return *u.Fromuser.FieldValue
-}
-
-func (u *Tim_message) SetFromuser(arg string) {
-	u.Table.ModifyMap[u.Fromuser.fieldName] = arg
-	v := string(arg)
-	u.Fromuser.FieldValue = &v
-}
-
-func (u *Tim_message) GetMsgtype() int32 {
-	return *u.Msgtype.FieldValue
-}
-
-func (u *Tim_message) SetMsgtype(arg int64) {
-	u.Table.ModifyMap[u.Msgtype.fieldName] = arg
-	v := int32(arg)
-	u.Msgtype.FieldValue = &v
-}
-
-func (u *Tim_message) GetMsgmode() int32 {
-	return *u.Msgmode.FieldValue
-}
-
-func (u *Tim_message) SetMsgmode(arg int64) {
-	u.Table.ModifyMap[u.Msgmode.fieldName] = arg
-	v := int32(arg)
-	u.Msgmode.FieldValue = &v
-}
-
-func (u *Tim_message) GetLarge() int32 {
-	return *u.Large.FieldValue
-}
-
-func (u *Tim_message) SetLarge(arg int64) {
-	u.Table.ModifyMap[u.Large.fieldName] = arg
-	v := int32(arg)
-	u.Large.FieldValue = &v
-}
-
-func (u *Tim_message) GetStanza() string {
-	return *u.Stanza.FieldValue
-}
-
-func (u *Tim_message) SetStanza(arg string) {
-	u.Table.ModifyMap[u.Stanza.fieldName] = arg
-	v := string(arg)
-	u.Stanza.FieldValue = &v
 }
 
 func (u *Tim_message) GetCreatetime() string {
@@ -263,6 +213,66 @@ func (u *Tim_message) SetChatid(arg string) {
 	u.Chatid.FieldValue = &v
 }
 
+func (u *Tim_message) GetFromuser() string {
+	return *u.Fromuser.FieldValue
+}
+
+func (u *Tim_message) SetFromuser(arg string) {
+	u.Table.ModifyMap[u.Fromuser.fieldName] = arg
+	v := string(arg)
+	u.Fromuser.FieldValue = &v
+}
+
+func (u *Tim_message) GetMsgtype() int32 {
+	return *u.Msgtype.FieldValue
+}
+
+func (u *Tim_message) SetMsgtype(arg int64) {
+	u.Table.ModifyMap[u.Msgtype.fieldName] = arg
+	v := int32(arg)
+	u.Msgtype.FieldValue = &v
+}
+
+func (u *Tim_message) GetGname() string {
+	return *u.Gname.FieldValue
+}
+
+func (u *Tim_message) SetGname(arg string) {
+	u.Table.ModifyMap[u.Gname.fieldName] = arg
+	v := string(arg)
+	u.Gname.FieldValue = &v
+}
+
+func (u *Tim_message) GetStanza() string {
+	return *u.Stanza.FieldValue
+}
+
+func (u *Tim_message) SetStanza(arg string) {
+	u.Table.ModifyMap[u.Stanza.fieldName] = arg
+	v := string(arg)
+	u.Stanza.FieldValue = &v
+}
+
+func (u *Tim_message) GetLarge() int32 {
+	return *u.Large.FieldValue
+}
+
+func (u *Tim_message) SetLarge(arg int64) {
+	u.Table.ModifyMap[u.Large.fieldName] = arg
+	v := int32(arg)
+	u.Large.FieldValue = &v
+}
+
+func (u *Tim_message) GetId() int32 {
+	return *u.Id.FieldValue
+}
+
+func (u *Tim_message) SetId(arg int64) {
+	u.Table.ModifyMap[u.Id.fieldName] = arg
+	v := int32(arg)
+	u.Id.FieldValue = &v
+}
+
 func (u *Tim_message) GetStamp() string {
 	return *u.Stamp.FieldValue
 }
@@ -283,14 +293,14 @@ func (u *Tim_message) SetTouser(arg string) {
 	u.Touser.FieldValue = &v
 }
 
-func (u *Tim_message) GetGname() string {
-	return *u.Gname.FieldValue
+func (u *Tim_message) GetMsgmode() int32 {
+	return *u.Msgmode.FieldValue
 }
 
-func (u *Tim_message) SetGname(arg string) {
-	u.Table.ModifyMap[u.Gname.fieldName] = arg
-	v := string(arg)
-	u.Gname.FieldValue = &v
+func (u *Tim_message) SetMsgmode(arg int64) {
+	u.Table.ModifyMap[u.Msgmode.fieldName] = arg
+	v := int32(arg)
+	u.Msgmode.FieldValue = &v
 }
 
 func (u *Tim_message) GetSmall() int32 {
@@ -303,19 +313,9 @@ func (u *Tim_message) SetSmall(arg int64) {
 	u.Small.FieldValue = &v
 }
 
-func (u *Tim_message) GetId() int32 {
-	return *u.Id.FieldValue
-}
-
-func (u *Tim_message) SetId(arg int64) {
-	u.Table.ModifyMap[u.Id.fieldName] = arg
-	v := int32(arg)
-	u.Id.FieldValue = &v
-}
-
 func (t *Tim_message) Query(columns ...gdao.Column) ([]Tim_message,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Gname,t.Small,t.Id,t.Stamp,t.Touser,t.Msgmode,t.Large,t.Stanza,t.Createtime,t.Chatid,t.Fromuser,t.Msgtype}
+		columns = []gdao.Column{ t.Stanza,t.Createtime,t.Chatid,t.Fromuser,t.Msgtype,t.Gname,t.Small,t.Large,t.Id,t.Stamp,t.Touser,t.Msgmode}
 	}
 	rs,err := t.Table.Query(columns...)
 	if rs == nil || err != nil {
@@ -346,7 +346,7 @@ func copyTim_message(channle chan int16, rows []interface{}, t *Tim_message, col
 
 func (t *Tim_message) QuerySingle(columns ...gdao.Column) (*Tim_message,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Gname,t.Small,t.Id,t.Stamp,t.Touser,t.Msgmode,t.Large,t.Stanza,t.Createtime,t.Chatid,t.Fromuser,t.Msgtype}
+		columns = []gdao.Column{ t.Stanza,t.Createtime,t.Chatid,t.Fromuser,t.Msgtype,t.Gname,t.Small,t.Large,t.Id,t.Stamp,t.Touser,t.Msgmode}
 	}
 	rs,err := t.Table.QuerySingle(columns...)
 	if rs == nil || err != nil {
@@ -366,7 +366,7 @@ func (t *Tim_message) QuerySingle(columns ...gdao.Column) (*Tim_message,error) {
 
 func (t *Tim_message) Select(columns ...gdao.Column) (*Tim_message,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Gname,t.Small,t.Id,t.Stamp,t.Touser,t.Msgmode,t.Large,t.Stanza,t.Createtime,t.Chatid,t.Fromuser,t.Msgtype}
+		columns = []gdao.Column{ t.Stanza,t.Createtime,t.Chatid,t.Fromuser,t.Msgtype,t.Gname,t.Small,t.Large,t.Id,t.Stamp,t.Touser,t.Msgmode}
 	}
 	rows,err := t.Table.Selects(columns...)
 	defer rows.Close()
@@ -388,7 +388,7 @@ func (t *Tim_message) Select(columns ...gdao.Column) (*Tim_message,error) {
 
 func (t *Tim_message) Selects(columns ...gdao.Column) ([]*Tim_message,error) {
 	if columns == nil {
-		columns = []gdao.Column{ t.Gname,t.Small,t.Id,t.Stamp,t.Touser,t.Msgmode,t.Large,t.Stanza,t.Createtime,t.Chatid,t.Fromuser,t.Msgtype}
+		columns = []gdao.Column{ t.Stanza,t.Createtime,t.Chatid,t.Fromuser,t.Msgtype,t.Gname,t.Small,t.Large,t.Id,t.Stamp,t.Touser,t.Msgmode}
 	}
 	rows,err := t.Table.Selects(columns...)
 	defer rows.Close()
@@ -413,39 +413,37 @@ func  cpTim_message(buff []interface{}, t *Tim_message, columns []gdao.Column) {
 	for i, column := range columns {
 		field := column.Name()
 		switch field {
+		case "chatid":
+			buff[i] = &t.Chatid.FieldValue
 		case "fromuser":
 			buff[i] = &t.Fromuser.FieldValue
 		case "msgtype":
 			buff[i] = &t.Msgtype.FieldValue
-		case "msgmode":
-			buff[i] = &t.Msgmode.FieldValue
-		case "large":
-			buff[i] = &t.Large.FieldValue
+		case "gname":
+			buff[i] = &t.Gname.FieldValue
 		case "stanza":
 			buff[i] = &t.Stanza.FieldValue
 		case "createtime":
 			buff[i] = &t.Createtime.FieldValue
-		case "chatid":
-			buff[i] = &t.Chatid.FieldValue
+		case "id":
+			buff[i] = &t.Id.FieldValue
 		case "stamp":
 			buff[i] = &t.Stamp.FieldValue
 		case "touser":
 			buff[i] = &t.Touser.FieldValue
-		case "gname":
-			buff[i] = &t.Gname.FieldValue
+		case "msgmode":
+			buff[i] = &t.Msgmode.FieldValue
 		case "small":
 			buff[i] = &t.Small.FieldValue
-		case "id":
-			buff[i] = &t.Id.FieldValue
+		case "large":
+			buff[i] = &t.Large.FieldValue
 		}
 	}
 }
 
 func NewTim_message(tableName ...string) *Tim_message {
-	gname := &tim_message_Gname{fieldName: "gname"}
-	gname.Field.FieldName = "gname"
-	small := &tim_message_Small{fieldName: "small"}
-	small.Field.FieldName = "small"
+	large := &tim_message_Large{fieldName: "large"}
+	large.Field.FieldName = "large"
 	id := &tim_message_Id{fieldName: "id"}
 	id.Field.FieldName = "id"
 	stamp := &tim_message_Stamp{fieldName: "stamp"}
@@ -454,10 +452,8 @@ func NewTim_message(tableName ...string) *Tim_message {
 	touser.Field.FieldName = "touser"
 	msgmode := &tim_message_Msgmode{fieldName: "msgmode"}
 	msgmode.Field.FieldName = "msgmode"
-	large := &tim_message_Large{fieldName: "large"}
-	large.Field.FieldName = "large"
-	stanza := &tim_message_Stanza{fieldName: "stanza"}
-	stanza.Field.FieldName = "stanza"
+	small := &tim_message_Small{fieldName: "small"}
+	small.Field.FieldName = "small"
 	createtime := &tim_message_Createtime{fieldName: "createtime"}
 	createtime.Field.FieldName = "createtime"
 	chatid := &tim_message_Chatid{fieldName: "chatid"}
@@ -466,7 +462,11 @@ func NewTim_message(tableName ...string) *Tim_message {
 	fromuser.Field.FieldName = "fromuser"
 	msgtype_ := &tim_message_Msgtype{fieldName: "msgtype"}
 	msgtype_.Field.FieldName = "msgtype"
-	table := &Tim_message{Stanza:stanza,Createtime:createtime,Chatid:chatid,Fromuser:fromuser,Msgtype:msgtype_,Msgmode:msgmode,Large:large,Id:id,Stamp:stamp,Touser:touser,Gname:gname,Small:small}
+	gname := &tim_message_Gname{fieldName: "gname"}
+	gname.Field.FieldName = "gname"
+	stanza := &tim_message_Stanza{fieldName: "stanza"}
+	stanza.Field.FieldName = "stanza"
+	table := &Tim_message{Gname:gname,Stanza:stanza,Createtime:createtime,Chatid:chatid,Fromuser:fromuser,Msgtype:msgtype_,Msgmode:msgmode,Small:small,Large:large,Id:id,Stamp:stamp,Touser:touser}
 	table.Table.ModifyMap = make(map[string]interface{})
 	if len(tableName) == 1 {
 		table.Table.TableName = tableName[0]

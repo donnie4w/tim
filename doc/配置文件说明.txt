@@ -1,0 +1,30 @@
+tim.xml
+	<Port>6666</Port>         监听端口
+	<Addr>0.0.0.0</Addr>	  允许访问的ip
+	<HeartBeat>120</HeartBeat>		服务器监听客户端心跳时间 单位 秒
+	<Logdir>C:/Users/dong/Desktop/tim</Logdir>		服务器日志目录
+	<LogName>tim.log</LogName>						日志文件名
+	<Db_dataSourceName>root:123456@tcp(127.0.0.1:3306)/tim</Db_dataSourceName>   数据库源地址
+	<Db_MaxOpenConns>20</Db_MaxOpenConns>										 
+	<Db_MaxIdleConns>5</Db_MaxIdleConns>
+	<HttpPort>0</HttpPort>			服务器http监听地址，0表示不启用
+	<Db_Exsit>1</Db_Exsit>          0表示无数据库模式 
+	<Presence>1</Presence>			0表示不推送用户在线状态
+	<ConfirmAck>0</ConfirmAck>      0表示 客户端发送信息不等待回执
+	<MustAuth>0</MustAuth>			0表示 登陆无需验证
+	<SingleClient>1</SingleClient>  0表示 支持同一用户同时在多客户端登陆
+	<Interflow>0</Interflow>		0表示消息不合流 大于0时，如1表示同1秒内信息同时推送到客户端，如2表示2秒内信息同时推送到客户端，依次类推
+	
+	
+#####################################
+cluster.xml
+    <RedisAddr>127.0.0.1:6379</RedisAddr>       
+	<RedisPwd>wuxiaodong</RedisPwd>   
+	<RedisDB>1</RedisDB>                        
+	<RequestAddr>127.0.0.1:2426</RequestAddr>     其他tim服务器可以访问的地址，部署时建议对端口进行限制，仅供tim服务器所在的ip访问
+	<Domain>clusterdomin</Domain>				  集群tim服务器之间的domain需相同
+	<Username>admin</Username>					  集群tim服务器之间的Username需相同
+	<Password>123456</Password>					  集群tim服务器之间的Password需相同  
+	<IsCluster>1</IsCluster>					  1表示开启集群
+	<Interflow>1000</Interflow>					  大于0时表示消息合流推送，单位为毫秒，如1000表示 1000毫秒内的信息一起推送到目标tim服务器上
+	<Keytimeout>1800</Keytimeout>				  

@@ -8,8 +8,11 @@ import (
 )
 
 /*版本*/
-var _Version = "tim 1.0"
-var _Author = "wuxiaodong"
-var _Email = "donnie4w@gmail.com;donnie4wu@qq.com"
+var VersionName = "tim 1.0"
+var VersionCode = 2
+var Author = "wuxiaodong"
+var Email = "donnie4w@gmail.com"
 
-var ConfBean = &conf.ConfBean{KV: make(map[string]string, 0), Db_Exsit: 1}
+var CF = &conf.ConfBean{KV: make(map[string]string, 0), Db_Exsit: 1, MustAuth: 1}
+
+var ClusterConf = &conf.ClusterBean{IsCluster: 1}

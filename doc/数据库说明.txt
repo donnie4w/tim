@@ -1,0 +1,32 @@
+tim_domain  域名表
+    需要为im分配一个指定的域名，类似渠道，不同域名之间的用户是无法通讯的。
+	客户端登陆时，为Tid对象赋值，其中domain字段便是域名值，服务器验证登陆用户名密码时，也会从tim_domain表中查询是否已经分配了域名，如果不存在则会验证失败
+    域名格式没有特殊要求，建议使用不易跟人重复的字符串，确保唯一性
+   
+tim_property 系统属性表
+    主要是配置属性字段，并非强制性，根据实际情况选择配置，以下是每个字段的说明
+	1) tim.mysql.passwordSQL   
+	    密码验证的sql，如果是采用自己数据库的用户表，那么可以配置改字段，服务器验证时，会执行该sql，并获取 password 值与客户端提交pwd做验证。如果表密码字段名称不是
+		password 则采用别名 如 select plainpassword password from tim_user where username=?
+	2) authProvider.passwordType
+       密码验证方式 ，目前服务器提供了3种方式：plain，sha1，md5
+	   举例说明：   服务器查询密码值为serverpwd，客户端提交密码为 clientpwd
+	   authProvider.passwordType 为 plain 时：验证方式是：   serverpwd==clientpwd
+								 为 sha1  时：验证方式是：   serverpwd==sha1(clientpwd)
+								 为 md5   时：验证方式是：   serverpwd==md5(clientpwd)
+	 3) tim.mysql.rosterSQL  用户的好友列表
+        当用户状态发生变化时，服务器会自动通知到用户在线的好友，如离开，上线，下线等，此时服务器需求查询用户好友列表
+		如果采用自己数据库的好友关系表，那么需要配置该字段，服务器查询时，会获取 roster 值，即用户好友的id
+		如：select rostername roster from tim_roster where username=?
+	 4) tim.mysql.mucAuthSQL  房间(群)验证
+	    在群里发送信息是，服务器会先验证你是否该群成员，有无权限发送信息等
+		如果采用自己数据库群关系表，那么需求配置改字段 ，服务器查询时，如果返回结果集条数大于0，则说明有权限发送，否则则认为无权限发送
+		如：select count(1) from mucmember where roomid=? and username=? and forbid=0
+	 5) tim.mysql.mucRoomSQL 房间成员
+	    用户在群上发送信息，服务器需要查询改群在线成员
+	    如果采用自己数据库群关系表，那么需求配置改字段 ，服务器查询时，会获取 username 值，即群各成员用户标识
+		如：select username from mucmember where roomid=?
+								 
+								 
+					
+    

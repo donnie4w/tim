@@ -36,6 +36,12 @@ type ConfBean struct {
 	KV map[string]string //系统key value
 
 	ConfirmAck int //发送消息是否需要回执 1需要 0不需要
+
+	SingleClient int //0多客户端登陆 1 单客户端登陆  default 0
+
+	MustAuth int //登陆验证 1需验证 0不需验证
+
+	Interflow int //信息合流 0不合流 1合流
 }
 
 /**设置Ip信息*/
@@ -82,17 +88,24 @@ func (cf *ConfBean) GetKV(keyword string, defaultValue string) (value string) {
 }
 
 func (cf *ConfBean) Init(filexml string) {
-	xmlconfig, err := os.Open(filexml)
-	if err != nil {
-		panic(fmt.Sprint("xmlconfig is error:", err.Error()))
-		os.Exit(0)
+	xmlstr := ""
+	if isExist(filexml) {
+		xmlconfig, err := os.Open(filexml)
+		if err != nil {
+			panic(fmt.Sprint("xmlconfig is error:", err.Error()))
+			os.Exit(0)
+		}
+		config, err := ioutil.ReadAll(xmlconfig)
+		if err != nil {
+			panic(fmt.Sprint("config is error:", err.Error()))
+			os.Exit(1)
+		}
+		xmlstr = string(config)
+	} else {
+		xmlstr = timxml
 	}
-	config, err := ioutil.ReadAll(xmlconfig)
-	if err != nil {
-		panic(fmt.Sprint("config is error:", err.Error()))
-		os.Exit(1)
-	}
-	dom, err := dom4g.LoadByXml(string(config))
+
+	dom, err := dom4g.LoadByXml(xmlstr)
 	if err == nil {
 		nodes := dom.AllNodes()
 		if nodes != nil {
@@ -125,3 +138,18 @@ func (cf *ConfBean) Init(filexml string) {
 		}
 	}
 }
+
+var timxml = `<tim>
+	<Port>3737</Port>
+	<Addr>0.0.0.0</Addr>
+	<HeartBeat>120</HeartBeat>
+	<Logdir>./timLog</Logdir>
+	<LogName>tim.log</LogName>
+	<HttpPort>3939</HttpPort>
+	<Db_Exsit>0</Db_Exsit>
+	<Presence>1</Presence>
+	<ConfirmAck>0</ConfirmAck>
+	<MustAuth>0</MustAuth>
+	<SingleClient>0</SingleClient>
+	<Interflow>0</Interflow>
+</tim>`

@@ -16,8 +16,8 @@ func Start() {
 		if err := recover(); err != nil {
 		}
 	}()
-	service := fmt.Sprint(ConfBean.Addr, ":", ConfBean.Port)
-	logger.Debug("listen port:", ConfBean.Port)
+	service := fmt.Sprint(CF.Addr, ":", CF.Port)
+	logger.Debug("listen port:", CF.Port)
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", service)
 	checkError(err)
 	listener, err := net.ListenTCP("tcp", tcpAddr)

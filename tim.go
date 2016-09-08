@@ -27,6 +27,9 @@ func init() {
 }
 
 func initGdao() {
+	if CF.Db_Exsit == 0 {
+		return
+	}
 	logger.Debug("initGdao")
 	DB.Init()
 	gdao.SetDB(DB.Master)
@@ -39,7 +42,7 @@ func initGdao() {
 
 func initLog(loglevel string) {
 	logger.SetConsole(true)
-	logger.SetRollingDaily(ConfBean.GetLog())
+	logger.SetRollingDaily(CF.GetLog())
 	switch loglevel {
 	case "debug":
 		logger.SetLevel(logger.DEBUG)
@@ -50,33 +53,41 @@ func initLog(loglevel string) {
 	case "error":
 		logger.SetLevel(logger.ERROR)
 	default:
-		logger.SetLevel(logger.DEBUG)
+		logger.SetLevel(logger.WARN)
 	}
 }
 
+// tim f tim.xml c cluster.xml d debug
 func main() {
 	flag.Parse()
 	wd, _ := os.Getwd()
-	for i := 0; i < flag.NArg(); i++ {
-		fmt.Println(flag.Arg(i))
-	}
-	if flag.NArg() > 2 {
+	if flag.NArg() > 6 {
 		fmt.Println("error:", "flag's length is", flag.NArg())
 		os.Exit(1)
 	}
-	if flag.NArg() >= 1 {
-		ConfBean.Init(flag.Arg(0))
-	} else {
-		ConfBean.Init(fmt.Sprint(wd, "/tim.xml"))
+	timconf := fmt.Sprint(wd, "/tim.xml")
+	initconf := ""
+	clusterconf := fmt.Sprint(fmt.Sprint(wd, "/cluster.xml"))
+	for i := 0; i < flag.NArg(); i++ {
+		if i%2 == 0 {
+			switch flag.Arg(i) {
+			case "f":
+				timconf = flag.Arg(i + 1)
+			case "c":
+				clusterconf = flag.Arg(i + 1)
+			case "d":
+				initconf = flag.Arg(i + 1)
+			default:
+				fmt.Println("error:", "error arg:", flag.Arg(i))
+				os.Exit(1)
+			}
+		}
 	}
-	if flag.NArg() == 2 {
-		initLog(flag.Arg(1))
-	} else {
-		initLog("")
-	}
-	cluster.InitCluster(fmt.Sprint(wd, "/cluster.xml"))
+	CF.Init(timconf)
+	initLog(initconf)
+	cluster.InitCluster(clusterconf)
 	initGdao()
-	daoService.AddConf()
+	daoService.InitDaoservice()
 	ticker.TickerStart()
 	service.ServerStart()
 }

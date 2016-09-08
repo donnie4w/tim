@@ -19,9 +19,16 @@ import (
 
 type ClusterBean struct {
 	RedisAddr   string //  redis ip:port
-	RedisPwd    string
+	RedisPwd    string //
+	RedisDB     int    //
 	RequestAddr string // 访问地址
 	RequestType string // 访问类型
+	Domain      string // 域名
+	Username    string // 登陆名
+	Password    string // 登陆密码
+	IsCluster   int    // 1集群 0不集群
+	Interflow   int    // 合流信息发送 0不合流  1合流
+	Keytimeout  int    // key 过期时间
 }
 
 func (cb *ClusterBean) Init(filexml string) (b bool) {
@@ -34,6 +41,7 @@ func (cb *ClusterBean) Init(filexml string) (b bool) {
 	}()
 	if !isExist(filexml) {
 		b = false
+		return
 	}
 	xmlconfig, err := os.Open(filexml)
 	if err != nil {
