@@ -62,9 +62,9 @@ func SaveOfflineMBean(mbean *TimMBean) {
 		return
 	}
 	if mbean.GetType() == "groupchat" {
-		_saveOfflineMBean(mbean)
-	} else {
 		_saveOfflineMucBean(mbean)
+	} else {
+		_saveOfflineMBean(mbean)
 	}
 }
 
