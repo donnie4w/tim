@@ -14,4 +14,7 @@
 	<MustAuth>0</MustAuth>
 	<SingleClient>1</SingleClient>
 	<Interflow>0</Interflow>
+	<TLSPort>0</TLSPort>
+	<TLSServerPem></TLSServerPem>
+	<TLSServerKey></TLSServerKey>
 </tim>

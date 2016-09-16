@@ -4,6 +4,8 @@ package clusterServer
  * donnie4w@gmail.com  tim server
  */
 import (
+	"fmt"
+
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/donnie4w/go-logger/logger"
 	"tim.client"
@@ -40,6 +42,6 @@ func (t *Controlloer) Server() {
 	handler := new(client.TimImpl)
 	processor := NewITimProcessor(handler)
 	server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
-	logger.Info("cluster server listen:", t.ListenAddr())
+	fmt.Println("cluster server listen:", t.ListenAddr())
 	server.Serve()
 }

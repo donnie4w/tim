@@ -33,7 +33,7 @@ func Httpserver() {
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	logger.Info("httpserver start listen:", CF.GetHttpPort())
+	fmt.Println("httpserver start listen:", CF.GetHttpPort())
 	s.ListenAndServe()
 }
 

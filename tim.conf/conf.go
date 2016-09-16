@@ -42,6 +42,11 @@ type ConfBean struct {
 	MustAuth int //登陆验证 1需验证 0不需验证
 
 	Interflow int //信息合流 0不合流 1合流
+
+	TLSPort      int    // TLS 端口
+	TLSServerPem string // 服务器端证书路径
+	TLSServerKey string // 服务器端私钥路径
+	TLSCLientPem string // 客户端证书路径
 }
 
 /**设置Ip信息*/

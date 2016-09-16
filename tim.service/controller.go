@@ -4,6 +4,7 @@
 package service
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"runtime/debug"
@@ -33,6 +34,7 @@ type Controlloer struct {
 
 func ServerStart() {
 	go Httpserver()
+	go tsslServer()
 	s := new(Controlloer)
 	s.SetAddr(CF.GetIp())
 	if cluster.IsCluster() {
@@ -101,18 +103,45 @@ func Accept(server *thriftserver.TSimpleServer) (client thrift.TTransport, err e
 	return
 }
 
+func tsslServer() {
+	if CF.TLSPort <= 0 && CF.TLSServerPem == "" && CF.TLSServerKey == "" {
+		return
+	}
+	cer, err := tls.LoadX509KeyPair(CF.TLSServerPem, CF.TLSServerKey)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	config := &tls.Config{Certificates: []tls.Certificate{cer}}
+	tsslServerSocket, err := thrift.NewTSSLServerSocket(fmt.Sprint(CF.Addr, ":", CF.TLSPort), config)
+	if err != nil {
+		logger.Error(err.Error())
+		return
+	}
+	err = tsslServerSocket.Listen()
+	if err != nil {
+		logger.Error(err.Error())
+		return
+	}
+	fmt.Println("tls server listen:", CF.TLSPort)
+	for {
+		client, err := tsslServerSocket.Accept()
+		if err == nil && client != nil {
+			go controllerHandler(client)
+		}
+	}
+}
+
 func controllerHandler(tt thrift.TTransport) {
 	isclose := false
 	var gorutineclose *bool = &isclose
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error("controllerHandler,", err)
-			//			logger.Error(string(debug.Stack()))
 			*gorutineclose = true
 		}
 	}()
 	tu := &TimUser{Client: NewTimClient(tt), OverLimit: 3, Fw: FW.CONNECT, IdCardNo: utils.TimeMills(), Sendflag: make(chan string, 0), Sync: new(sync.Mutex)}
-	//	tu.Interflow = 1
 	TP.AddConnect(tu)
 	defer func() {
 		if cluster.IsCluster() && tu.UserTid != nil {

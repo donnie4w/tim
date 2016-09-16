@@ -57,7 +57,7 @@ func initLog(loglevel string) {
 	}
 }
 
-// tim f tim.xml c cluster.xml d debug
+//tim f tim.xml c cluster.xml d debug
 func main() {
 	flag.Parse()
 	wd, _ := os.Getwd()
