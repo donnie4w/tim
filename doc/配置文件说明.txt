@@ -14,7 +14,9 @@ tim.xml
 	<MustAuth>0</MustAuth>			0表示 登陆无需验证
 	<SingleClient>1</SingleClient>  0表示 支持同一用户同时在多客户端登陆
 	<Interflow>0</Interflow>		0表示消息不合流 大于0时，如1表示同1秒内信息同时推送到客户端，如2表示2秒内信息同时推送到客户端，依次类推
-	
+	<TLSPort>0</TLSPort>            TLS安全传输协议的服务器监听端口
+	<TLSServerPem></TLSServerPem>	TLS证书
+	<TLSServerKey></TLSServerKey>	TLS服务密钥
 	
 #####################################
 cluster.xml
