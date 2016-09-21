@@ -7,5 +7,7 @@
 
 -include("tim_types.hrl").
 
--define(TIM_PROTOCOLVERSION, 2).
+-define(TIM_PROTOCOLVERSION, 3).
+
+-define(TIM_PROTOCOLVERSIONNAME, "1.0.1").
 

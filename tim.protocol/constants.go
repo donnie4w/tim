@@ -14,7 +14,8 @@ var _ = thrift.ZERO
 var _ = fmt.Printf
 var _ = bytes.Equal
 
-const Protocolversion = 2
+const Protocolversion = 3
+const ProtocolversionName = "1.0.1"
 
 func init() {
 }

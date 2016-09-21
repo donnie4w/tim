@@ -1683,4 +1683,5 @@
 @interface timConstants : NSObject {
 }
 + (int32_t) protocolversion;
++ (NSString *) protocolversionName;
 @end

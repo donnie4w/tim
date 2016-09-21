@@ -839,7 +839,8 @@ GType tim_property_bean_get_type (void);
 #define TIM_PROPERTY_BEAN_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), TYPE_TIM_PROPERTY_BEAN, TimPropertyBeanClass))
 
 /* constants */
-#define PROTOCOLVERSION 2
+#define PROTOCOLVERSION 3
+#define PROTOCOLVERSIONNAME g_strdup ("1.0.1")
 
 /* struct ITimTimStreamArgs */
 struct _ITimTimStreamArgs

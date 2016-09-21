@@ -10,6 +10,8 @@ use warnings;
 use Thrift;
 
 
-use constant protocolversion => 2;
+use constant protocolversion => 3;
+
+use constant protocolversionName => "1.0.1";
 
 1;

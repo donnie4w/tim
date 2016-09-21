@@ -5873,9 +5873,14 @@ class TimPropertyBean {
 
 final class Constant extends \Thrift\Type\TConstant {
   static protected $protocolversion;
+  static protected $protocolversionName;
 
   static protected function init_protocolversion() {
-    return 2;
+    return 3;
+  }
+
+  static protected function init_protocolversionName() {
+    return "1.0.1";
   }
 }
 

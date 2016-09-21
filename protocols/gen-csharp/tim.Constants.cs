@@ -15,5 +15,6 @@ using System.Runtime.Serialization;
 
 public static class timConstants
 {
-  public const int protocolversion = 2;
+  public const int protocolversion = 3;
+  public const string protocolversionName = "1.0.1";
 }

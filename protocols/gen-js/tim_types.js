@@ -4066,4 +4066,5 @@ TimPropertyBean.prototype.write = function(output) {
   return;
 };
 
-protocolversion = 2;
+protocolversion = 3;
+protocolversionName = '1.0.1';

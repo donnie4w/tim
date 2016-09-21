@@ -36,6 +36,8 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings({"cast", "rawtypes", "serial", "unchecked"})
 public class timConstants {
 
-  public static final int protocolversion = 2;
+  public static final int protocolversion = 3;
+
+  public static final String protocolversionName = "1.0.1";
 
 }

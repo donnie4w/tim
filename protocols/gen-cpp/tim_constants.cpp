@@ -11,7 +11,9 @@
 const timConstants g_tim_constants;
 
 timConstants::timConstants() {
-  protocolversion = 2;
+  protocolversion = 3;
+
+  protocolversionName = "1.0.1";
 
 }
 

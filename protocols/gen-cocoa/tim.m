@@ -10933,13 +10933,17 @@
 
 @end
 
-static int32_t protocolversion = 2;
+static int32_t protocolversion = 3;
+static NSString * protocolversionName = @"1.0.1";
 
 @implementation timConstants
 + (void) initialize {
 }
 + (int32_t) protocolversion{
   return protocolversion;
+}
++ (NSString *) protocolversionName{
+  return protocolversionName;
 }
 @end
 

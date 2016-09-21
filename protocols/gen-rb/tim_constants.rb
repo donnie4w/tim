@@ -7,5 +7,7 @@
 require 'thrift'
 require 'tim_types'
 
-Protocolversion = 2
+Protocolversion = 3
+
+ProtocolversionName = %q"1.0.1"
 

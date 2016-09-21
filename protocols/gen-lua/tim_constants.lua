@@ -8,4 +8,6 @@
 
 require 'Thrift'
 
-protocolversion = 2
+protocolversion = 3
+
+protocolversionName = '1.0.1'

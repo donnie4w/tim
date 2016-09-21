@@ -16,7 +16,7 @@ tim.xml
 	<Interflow>0</Interflow>		0表示消息不合流 大于0时，如1表示同1秒内信息同时推送到客户端，如2表示2秒内信息同时推送到客户端，依次类推
 	<TLSPort>0</TLSPort>            TLS安全传输协议的服务器监听端口
 	<TLSServerPem></TLSServerPem>	TLS证书
-	<TLSServerKey></TLSServerKey>	TLS服务密钥
+	<TLSServerKey></TLSServerKey>	TLS服务器密钥
 	
 #####################################
 cluster.xml

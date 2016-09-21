@@ -13,7 +13,10 @@ import thrift.util.hashset;
 import tim_types;
 
 immutable(int) protocolversion;
+immutable(string) protocolversionName;
 
 static this() {
-  protocolversion = 2;
+  protocolversion = 3;
+
+  protocolversionName = "1.0.1";
 }

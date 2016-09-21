@@ -603,41 +603,38 @@ func Auth(tid *Tid, pwd string) (b bool) {
 		}
 	}()
 	authProvider_passwordSQL := CF.GetKV("tim.mysql.passwordSQL", "")
-	loginname, _ := connect.GetLoginName(tid)
 	if authProvider_passwordSQL == "" {
-		tim_user := dao.NewTim_user()
-		tim_user.Where(tim_user.Loginname.EQ(loginname))
-		user, err := tim_user.Select()
-		if err == nil && user != nil {
-			switch CF.GetKV("authProvider.passwordType", "") {
-			case "plain":
-				b = eqString(user.GetEncryptedpassword(), pwd)
-			case "md5":
-				b = eqString(user.GetEncryptedpassword(), utils.MD5(pwd))
-			case "sha1":
-				b = eqString(user.GetEncryptedpassword(), utils.Sha1(pwd))
-			default:
-				b = eqString(user.GetEncryptedpassword(), pwd)
-			}
-		}
+		b = _auth(tid, pwd)
 	} else {
 		provider()
 		if authProviderDB == nil {
 			logger.Error("authProviderDB is nil")
 			return false
 		}
-		b = _Auth4Sql(authProvider_passwordSQL, tid, pwd)
-		if !b {
-			authProvider_passwordSQL2 := CF.GetKV("tim.mysql.passwordSQL2", "")
-			if authProvider_passwordSQL2 != "" {
-				b = _Auth4Sql(authProvider_passwordSQL2, tid, pwd)
+		for i := 0; i < 5; i++ {
+			index := ""
+			if i > 0 {
+				index = fmt.Sprint(i)
+			}
+			authProvider_passwordSQL := CF.GetKV(fmt.Sprint("tim.mysql.passwordSQL", index), "")
+			if authProvider_passwordSQL == "" {
+				continue
+			}
+			b = _auth4Sql(authProvider_passwordSQL, tid, pwd)
+			if b {
+				break
 			}
 		}
 	}
 	return
 }
 
-func _Auth4Sql(authProvider_passwordSQL string, tid *Tid, pwd string) (b bool) {
+func _auth4Sql(authProvider_passwordSQL string, tid *Tid, pwd string) (b bool) {
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Error(string(debug.Stack()))
+		}
+	}()
 	provider()
 	if authProviderDB == nil {
 		logger.Error("authProviderDB is nil")
@@ -656,6 +653,31 @@ func _Auth4Sql(authProvider_passwordSQL string, tid *Tid, pwd string) (b bool) {
 			default:
 				b = eqString(bean.ValueString(), pwd)
 			}
+		}
+	}
+	return
+}
+
+func _auth(tid *Tid, pwd string) (b bool) {
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Error(string(debug.Stack()))
+		}
+	}()
+	loginname, _ := connect.GetLoginName(tid)
+	tim_user := dao.NewTim_user()
+	tim_user.Where(tim_user.Loginname.EQ(loginname))
+	user, err := tim_user.Select()
+	if err == nil && user != nil {
+		switch CF.GetKV("authProvider.passwordType", "") {
+		case "plain":
+			b = eqString(user.GetEncryptedpassword(), pwd)
+		case "md5":
+			b = eqString(user.GetEncryptedpassword(), utils.MD5(pwd))
+		case "sha1":
+			b = eqString(user.GetEncryptedpassword(), utils.Sha1(pwd))
+		default:
+			b = eqString(user.GetEncryptedpassword(), pwd)
 		}
 	}
 	return

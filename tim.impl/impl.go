@@ -102,7 +102,7 @@ func (this *TimImpl) TimLogin(tid *Tid, pwd string) (err error) {
 		status400, typeType := "400", "login"
 		ack.AckStatus, ack.AckType = &status400, &typeType
 		this.Tu.SendAckBean(ack)
-		panic("loginname or pwd is error")
+		panic(fmt.Sprint("loginname or pwd is error:", tid.GetName(), " | ", pwd))
 	}
 	return
 }

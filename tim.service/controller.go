@@ -170,7 +170,8 @@ func controllerHandler(tt thrift.TTransport) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				logger.Error(string(debug.Stack()))
+				//				logger.Error(string(debug.Stack()))
+				logger.Error(err)
 			}
 		}()
 		defer func() {
