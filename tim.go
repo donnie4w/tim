@@ -14,16 +14,18 @@ import (
 	"tim.cluster"
 	. "tim.common"
 	"tim.daoService"
+	. "tim.protocol"
 	"tim.service"
 	"tim.ticker"
 )
 
 func init() {
-	fmt.Println("--------------------------------------------------------")
-	fmt.Println("-------------------- tim1.0 server ---------------------")
+	servername := fmt.Sprint("tim", ProtocolversionName, " server")
+	fmt.Println("----------------------------------------------------------")
+	fmt.Println("-------------------- " + servername + " ---------------------")
 	fmt.Println("--------------------------------------------------------")
 	fmt.Println("------------------ donnie4w@gmail.com ------------------")
-	fmt.Println("--------------------------------------------------------")
+	fmt.Println("----------------------------------------------------------")
 }
 
 func initGdao() {
