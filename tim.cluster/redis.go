@@ -1,6 +1,10 @@
+/**
+ * donnie4w@gmail.com  tim server
+ */
 package cluster
 
 import (
+	"errors"
 	"runtime/debug"
 	"time"
 
@@ -97,12 +101,16 @@ func (this *RedisClient) RedisCmd(cmd string, retType string, args ...interface{
 	return
 }
 
-func (this *RedisClient) Ping() bool {
+func (this *RedisClient) Ping() (bool, error) {
 	v, err := redis.String(this.Do("PING"))
-	if v == "PONG" && err == nil {
-		return true
+	if err != nil {
+		return false, err
 	}
-	return false
+	if v == "PONG" && err == nil {
+		return true, nil
+	} else {
+		return false, errors.New("ping failed")
+	}
 }
 
 func (this *RedisClient) IsKeyExsit(key string) (b bool, err error) {

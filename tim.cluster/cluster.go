@@ -1,8 +1,12 @@
+/**
+ * donnie4w@gmail.com  tim server
+ */
 package cluster
 
 import (
 	"errors"
 	"fmt"
+	"os"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -30,7 +34,12 @@ var sha1Getcmd *ScriptCmd
 func InitCluster(filexml string) {
 	if ClusterConf.Init(filexml) {
 		Redis.initPool()
-		flag = Redis.Ping()
+		var err error
+		flag, err = Redis.Ping()
+		if !flag && err != nil {
+			logger.Error("redis connect failed:", err.Error())
+			os.Exit(1)
+		}
 		sha1Addcmd = Redis.NewScript(scriptAddCmd, 2)
 		sha1Getcmd = Redis.NewScript(scriptGetCmd, 1)
 	}
