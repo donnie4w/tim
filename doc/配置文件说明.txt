@@ -17,7 +17,8 @@ tim.xml
 	<TLSPort>0</TLSPort>            TLS安全传输协议的服务器监听端口
 	<TLSServerPem></TLSServerPem>	TLS证书
 	<TLSServerKey></TLSServerKey>	TLS服务器密钥
-	
+	<HbaseAddr>127.0.0.1:9090</HbaseAddr>   hbase的thrift2服务对外ip地址与端口，冒号:连接
+	<DataBase>1</DataBase>	        1表示开启hbase服务，使用hbase存储消息数据，0表示使用mysql，默认值0
 #####################################
 cluster.xml
     <RedisAddr>127.0.0.1:6379</RedisAddr>       
