@@ -27,6 +27,7 @@ func Httpserver() {
 	http.HandleFunc("/tim", tim)
 	http.HandleFunc("/info", info)
 	http.HandleFunc("/uinfo", userInfo)
+	http.HandleFunc("/hi", hbaseclient)
 	s := &http.Server{
 		Addr:           fmt.Sprint(":", CF.GetHttpPort()),
 		ReadTimeout:    10 * time.Second,

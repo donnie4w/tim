@@ -1,51 +1,21 @@
 /**
  * donnie4w@gmail.com  tim server
  */
-package daoService
+package hbaseService
 
 import (
 	"errors"
 	"fmt"
 	"runtime/debug"
-	"strconv"
-	"strings"
-	"time"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
-
-	"database/sql"
-	"sync"
-
-	"github.com/donnie4w/gdao"
 	"github.com/donnie4w/go-logger/logger"
-	"tim.DB"
-	. "tim.Map"
 	"tim.base64Util"
 	. "tim.common"
-	"tim.connect"
-	"tim.dao"
 	"tim.hbase"
-	"tim.hbaseService"
 	. "tim.protocol"
 	"tim.utils"
 )
-
-var authProviderDB *sql.DB
-var once sync.Once
-var domainmap *HashTable = NewHashTable()
-
-func initAuthProviderDB() {
-	logger.Info("initAuthProviderDB")
-	authProviderDB, _ = DB.GetDB(CF.GetKV("tim.mysql.connection", ""), 100, 10)
-}
-
-func InitDaoservice() {
-	AddConf()
-	updateVersion()
-	if CF.DataBase == 1 {
-		hbase.Init()
-	}
-}
 
 /*保存离线信息列表*/
 func SaveOfflineMBeanList(mbeans []*TimMBean) {
@@ -56,22 +26,8 @@ func SaveOfflineMBeanList(mbeans []*TimMBean) {
 	}
 }
 
-func SaveOfflineMBean(mbean *TimMBean) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error("SaveOfflineMBean,", err)
-			logger.Error(string(debug.Stack()))
-		}
-	}()
-	if CF.DataBase == 1 {
-		hbaseService.SaveOfflineMBean(mbean)
-	} else {
-		_SaveOfflineMBean(mbean)
-	}
-}
-
 /*保存离线信息*/
-func _SaveOfflineMBean(mbean *TimMBean) {
+func SaveOfflineMBean(mbean *TimMBean) {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error("SaveOfflineMBean,", err)
@@ -89,6 +45,7 @@ func _SaveOfflineMBean(mbean *TimMBean) {
 }
 
 func _saveOfflineMBean(mbean *TimMBean) {
+	/**
 	tim_offline := dao.NewTim_offline()
 	mid, _ := strconv.Atoi(mbean.GetMid())
 	tim_offline.SetMid(int64(mid))
@@ -105,10 +62,29 @@ func _saveOfflineMBean(mbean *TimMBean) {
 	tim_offline.SetStanza(base64string)
 	tim_offline.SetMessage_size(int64(length))
 	tim_offline.Insert()
+	*/
+	tim_offline := new(hbase.Tim_offline)
+	tim_offline.Mid = fmt.Sprint(mbean.GetMid())
+	tim_offline.Domain = mbean.FromTid.GetDomain()
+	tim_offline.Fromuser = mbean.FromTid.GetName()
+	tim_offline.Createtime = utils.NowTime()
+	tim_offline.Username = mbean.ToTid.GetName()
+	tim_offline.Stamp = utils.TimeMills()
+	mbean.Offline = NewTimTime()
+	mbean.Offline.Timestamp = mbean.Timestamp
+	stanza, _ := thrift.NewTSerializer().Write(mbean)
+	base64string := base64Util.Base64Encode(stanza)
+	length := len([]byte(base64string))
+	tim_offline.Stanza = base64string
+	tim_offline.Message_size = fmt.Sprint(length)
+	tim_offline.IndexMid = tim_offline.Mid
+	tim_offline.IndexDomainUsername = utils.MD5(fmt.Sprint(tim_offline.Domain, "_idx_", tim_offline.Username))
+	tim_offline.Insert()
 	go UpdateOffMessage(mbean, 0)
 }
 
 func _saveOfflineMucBean(mbean *TimMBean) {
+	/***
 	tim_mucoffline := dao.NewTim_mucoffline()
 	tim_mucoffline.SetCreatetime(utils.NowTime())
 	tim_mucoffline.SetMid(utils.Atoi64(mbean.GetMid()))
@@ -117,6 +93,18 @@ func _saveOfflineMucBean(mbean *TimMBean) {
 	tim_mucoffline.SetStamp(mbean.GetTimestamp())
 	tim_mucoffline.SetRoomid(mbean.GetFromTid().GetName())
 	tim_mucoffline.SetMsgtype(int64(mbean.GetMsgType()))
+	tim_mucoffline.Insert()
+	*/
+	tim_mucoffline := new(hbase.Tim_mucoffline)
+	tim_mucoffline.Createtime = utils.NowTime()
+	tim_mucoffline.Mid = mbean.GetMid()
+	tim_mucoffline.Domain = mbean.GetFromTid().GetDomain()
+	tim_mucoffline.Username = mbean.GetToTid().GetName()
+	tim_mucoffline.Stamp = mbean.GetTimestamp()
+	tim_mucoffline.Roomid = mbean.GetFromTid().GetName()
+	tim_mucoffline.Msgtype = fmt.Sprint(mbean.GetMsgType())
+	tim_mucoffline.IndexMid = tim_mucoffline.Mid
+	tim_mucoffline.IndexDomainUsername = utils.MD5(fmt.Sprint(tim_mucoffline.Domain, "_idx_", tim_mucoffline.Username))
 	tim_mucoffline.Insert()
 }
 
@@ -131,23 +119,7 @@ func LoadOfflineMBean(tid *Tid) (mbeans []*TimMBean) {
 	if CF.Db_Exsit == 0 {
 		return
 	}
-	if CF.DataBase == 1 {
-		return hbaseService.LoadOfflineMBean(tid)
-	} else {
-		return _LoadOfflineMBean(tid)
-	}
-}
-
-func _LoadOfflineMBean(tid *Tid) (mbeans []*TimMBean) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error("LoadOfflineMBean,", err)
-			logger.Error(string(debug.Stack()))
-		}
-	}()
-	if CF.Db_Exsit == 0 {
-		return
-	}
+	/**
 	tim_offline := dao.NewTim_offline()
 	tim_offline.Where(tim_offline.Domain.EQ(tid.GetDomain()), tim_offline.Username.EQ(tid.GetName()))
 	tim_offline.OrderBy(tim_offline.Id.Asc())
@@ -164,8 +136,35 @@ func _LoadOfflineMBean(tid *Tid) (mbeans []*TimMBean) {
 				logger.Error("Base64Decode:", er)
 			}
 		}
+	}*/
+	tim_offline := new(hbase.Tim_offline)
+	bean := new(hbase.Bean)
+	bean.Family = "index"
+	bean.Qualifier = utils.MD5(fmt.Sprint(tid.GetDomain(), "_idx_", tid.GetName()))
+	rs, er := hbase.ScansFromRow(tim_offline.Tablename(), []*hbase.Bean{bean}, 0, false)
+	if er == nil {
+		mbeans = make([]*TimMBean, 0)
+		for _, r := range rs {
+			//printResult(r)
+			t := new(hbase.Tim_offline)
+			hbase.Result2object(r, t)
+			var timmbean *TimMBean = NewTimMBean()
+			bb, er := base64Util.Base64Decode(t.Stanza)
+			if er == nil {
+				thrift.NewTDeserializer().Read(timmbean, []byte(bb))
+				mbeans = append(mbeans, timmbean)
+			} else {
+				logger.Error("Base64Decode:", er)
+			}
+		}
 	}
 	return
+}
+
+func printResult(result *hbase.TResult_) {
+	for _, resultColumnValue := range result.GetColumnValues() {
+		logger.Error("printResult===>", hbase.Bytes2hex(result.GetRow()), " | ", "family==", string(resultColumnValue.GetFamily()), " | ", "qualifier==", string(resultColumnValue.GetQualifier()), " | ", "value==", string(resultColumnValue.GetValue()), " | ", "timestamp==", resultColumnValue.GetTimestamp())
+	}
 }
 
 func LoadOfflineMucMBean(tid *Tid) (mbeans []*TimMBean) {
@@ -175,23 +174,10 @@ func LoadOfflineMucMBean(tid *Tid) (mbeans []*TimMBean) {
 			logger.Error(string(debug.Stack()))
 		}
 	}()
-	if CF.DataBase == 1 {
-		return hbaseService.LoadOfflineMucMBean(tid)
-	} else {
-		return _LoadOfflineMucMBean(tid)
-	}
-}
-
-func _LoadOfflineMucMBean(tid *Tid) (mbeans []*TimMBean) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error("LoadOfflineMucMBean,", err)
-			logger.Error(string(debug.Stack()))
-		}
-	}()
 	if CF.Db_Exsit == 0 {
 		return
 	}
+	/***
 	tim_mucoffline := dao.NewTim_mucoffline()
 	tim_mucoffline.Where(tim_mucoffline.Domain.EQ(tid.GetDomain()), tim_mucoffline.Username.EQ(tid.GetName()))
 	tim_mucoffline.OrderBy(tim_mucoffline.Id.Desc())
@@ -217,10 +203,38 @@ func _LoadOfflineMucMBean(tid *Tid) (mbeans []*TimMBean) {
 				}
 			}
 		}
+	}**/
+	tim_mucoffline := new(hbase.Tim_mucoffline)
+	rs, er := hbase.Selects(tim_mucoffline.Tablename(), "index", utils.MD5(fmt.Sprint(tid.GetDomain(), "_idx_", tid.GetName())), 0, false)
+	if er == nil {
+		mbeans = make([]*TimMBean, 0)
+		mids := make([]int64, 0)
+		for _, r := range rs {
+			t := new(hbase.Tim_mucoffline)
+			hbase.Result2object(r, t)
+			mids = append(mids, utils.Atoi64(t.Mid))
+		}
+		tim_mucmessage := new(hbase.Tim_mucmessage)
+		rss, err := hbase.SelectByRows(tim_mucmessage.Tablename(), mids)
+		if err == nil {
+			for _, r := range rss {
+				t := new(hbase.Tim_mucmessage)
+				hbase.Result2object(r, t)
+				var timmbean *TimMBean = NewTimMBean()
+				bb, er := base64Util.Base64Decode(t.Stanza)
+				if er == nil {
+					thrift.NewTDeserializer().Read(timmbean, []byte(bb))
+					mbeans = append(mbeans, timmbean)
+				} else {
+					logger.Error("Base64Decode:", er)
+				}
+			}
+		}
 	}
 	return
 }
 
+/***
 func LoadMucmember(roomid *Tid) (tids []*Tid) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -230,6 +244,7 @@ func LoadMucmember(roomid *Tid) (tids []*Tid) {
 	if CF.Db_Exsit == 0 {
 		return nil
 	}
+
 	mucRoomSQL := CF.GetKV("tim.mysql.mucRoomSQL", "")
 	if mucRoomSQL == "" {
 		tim_mucmember := dao.NewTim_mucmember()
@@ -265,7 +280,9 @@ func LoadMucmember(roomid *Tid) (tids []*Tid) {
 	}
 	return
 }
+*/
 
+/***
 func AuthMucmember(roomid, tid *Tid) (b bool) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -297,7 +314,9 @@ func AuthMucmember(roomid, tid *Tid) (b bool) {
 	}
 	return
 }
+*/
 
+/*删除指定信息*/
 func DelOfflineMBean(mid *string) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -308,27 +327,13 @@ func DelOfflineMBean(mid *string) {
 	if CF.Db_Exsit == 0 {
 		return
 	}
-	if CF.DataBase == 1 {
-		hbaseService.DelOfflineMBean(mid)
-	} else {
-		_DelOfflineMBean(mid)
-	}
-}
-
-/*删除指定信息*/
-func _DelOfflineMBean(mid *string) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error("DelOfflineMBean,", err)
-			logger.Error(string(debug.Stack()))
-		}
-	}()
-	if CF.Db_Exsit == 0 {
-		return
-	}
+	/***
 	tim_offline := dao.NewTim_offline()
 	tim_offline.Where(tim_offline.Mid.EQ(mid))
-	tim_offline.Delete()
+	tim_offline.Delete()*/
+	row := utils.Atoi64(*mid)
+	tim_offline := new(hbase.Tim_offline)
+	tim_offline.Delete(row)
 }
 
 func DelOfflineMucMBean(mid *string) {
@@ -341,28 +346,14 @@ func DelOfflineMucMBean(mid *string) {
 	if CF.Db_Exsit == 0 {
 		return
 	}
-	if CF.DataBase == 1 {
-		hbaseService.DelOfflineMucMBean(mid)
-	} else {
-		_DelOfflineMucMBean(mid)
-	}
+	//	tim_mucoffline := dao.NewTim_mucoffline()
+	//	tim_mucoffline.Where(tim_mucoffline.Mid.EQ(mid))
+	//	tim_mucoffline.Delete()
+	tim_mucoffline := new(hbase.Tim_mucoffline)
+	tim_mucoffline.Delete(utils.Atoi64(*mid))
 }
 
-func _DelOfflineMucMBean(mid *string) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error("DelOfflineMBean,", err)
-			logger.Error(string(debug.Stack()))
-		}
-	}()
-	if CF.Db_Exsit == 0 {
-		return
-	}
-	tim_mucoffline := dao.NewTim_mucoffline()
-	tim_mucoffline.Where(tim_mucoffline.Mid.EQ(mid))
-	tim_mucoffline.Delete()
-}
-
+/*删除指定信息列表*/
 func DelOfflineMBeanList(mids ...interface{}) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -373,27 +364,20 @@ func DelOfflineMBeanList(mids ...interface{}) {
 	if CF.Db_Exsit == 0 {
 		return
 	}
-	if CF.DataBase == 1 {
-		hbaseService.DelOfflineMBeanList(mids...)
-	} else {
-		_DelOfflineMBeanList(mids...)
+	//	tim_offline := dao.NewTim_offline()
+	//	tim_offline.Where(tim_offline.Mid.IN(mids...))
+	//	tim_offline.Delete()
+	//	rows := make([]int64, 0)
+	beans := make([]*hbase.Bean, 0)
+	for _, mid := range mids {
+		bean := new(hbase.Bean)
+		bean.Family = "index"
+		bean.Qualifier = fmt.Sprint(mid)
+		beans = append(beans, bean)
 	}
-}
-
-/*删除指定信息列表*/
-func _DelOfflineMBeanList(mids ...interface{}) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error("DelOfflineMBeanList,", err)
-			logger.Error(string(debug.Stack()))
-		}
-	}()
-	if CF.Db_Exsit == 0 {
-		return
-	}
-	tim_offline := dao.NewTim_offline()
-	tim_offline.Where(tim_offline.Mid.IN(mids...))
-	tim_offline.Delete()
+	tim_offline := new(hbase.Tim_offline)
+	//	tim_offline.Deletes(rows)
+	tim_offline.DeleteByBean(beans)
 }
 
 func DelOfflineMucMBeanList(mids ...interface{}) {
@@ -406,26 +390,15 @@ func DelOfflineMucMBeanList(mids ...interface{}) {
 	if CF.Db_Exsit == 0 {
 		return
 	}
-	if CF.DataBase == 1 {
-		hbaseService.DelOfflineMucMBeanList(mids...)
-	} else {
-		_DelOfflineMucMBeanList(mids...)
+	//	tim_mucoffline := dao.NewTim_mucoffline()
+	//	tim_mucoffline.Where(tim_mucoffline.Mid.IN(mids...))
+	//	tim_mucoffline.Delete()
+	rows := make([]int64, 0)
+	for _, mid := range mids {
+		rows = append(rows, utils.Atoi64(fmt.Sprint(mid)))
 	}
-}
-
-func _DelOfflineMucMBeanList(mids ...interface{}) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error("DelOfflineMucMBeanList,", err)
-			logger.Error(string(debug.Stack()))
-		}
-	}()
-	if CF.Db_Exsit == 0 {
-		return
-	}
-	tim_mucoffline := dao.NewTim_mucoffline()
-	tim_mucoffline.Where(tim_mucoffline.Mid.IN(mids...))
-	tim_mucoffline.Delete()
+	tim_mucoffline := new(hbase.Tim_mucoffline)
+	tim_mucoffline.Deletes(rows)
 }
 
 /*保存信息*/
@@ -439,30 +412,11 @@ func SaveMBean(mbean *TimMBean) (mid string, timestamp string, err error) {
 	if CF.Db_Exsit == 0 {
 		return
 	}
-	if CF.DataBase == 1 {
-		return hbaseService.SaveMBean(mbean)
-	} else {
-		return _saveMBean(mbean, 1, 1)
-	}
-
-}
-
-func SaveSingleMBean(mbean *TimMBean) (mid string, timestamp string, err error) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error("SaveMBean,", err)
-			logger.Error(string(debug.Stack()))
-		}
-	}()
-	if CF.DataBase == 1 {
-		return hbaseService.SaveSingleMBean(mbean)
-	} else {
-		return _SaveSingleMBean(mbean)
-	}
+	return _saveMBean(mbean, 1, 1)
 }
 
 /*保存信息*/
-func _SaveSingleMBean(mbean *TimMBean) (mid string, timestamp string, err error) {
+func SaveSingleMBean(mbean *TimMBean) (mid string, timestamp string, err error) {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error("SaveMBean,", err)
@@ -503,6 +457,7 @@ func _saveMBean(mbean *TimMBean, small, large int) (mid string, timestamp string
 		}
 		return
 	}
+	/**
 	domain := mbean.GetFromTid().GetDomain()
 	fromname := mbean.GetFromTid().GetName()
 	toname := mbean.GetToTid().GetName()
@@ -522,29 +477,40 @@ func _saveMBean(mbean *TimMBean, small, large int) (mid string, timestamp string
 	message.Insert()
 	mess := dao.NewTim_message()
 	mess.Where(mess.Stamp.EQ(timestamp), mess.Chatid.EQ(chatid))
+	var err error
 	mess, err = mess.Select()
 	if err == nil {
 		mid = fmt.Sprint(mess.GetId())
 		mbean.Mid = &mid
+	}*/
+	domain := mbean.GetFromTid().GetDomain()
+	fromname := mbean.GetFromTid().GetName()
+	toname := mbean.GetToTid().GetName()
+	message := new(hbase.Tim_message)
+	chatid := utils.Chatid(fromname, toname, domain)
+	message.Chatid = chatid
+	timestamp = mbean.GetTimestamp()
+	message.Stamp = timestamp
+	message.Createtime = utils.NowTime()
+	message.Fromuser = fromname
+	message.Touser = toname
+	message.Small = fmt.Sprint(small)
+	message.Large = fmt.Sprint(large)
+	message.Msgtype = fmt.Sprint(mbean.GetMsgType())
+	message.Msgmode = "1"
+	stanza, _ := thrift.NewTSerializer().Write(mbean)
+	stanzastr := string(base64Util.Base64Encode(stanza))
+	message.Stanza = stanzastr
+	message.IndexChatid = chatid
+	var row int64
+	row, err = message.Insert()
+	if err == nil {
+		mid = fmt.Sprint(row)
 	}
 	return
 }
 
 func SaveMucMBean(mbean *TimMBean) (mid string, err error) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error("SaveMucMBean,", err)
-			logger.Error(string(debug.Stack()))
-		}
-	}()
-	if CF.DataBase == 1 {
-		return hbaseService.SaveMucMBean(mbean)
-	} else {
-		return _SaveMucMBean(mbean)
-	}
-}
-
-func _SaveMucMBean(mbean *TimMBean) (mid string, err error) {
 	defer func() {
 		if er := recover(); er != nil {
 			err = errors.New(fmt.Sprint(er))
@@ -552,6 +518,7 @@ func _SaveMucMBean(mbean *TimMBean) (mid string, err error) {
 			logger.Error(string(debug.Stack()))
 		}
 	}()
+	/***
 	tim_mucmessage := dao.NewTim_mucmessage()
 	tim_mucmessage.SetStamp(mbean.GetTimestamp())
 	tim_mucmessage.SetFromuser(mbean.GetLeaguerTid().GetName())
@@ -566,32 +533,36 @@ func _SaveMucMBean(mbean *TimMBean) (mid string, err error) {
 
 	mucmessage := dao.NewTim_mucmessage()
 	mucmessage.Where(mucmessage.Stamp.EQ(mbean.GetTimestamp()), mucmessage.Fromuser.EQ(mbean.LeaguerTid.GetName()), mucmessage.Domain.EQ(mbean.LeaguerTid.GetDomain()), mucmessage.Roomtidname.EQ(mbean.GetFromTid().GetName()))
+	var err error
 	mucmessage, err = mucmessage.Select(mucmessage.Id)
 	if err == nil {
 		mid = fmt.Sprint(mucmessage.GetId())
+		mbean.Mid = &mid
+	}*/
+	tim_mucmessage := new(hbase.Tim_mucmessage)
+	tim_mucmessage.Stamp = mbean.GetTimestamp()
+	tim_mucmessage.Fromuser = mbean.GetLeaguerTid().GetName()
+	tim_mucmessage.Roomtidname = mbean.GetFromTid().GetName()
+	tim_mucmessage.Domain = mbean.GetLeaguerTid().GetDomain()
+	tim_mucmessage.Msgtype = fmt.Sprint(mbean.GetMsgType())
+	stanza, _ := thrift.NewTSerializer().Write(mbean)
+	stanzastr := string(base64Util.Base64Encode(stanza))
+	tim_mucmessage.Stanza = stanzastr
+	tim_mucmessage.Createtime = utils.NowTime()
+	tim_mucmessage.IndexFromuserDomain = utils.MD5(fmt.Sprint(tim_mucmessage.Fromuser, "_idx_", tim_mucmessage.Domain))
+	var row int64
+	row, err = tim_mucmessage.Insert()
+	if err == nil {
+		mid = fmt.Sprint(row)
 		mbean.Mid = &mid
 	}
 	return
 }
 
-func UpdateOffMessage(mbean *TimMBean, status int) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error("UpdateOffMessage", err)
-			logger.Error(string(debug.Stack()))
-		}
-	}()
-	if CF.DataBase == 1 {
-		hbaseService.UpdateOffMessage(mbean, status)
-	} else {
-		_UpdateOffMessage(mbean, status)
-	}
-}
-
 /**
   离线信息发送成功后 更新 small或large 状态
 */
-func _UpdateOffMessage(mbean *TimMBean, status int) {
+func UpdateOffMessage(mbean *TimMBean, status int) {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error("UpdateOffMessage", err)
@@ -605,6 +576,7 @@ func _UpdateOffMessage(mbean *TimMBean, status int) {
 	fromname := mbean.GetFromTid().GetName()
 	toname := mbean.GetToTid().GetName()
 	//	chatid := utils.Chatid(fromname, toname, domain)
+	/***
 	message := dao.NewTim_message()
 	if toname < fromname {
 		message.SetSmall(int64(status))
@@ -613,26 +585,20 @@ func _UpdateOffMessage(mbean *TimMBean, status int) {
 	}
 	message.Where(message.Id.EQ(mbean.GetMid()))
 	message.Update()
-}
-
-func UpdateOffMessageList(mbeans []*TimMBean, status int) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error("UpdateOffMessageList", err)
-			logger.Error(string(debug.Stack()))
-		}
-	}()
-	if CF.DataBase == 1 {
-		hbaseService.UpdateOffMessageList(mbeans, status)
+	*/
+	message := new(hbase.Tim_message)
+	if toname < fromname {
+		message.Small = fmt.Sprint(status)
 	} else {
-		_UpdateOffMessageList(mbeans, status)
+		message.Large = fmt.Sprint(status)
 	}
+	message.Update(utils.Atoi64(mbean.GetMid()))
 }
 
 /**
   离线信息发送成功后 更新 small或large 状态  列表
 */
-func _UpdateOffMessageList(mbeans []*TimMBean, status int) {
+func UpdateOffMessageList(mbeans []*TimMBean, status int) {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error("UpdateOffMessageList", err)
@@ -647,6 +613,7 @@ func _UpdateOffMessageList(mbeans []*TimMBean, status int) {
 	}
 	fromname := mbeans[0].GetFromTid().GetName()
 	toname := mbeans[0].GetToTid().GetName()
+	/**
 	message := dao.NewTim_message()
 	if toname < fromname {
 		message.SetSmall(int64(status))
@@ -658,24 +625,22 @@ func _UpdateOffMessageList(mbeans []*TimMBean, status int) {
 		mids = append(mids, mbean.GetMid())
 	}
 	message.Where(message.Id.IN(mids...))
-	message.Update()
-}
-
-func LoadMBean(fidname, tidname, domain string, fromstamp, tostamp *string, limitcount int32) (tms []*TimMBean) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error(string(debug.Stack()))
-		}
-	}()
-	if CF.DataBase == 1 {
-		return hbaseService.LoadMBean(fidname, tidname, domain, fromstamp, tostamp, limitcount)
+	message.Update()*/
+	tim_message := new(hbase.Tim_message)
+	if toname < fromname {
+		tim_message.Small = fmt.Sprint(status)
 	} else {
-		return _LoadMBean(fidname, tidname, domain, fromstamp, tostamp, limitcount)
+		tim_message.Large = fmt.Sprint(status)
 	}
+	rows := make([]int64, 0)
+	for _, mbean := range mbeans {
+		rows = append(rows, utils.Atoi64(mbean.GetMid()))
+	}
+	tim_message.Updates(rows)
 }
 
 /***/
-func _LoadMBean(fidname, tidname, domain string, fromstamp, tostamp *string, limitcount int32) (tms []*TimMBean) {
+func LoadMBean(fidname, tidname, domain string, fromstamp, tostamp *string, limitcount int32) (tms []*TimMBean) {
 	logger.Debug("LoadMBean:", fidname, " ", tidname, " ", domain, " ", fromstamp, " ", tostamp, " ", limitcount)
 	defer func() {
 		if err := recover(); err != nil {
@@ -687,9 +652,9 @@ func _LoadMBean(fidname, tidname, domain string, fromstamp, tostamp *string, lim
 	}
 	chatid := utils.Chatid(fidname, tidname, domain)
 	isLarge := fidname > tidname
+	/**
 	timMessage := dao.NewTim_message()
 	wheres := make([]*gdao.Where, 0)
-
 	if fromstamp != nil && tostamp != nil {
 		wheres = append(wheres, timMessage.Stamp.Between(*fromstamp, *tostamp))
 	} else if fromstamp != nil {
@@ -723,24 +688,53 @@ func _LoadMBean(fidname, tidname, domain string, fromstamp, tostamp *string, lim
 				logger.Error("Base64Decode:", er)
 			}
 		}
+	}**/
+	tim_Message := new(hbase.Tim_message)
+	beans := make([]*hbase.Bean, 0)
+	if isLarge {
+		b := new(hbase.Bean)
+		b.Family = "large"
+		b.Value = "1"
+		beans = append(beans, b)
+	} else {
+		b := new(hbase.Bean)
+		b.Family = "small"
+		b.Value = "1"
+		beans = append(beans, b)
+	}
+	b := new(hbase.Bean)
+	b.Family = "index"
+	b.Qualifier = chatid
+	beans = append(beans, b)
+	//	rs, er := hbase.Scans(tim_Message.Tablename(), beans, 0, true)
+	rs, er := hbase.ScansFromRow(tim_Message.Tablename(), beans, 0, true)
+	if er != nil {
+		return
+	}
+
+	tms = make([]*TimMBean, 0)
+	tim_Messages := make([]*hbase.Tim_message, 0)
+	for _, r := range rs {
+		o := new(hbase.Tim_message)
+		hbase.Result2object(r, o)
+		tim_Messages = append(tim_Messages, o)
+	}
+	for _, msg := range tim_Messages {
+		tm := new(TimMBean)
+		bb, er := base64Util.Base64Decode(msg.Stanza)
+		if er == nil {
+			thrift.NewTDeserializer().Read(tm, bb)
+			mid := fmt.Sprint(msg.Id)
+			tm.Mid = &mid
+			tms = append(tms, tm)
+		} else {
+			logger.Error("Base64Decode:", er)
+		}
 	}
 	return
 }
 
 func DelMBean(fidname, tidname, domain, mid string) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error(string(debug.Stack()))
-		}
-	}()
-	if CF.DataBase == 1 {
-		hbaseService.DelMBean(fidname, tidname, domain, mid)
-	} else {
-		_DelMBean(fidname, tidname, domain, mid)
-	}
-}
-
-func _DelMBean(fidname, tidname, domain, mid string) {
 	logger.Debug("DelMBean:", fidname, " ", tidname, " ", domain, " ", mid)
 	defer func() {
 		if err := recover(); err != nil {
@@ -752,30 +746,28 @@ func _DelMBean(fidname, tidname, domain, mid string) {
 	}
 	chatid := utils.Chatid(fidname, tidname, domain)
 	isLarge := fidname > tidname
-	timMessage := dao.NewTim_message()
-	if isLarge {
-		timMessage.SetLarge(0)
-	} else {
-		timMessage.SetSmall(0)
+	//	timMessage := dao.NewTim_message()
+	//	if isLarge {
+	//		timMessage.SetLarge(0)
+	//	} else {
+	//		timMessage.SetSmall(0)
+	//	}
+	//	timMessage.Where(timMessage.Chatid.EQ(chatid), timMessage.Id.EQ(mid))
+	//	timMessage.Update()
+	timMessage := new(hbase.Tim_message)
+	hbase.Select(timMessage.Tablename(), utils.Atoi64(mid), "", "", timMessage)
+	if timMessage.Chatid == chatid {
+		tm := new(hbase.Tim_message)
+		if isLarge {
+			tm.Large = "0"
+		} else {
+			tm.Small = "0"
+		}
+		tm.Update(utils.Atoi64(mid))
 	}
-	timMessage.Where(timMessage.Chatid.EQ(chatid), timMessage.Id.EQ(mid))
-	timMessage.Update()
 }
 
 func DelAllMBean(fidname, tidname, domain string) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error(string(debug.Stack()))
-		}
-	}()
-	if CF.DataBase == 1 {
-		hbaseService.DelAllMBean(fidname, tidname, domain)
-	} else {
-		_DelAllMBean(fidname, tidname, domain)
-	}
-}
-
-func _DelAllMBean(fidname, tidname, domain string) {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error(string(debug.Stack()))
@@ -785,15 +777,24 @@ func _DelAllMBean(fidname, tidname, domain string) {
 		return
 	}
 	chatid := utils.Chatid(fidname, tidname, domain)
-	isLarge := fidname > tidname
-	timMessage := dao.NewTim_message()
-	if isLarge {
-		timMessage.SetLarge(0)
-	} else {
-		timMessage.SetSmall(0)
+	timMessage := new(hbase.Tim_message)
+	rs, er := hbase.Selects(timMessage.Tablename(), "index", chatid, 0, false)
+	if er == nil {
+		rows := make([]int64, 0)
+		for _, r := range rs {
+			row := hbase.Bytes2hex(r.GetRow())
+			rows = append(rows, row)
+		}
+		isLarge := fidname > tidname
+		tm := new(hbase.Tim_message)
+		if isLarge {
+			tm.Large = "0"
+		} else {
+			tm.Small = "0"
+		}
+		tm.Updates(rows)
 	}
-	timMessage.Where(timMessage.Chatid.EQ(chatid))
-	timMessage.Update()
+
 }
 
 ///*lastTime 时间之后的消息*/
@@ -810,6 +811,7 @@ func IsTidExist(tid *Tid) bool {
 	return true
 }
 
+/**
 func Auth(tid *Tid, pwd string) (b bool) {
 	if CF.MustAuth == 0 {
 		return true
@@ -844,8 +846,9 @@ func Auth(tid *Tid, pwd string) (b bool) {
 		}
 	}
 	return
-}
+}**/
 
+/**
 func _auth4Sql(authProvider_passwordSQL string, tid *Tid, pwd string) (b bool) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -874,42 +877,43 @@ func _auth4Sql(authProvider_passwordSQL string, tid *Tid, pwd string) (b bool) {
 	}
 	return
 }
-
+**/
+/**
 func _auth(tid *Tid, pwd string) (b bool) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error(string(debug.Stack()))
+		defer func() {
+			if err := recover(); err != nil {
+				logger.Error(string(debug.Stack()))
+			}
+		}()
+		loginname, _ := connect.GetLoginName(tid)
+		tim_user := dao.NewTim_user()
+		tim_user.Where(tim_user.Loginname.EQ(loginname))
+		user, err := tim_user.Select()
+		if err == nil && user != nil {
+			switch CF.GetKV("authProvider.passwordType", "") {
+			case "plain":
+				b = eqString(user.GetEncryptedpassword(), pwd)
+			case "md5":
+				b = eqString(user.GetEncryptedpassword(), utils.MD5(pwd))
+			case "sha1":
+				b = eqString(user.GetEncryptedpassword(), utils.Sha1(pwd))
+			default:
+				b = eqString(user.GetEncryptedpassword(), pwd)
+			}
 		}
-	}()
-	loginname, _ := connect.GetLoginName(tid)
-	tim_user := dao.NewTim_user()
-	tim_user.Where(tim_user.Loginname.EQ(loginname))
-	user, err := tim_user.Select()
-	if err == nil && user != nil {
-		switch CF.GetKV("authProvider.passwordType", "") {
-		case "plain":
-			b = eqString(user.GetEncryptedpassword(), pwd)
-		case "md5":
-			b = eqString(user.GetEncryptedpassword(), utils.MD5(pwd))
-		case "sha1":
-			b = eqString(user.GetEncryptedpassword(), utils.Sha1(pwd))
-		default:
-			b = eqString(user.GetEncryptedpassword(), pwd)
-		}
-	}
 	return
-}
+}*/
 
+/**
 func eqString(s1, s2 string) bool {
 	return strings.ToUpper(s1) == strings.ToUpper(s2)
 }
 
 func provider() {
-	if authProviderDB == nil && CF.GetKV("tim.mysql.connection", "") != "" {
-		once.Do(initAuthProviderDB)
-	}
+		if authProviderDB == nil && CF.GetKV("tim.mysql.connection", "") != "" {
+			once.Do(initAuthProviderDB)
+		}
 }
-
 func CheckDomain(domain string) bool {
 	defer func() {
 		if err := recover(); err != nil {
@@ -936,8 +940,9 @@ func CheckDomain(domain string) bool {
 		return true
 	}
 	return false
-}
+}*/
 
+/***
 func AddConf() {
 	logger.Debug("Addconf ok")
 	defer func() {
@@ -970,9 +975,9 @@ func AddConf() {
 			}
 		}
 	}
-}
+}***/
 
-//
+/***
 func GetOnlineRoser(fromtid *Tid) (tids []*Tid) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -984,7 +989,7 @@ func GetOnlineRoser(fromtid *Tid) (tids []*Tid) {
 	}
 	domain := fromtid.GetDomain()
 	fromname := fromtid.GetName()
-	//	logger.Debug(domain, " ", fromname)
+	logger.Debug(domain, " ", fromname)
 	authProvider_rosterSql := CF.GetKV("tim.mysql.rosterSQL", "")
 	loginname, _ := connect.GetLoginName(fromtid)
 	if authProvider_rosterSql == "" {
@@ -995,7 +1000,7 @@ func GetOnlineRoser(fromtid *Tid) (tids []*Tid) {
 			tids = make([]*Tid, 0)
 			for _, r := range rosters {
 				tid := NewTid()
-				//domain := fromtid.GetDomain()
+				domain := fromtid.GetDomain()
 				tid.Domain = &domain
 				tid.Name = r.GetRostername()
 				tids = append(tids, tid)
@@ -1021,7 +1026,8 @@ func GetOnlineRoser(fromtid *Tid) (tids []*Tid) {
 	}
 	return
 }
-
+***/
+/****
 func updateVersion() {
 	defer func() {
 		if err := recover(); err != nil {
@@ -1049,3 +1055,4 @@ func updateVersion() {
 		timDomain.Insert()
 	}
 }
+**/

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/donnie4w/go-logger/logger"
+	. "tim.common"
 	"tim.daoService"
-	//	"tim.utils"
 )
 
 func TickerStart() {
@@ -19,19 +19,19 @@ func TickerStart() {
 			logger.Error(string(debug.Stack()))
 		}
 	}()
-	logger.Debug("-------------tickerStart----------------")
-	go Ticker4min(5, daoService.AddConf)
+	logger.Debug("tickerStart>>>>")
+	go Ticker4Second(CF.GetConfLoad(600), daoService.AddConf)
 }
 
-func Ticker4min(min int, function func()) {
+func Ticker4Second(second int, function func()) {
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Error("Ticker4min error :", err)
+			logger.Error("Ticker4Second error :", err)
 			logger.Error(string(debug.Stack()))
 		}
 	}()
-	time.Sleep(time.Duration(min) * time.Minute)
-	timer := time.NewTicker(time.Duration(min) * time.Minute)
+	time.Sleep(time.Duration(second) * time.Second)
+	timer := time.NewTicker(time.Duration(second) * time.Second)
 	for {
 		select {
 		case <-timer.C:

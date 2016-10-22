@@ -1,3 +1,6 @@
+/**
+ * donnie4w@gmail.com  tim server
+ */
 package client
 
 import (
@@ -216,7 +219,7 @@ func (this *Cli) SendPBean(pbean *TimPBean) (err error) {
 	}()
 	this.Sync.Lock()
 	defer this.Sync.Unlock()
-	logger.Debug("SendPBean==========>", pbean)
+	//	logger.Debug("SendPBean==========>", pbean)
 	if pbean != nil && pbean.ThreadId != "" {
 		if this.Flow == START {
 			timer := time.NewTicker(5 * time.Second)

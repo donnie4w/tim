@@ -33,14 +33,17 @@ func RouteMBean(mbean *TimMBean, isSingle, async bool) (mid string, er error, of
 		mid = fmt.Sprint(utils.GetRand(100000000))
 	} else {
 		if isSingle {
-			mid, _ = daoService.SaveSingleMBean(mbean)
+			mid, _, er = daoService.SaveSingleMBean(mbean)
 		} else {
 			if mbean.GetType() == "groupchat" {
-				mid = daoService.SaveMucMBean(mbean)
+				mid, er = daoService.SaveMucMBean(mbean)
 			} else {
-				mid, _ = daoService.SaveMBean(mbean)
+				mid, _, er = daoService.SaveMBean(mbean)
 			}
 		}
+	}
+	if er != nil {
+		return
 	}
 	if async {
 		go func() {
@@ -162,7 +165,7 @@ func RouteOffLineMBean(tu *TimUser) (er error) {
 			logger.Error(string(debug.Stack()))
 		}
 	}()
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 	mbeans := daoService.LoadOfflineMBean(tu.UserTid)
 	if mbeans != nil && len(mbeans) > 0 {
 		if tu.Interflow > 0 {

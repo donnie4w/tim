@@ -268,14 +268,19 @@ func _TimMessage(this *TimImpl, mbean *TimMBean) (err error) {
 		}
 
 		if mustRoute {
-			id, _, _ := route.RouteMBean(mbean, false, true)
-			thid := mbean.ThreadId
+			id, er, _ := route.RouteMBean(mbean, false, true)
 			ack := NewTimAckBean()
+			thid := mbean.ThreadId
 			ack.ID = &thid
-			status200, typemessage := "200", "message"
-			ack.AckStatus, ack.AckType = &status200, &typemessage
-			ack.ExtraMap = make(map[string]string, 0)
-			ack.ExtraMap["mid"] = fmt.Sprint(id)
+			if er == nil {
+				status, typemessage := TIM_SC_SUCCESS, "message"
+				ack.AckStatus, ack.AckType = &status, &typemessage
+				ack.ExtraMap = make(map[string]string, 0)
+				ack.ExtraMap["mid"] = fmt.Sprint(id)
+			} else {
+				status, typemessage := TIM_SC_FAILED, "message"
+				ack.AckStatus, ack.AckType = &status, &typemessage
+			}
 			this.Tu.SendAckBean(ack)
 		}
 	}

@@ -47,6 +47,17 @@ type ConfBean struct {
 	TLSServerPem string // 服务器端证书路径
 	TLSServerKey string // 服务器端私钥路径
 	TLSCLientPem string // 客户端证书路径
+
+	ConfLoad int //加载间隔时间
+
+	HbaseAddr         string
+	HbaseMaxOpenConns int
+	HbaseMaxIdleConns int
+	HbaseMinOpenConns int
+	HbaseTimeoutConns int
+	HbaseIdleTimeOut  int
+
+	DataBase int //0mysql 1hbase
 }
 
 /**设置Ip信息*/
@@ -90,6 +101,42 @@ func (cf *ConfBean) GetKV(keyword string, defaultValue string) (value string) {
 		value = defaultValue
 	}
 	return
+}
+
+func (cf *ConfBean) GetHbaseArgs(maxoc, maxic, minoc, toc, ito int) (maxopenconns, maxidleconns, minopenconns, timeoutconns, idletimeout int) {
+	if cf.HbaseMaxOpenConns > 0 {
+		maxopenconns = cf.HbaseMaxOpenConns
+	} else {
+		maxopenconns = maxoc
+	}
+	if cf.HbaseMaxIdleConns > 0 {
+		maxidleconns = cf.HbaseMaxIdleConns
+	} else {
+		maxidleconns = maxic
+	}
+	if cf.HbaseMinOpenConns > 0 {
+		minopenconns = cf.HbaseMinOpenConns
+	} else {
+		minopenconns = minoc
+	}
+	if cf.HbaseTimeoutConns > 0 {
+		timeoutconns = cf.HbaseTimeoutConns
+	} else {
+		timeoutconns = toc
+	}
+	if cf.HbaseIdleTimeOut > 0 {
+		idletimeout = cf.HbaseIdleTimeOut
+	} else {
+		idletimeout = ito
+	}
+	return
+}
+
+func (cf *ConfBean) GetConfLoad(defaultTime int) int {
+	if cf.ConfLoad > 0 {
+		return cf.ConfLoad
+	}
+	return defaultTime
 }
 
 func (cf *ConfBean) Init(filexml string) {
