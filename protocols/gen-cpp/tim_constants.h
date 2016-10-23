@@ -17,6 +17,8 @@ class timConstants {
 
   int32_t protocolversion;
   std::string protocolversionName;
+  std::string TIM_SC_SUCCESS;
+  std::string TIM_SC_FAILED;
 };
 
 extern const timConstants g_tim_constants;

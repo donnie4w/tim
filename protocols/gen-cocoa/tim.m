@@ -10933,8 +10933,10 @@
 
 @end
 
-static int32_t protocolversion = 3;
-static NSString * protocolversionName = @"1.0.1";
+static int32_t protocolversion = 4;
+static NSString * protocolversionName = @"1.1.0";
+static NSString * TIM_SC_SUCCESS = @"200";
+static NSString * TIM_SC_FAILED = @"400";
 
 @implementation timConstants
 + (void) initialize {
@@ -10944,6 +10946,12 @@ static NSString * protocolversionName = @"1.0.1";
 }
 + (NSString *) protocolversionName{
   return protocolversionName;
+}
++ (NSString *) TIM_SC_SUCCESS{
+  return TIM_SC_SUCCESS;
+}
++ (NSString *) TIM_SC_FAILED{
+  return TIM_SC_FAILED;
 }
 @end
 

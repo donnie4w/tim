@@ -40,8 +40,14 @@ import qualified Thrift.Arbitraries as T
 
 import Tim_Types
 protocolversion :: I.Int32
-protocolversion = 3
+protocolversion = 4
 
 protocolversionName :: LT.Text
-protocolversionName = "1.0.1"
+protocolversionName = "1.1.0"
+
+tIM_SC_SUCCESS :: LT.Text
+tIM_SC_SUCCESS = "200"
+
+tIM_SC_FAILED :: LT.Text
+tIM_SC_FAILED = "400"
 

@@ -15,6 +15,20 @@ using System.Runtime.Serialization;
 
 public static class timConstants
 {
-  public const int protocolversion = 3;
-  public const string protocolversionName = "1.0.1";
+  /// <summary>
+  /// 内部版本号
+  /// </summary>
+  public const int protocolversion = 4;
+  /// <summary>
+  /// 外部版本号
+  /// </summary>
+  public const string protocolversionName = "1.1.0";
+  /// <summary>
+  /// 状态码：成功
+  /// </summary>
+  public const string TIM_SC_SUCCESS = "200";
+  /// <summary>
+  /// 状态码：失败
+  /// </summary>
+  public const string TIM_SC_FAILED = "400";
 }

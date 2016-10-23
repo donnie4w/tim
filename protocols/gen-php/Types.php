@@ -5874,13 +5874,35 @@ class TimPropertyBean {
 final class Constant extends \Thrift\Type\TConstant {
   static protected $protocolversion;
   static protected $protocolversionName;
+  static protected $TIM_SC_SUCCESS;
+  static protected $TIM_SC_FAILED;
 
   static protected function init_protocolversion() {
-    return 3;
+    return     /**
+     * 内部版本号
+     */
+4;
   }
 
   static protected function init_protocolversionName() {
-    return "1.0.1";
+    return     /**
+     * 外部版本号
+     */
+"1.1.0";
+  }
+
+  static protected function init_TIM_SC_SUCCESS() {
+    return     /**
+     * 状态码：成功
+     */
+"200";
+  }
+
+  static protected function init_TIM_SC_FAILED() {
+    return     /**
+     * 状态码：失败
+     */
+"400";
   }
 }
 

@@ -7,7 +7,11 @@
 
 -include("tim_types.hrl").
 
--define(TIM_PROTOCOLVERSION, 3).
+-define(TIM_PROTOCOLVERSION, 4).
 
--define(TIM_PROTOCOLVERSIONNAME, "1.0.1").
+-define(TIM_PROTOCOLVERSIONNAME, "1.1.0").
+
+-define(TIM_TIM_SC_SUCCESS, "200").
+
+-define(TIM_TIM_SC_FAILED, "400").
 

@@ -1684,4 +1684,6 @@
 }
 + (int32_t) protocolversion;
 + (NSString *) protocolversionName;
++ (NSString *) TIM_SC_SUCCESS;
++ (NSString *) TIM_SC_FAILED;
 @end

@@ -9,5 +9,7 @@
 from thrift.Thrift import TType, TMessageType, TException, TApplicationException
 from ttypes import *
 
-protocolversion = 3
-protocolversionName = "1.0.1"
+protocolversion = 4
+protocolversionName = "1.1.0"
+TIM_SC_SUCCESS = "200"
+TIM_SC_FAILED = "400"

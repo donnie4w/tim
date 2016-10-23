@@ -53,9 +53,13 @@ TimPBeanList [label="struct TimPBeanList|<field_threadId>threadId :: string|<fie
 node [fillcolor=beige];
 TimPropertyBean [label="struct TimPropertyBean|<field_threadId>threadId :: string|<field_interflow>interflow :: string|<field_tls>tls :: string"];
 node [fillcolor=aliceblue];
-const_protocolversion [label="protocolversion = 3 :: i32"];
+const_protocolversion [label="protocolversion = 4 :: i32"];
 node [fillcolor=aliceblue];
-const_protocolversionName [label="protocolversionName = \"1.0.1\" :: string"];
+const_protocolversionName [label="protocolversionName = \"1.1.0\" :: string"];
+node [fillcolor=aliceblue];
+const_TIM_SC_SUCCESS [label="TIM_SC_SUCCESS = \"200\" :: string"];
+node [fillcolor=aliceblue];
+const_TIM_SC_FAILED [label="TIM_SC_FAILED = \"400\" :: string"];
 subgraph cluster_ITim {
 node [fillcolor=bisque];
 style=dashed;

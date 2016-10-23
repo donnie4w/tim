@@ -4066,5 +4066,7 @@ TimPropertyBean.prototype.write = function(output) {
   return;
 };
 
-protocolversion = 3;
-protocolversionName = '1.0.1';
+protocolversion = 4;
+protocolversionName = '1.1.0';
+TIM_SC_SUCCESS = '200';
+TIM_SC_FAILED = '400';

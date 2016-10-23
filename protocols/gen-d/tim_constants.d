@@ -14,9 +14,15 @@ import tim_types;
 
 immutable(int) protocolversion;
 immutable(string) protocolversionName;
+immutable(string) TIM_SC_SUCCESS;
+immutable(string) TIM_SC_FAILED;
 
 static this() {
-  protocolversion = 3;
+  protocolversion = 4;
 
-  protocolversionName = "1.0.1";
+  protocolversionName = "1.1.0";
+
+  TIM_SC_SUCCESS = "200";
+
+  TIM_SC_FAILED = "400";
 }

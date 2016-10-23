@@ -36,8 +36,24 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings({"cast", "rawtypes", "serial", "unchecked"})
 public class timConstants {
 
-  public static final int protocolversion = 3;
+  /**
+   * 内部版本号
+   */
+  public static final int protocolversion = 4;
 
-  public static final String protocolversionName = "1.0.1";
+  /**
+   * 外部版本号
+   */
+  public static final String protocolversionName = "1.1.0";
+
+  /**
+   * 状态码：成功
+   */
+  public static final String TIM_SC_SUCCESS = "200";
+
+  /**
+   * 状态码：失败
+   */
+  public static final String TIM_SC_FAILED = "400";
 
 }

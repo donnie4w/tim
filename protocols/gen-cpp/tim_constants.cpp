@@ -11,9 +11,13 @@
 const timConstants g_tim_constants;
 
 timConstants::timConstants() {
-  protocolversion = 3;
+  protocolversion = 4;
 
-  protocolversionName = "1.0.1";
+  protocolversionName = "1.1.0";
+
+  TIM_SC_SUCCESS = "200";
+
+  TIM_SC_FAILED = "400";
 
 }
 

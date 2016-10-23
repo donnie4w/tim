@@ -10,8 +10,12 @@ use warnings;
 use Thrift;
 
 
-use constant protocolversion => 3;
+use constant protocolversion => 4;
 
-use constant protocolversionName => "1.0.1";
+use constant protocolversionName => "1.1.0";
+
+use constant TIM_SC_SUCCESS => "200";
+
+use constant TIM_SC_FAILED => "400";
 
 1;
