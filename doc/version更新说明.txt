@@ -1,0 +1,28 @@
+
+tim version1.0.1更新说明
+1.修复了部分bug以及部分功能优化
+2.增加了TLS安全传输协议
+3.golang客户端timgo https://github.com/donnie4w/timgo 
+  java客户端 atim   https://github.com/donnie4w/atim  
+  客户端同步增加了TLS安全传输协议
+___________________________________________________________________________
+
+tim version1.1.0更新说明
+1.修复了部分bug
+2.增加了对hbase存储的支持，聊天消息可以存储的hbase中
+	对消息量比较大的服务，可以使用Hbase存储数据，hbase版本要求0.98以上,需开启hbase的thrift2服务。
+	连接hbase的配置在tim.xml 中
+	DataBase 值为1时 表示开启hbase存储；默认是0，表示不开启
+	HbaseAddr  hbase的thrift2服务的连接 如 127.0.0.1:9090    
+	以下是hbase链接的参数，可以不配置，tim会自动使用缺省值
+	 HbaseMaxOpenConns   	hbase最大连接数 缺省100
+	 HbaseMaxIdleConns		hbase闲置连接数 缺省50
+	 HbaseMinOpenConns 		hbase最小连接数 缺省10
+	 HbaseTimeoutConns  	hbase连接超时时间 缺省5 单位秒
+	 HbaseIdleTimeOut		hbase空闲连接超时时间(空闲连接超过这个时间就会关闭并释放)，缺省180 单位秒
+3.开启hbase存储时需先在hbase中建几张表
+	tim_serialno  tim_message  tim_offline  tim_mucmessage  tim_mucoffline
+	建表参考 https://github.com/donnie4w/tim/blob/master/doc/hbaseTable.txt
+    这几张表与mysql表中同名的表一一对应，同名字段也是一一对应，数据可以互导
+	互导的工具在后期提供.
+——————————————————————————————————————————————————————————————————————————————
