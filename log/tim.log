@@ -1,0 +1,44 @@
+2023/02/11 15:52:05 redis.go:73: error Do error dial tcp 127.0.0.1:6379: connectex: No connection could be made because the target machine actively refused it. PING []
+2023/02/11 15:52:05 cluster.go:40: error redis connect failed:dial tcp 127.0.0.1:6379: connectex: No connection could be made because the target machine actively refused it.
+2023/02/11 15:53:23 redis.go:73: error Do error dial tcp 127.0.0.1:6379: connectex: No connection could be made because the target machine actively refused it. PING []
+2023/02/11 15:53:23 cluster.go:40: error redis connect failed:dial tcp 127.0.0.1:6379: connectex: No connection could be made because the target machine actively refused it.
+2023/02/11 15:56:02 daoservice.go:948: error goroutine 1 [running]:
+runtime/debug.Stack()
+	D:/installsoft/go/src/runtime/debug/stack.go:24 +0x65
+tim/daoService.AddConf.func1()
+	D:/workspace/donnie4w_go/src/github.com/tim/daoService/daoservice.go:948 +0x2a
+panic({0xc8eb20, 0xfede50})
+	D:/installsoft/go/src/runtime/panic.go:838 +0x207
+database/sql.(*Rows).close(0x0, {0x0, 0x0})
+	D:/installsoft/go/src/database/sql/sql.go:3308 +0x8e
+database/sql.(*Rows).Close(0xc00009a000?)
+	D:/installsoft/go/src/database/sql/sql.go:3304 +0x1d
+tim/dao.(*Tim_config).Selects(0x0?, {0x0?, 0x5?, 0xc00011de18?})
+	D:/workspace/donnie4w_go/src/github.com/tim/dao/tim_config.go:221 +0x1ca
+tim/daoService.AddConf()
+	D:/workspace/donnie4w_go/src/github.com/tim/daoService/daoservice.go:955 +0xc5
+tim/daoService.InitDaoservice()
+	D:/workspace/donnie4w_go/src/github.com/tim/daoService/daoservice.go:46 +0x17
+main.main()
+	D:/workspace/donnie4w_go/src/github.com/tim/tim.go:95 +0x485
+
+2023/02/11 15:56:02 daoservice.go:1031: error goroutine 1 [running]:
+runtime/debug.Stack()
+	D:/installsoft/go/src/runtime/debug/stack.go:24 +0x65
+tim/daoService.updateVersion.func1()
+	D:/workspace/donnie4w_go/src/github.com/tim/daoService/daoservice.go:1031 +0x2a
+panic({0xc8eb20, 0xfede50})
+	D:/installsoft/go/src/runtime/panic.go:838 +0x207
+database/sql.(*Rows).close(0x0, {0x0, 0x0})
+	D:/installsoft/go/src/database/sql/sql.go:3308 +0x8e
+database/sql.(*Rows).Close(0xc000216000?)
+	D:/installsoft/go/src/database/sql/sql.go:3304 +0x1d
+tim/dao.(*Tim_config).Select(0xc000216000?, {0x0?, 0x1?, 0xd054c8?})
+	D:/workspace/donnie4w_go/src/github.com/tim/dao/tim_config.go:199 +0x19e
+tim/daoService.updateVersion()
+	D:/workspace/donnie4w_go/src/github.com/tim/daoService/daoservice.go:1039 +0x148
+tim/daoService.InitDaoservice()
+	D:/workspace/donnie4w_go/src/github.com/tim/daoService/daoservice.go:47 +0x1c
+main.main()
+	D:/workspace/donnie4w_go/src/github.com/tim/tim.go:95 +0x485
+

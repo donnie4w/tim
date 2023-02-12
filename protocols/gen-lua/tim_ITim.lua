@@ -249,7 +249,7 @@ function ITimClient:recv_timRemoteUserAuth(tid, pwd, auth)
   local result = timRemoteUserAuth_result:new{}
   result:read(self.iprot)
   self.iprot:readMessageEnd()
-  if result.success then
+  if result.success ~= nil then
     return result.success
   end
   error(TApplicationException:new{errorCode = TApplicationException.MISSING_RESULT})
@@ -281,7 +281,7 @@ function ITimClient:recv_timRemoteUserGet(tid, auth)
   local result = timRemoteUserGet_result:new{}
   result:read(self.iprot)
   self.iprot:readMessageEnd()
-  if result.success then
+  if result.success ~= nil then
     return result.success
   end
   error(TApplicationException:new{errorCode = TApplicationException.MISSING_RESULT})
@@ -314,7 +314,7 @@ function ITimClient:recv_timRemoteUserEdit(tid, ub, auth)
   local result = timRemoteUserEdit_result:new{}
   result:read(self.iprot)
   self.iprot:readMessageEnd()
-  if result.success then
+  if result.success ~= nil then
     return result.success
   end
   error(TApplicationException:new{errorCode = TApplicationException.MISSING_RESULT})
@@ -346,7 +346,7 @@ function ITimClient:recv_timResponsePresence(pbean, auth)
   local result = timResponsePresence_result:new{}
   result:read(self.iprot)
   self.iprot:readMessageEnd()
-  if result.success then
+  if result.success ~= nil then
     return result.success
   end
   error(TApplicationException:new{errorCode = TApplicationException.MISSING_RESULT})
@@ -378,7 +378,7 @@ function ITimClient:recv_timResponseMessage(mbean, auth)
   local result = timResponseMessage_result:new{}
   result:read(self.iprot)
   self.iprot:readMessageEnd()
-  if result.success then
+  if result.success ~= nil then
     return result.success
   end
   error(TApplicationException:new{errorCode = TApplicationException.MISSING_RESULT})
@@ -411,7 +411,7 @@ function ITimClient:recv_timResponseMessageIq(timMsgIq, iqType, auth)
   local result = timResponseMessageIq_result:new{}
   result:read(self.iprot)
   self.iprot:readMessageEnd()
-  if result.success then
+  if result.success ~= nil then
     return result.success
   end
   error(TApplicationException:new{errorCode = TApplicationException.MISSING_RESULT})
@@ -443,7 +443,7 @@ function ITimClient:recv_timResponsePresenceList(pbeanList, auth)
   local result = timResponsePresenceList_result:new{}
   result:read(self.iprot)
   self.iprot:readMessageEnd()
-  if result.success then
+  if result.success ~= nil then
     return result.success
   end
   error(TApplicationException:new{errorCode = TApplicationException.MISSING_RESULT})
@@ -475,7 +475,7 @@ function ITimClient:recv_timResponseMessageList(mbeanList, auth)
   local result = timResponseMessageList_result:new{}
   result:read(self.iprot)
   self.iprot:readMessageEnd()
-  if result.success then
+  if result.success ~= nil then
     return result.success
   end
   error(TApplicationException:new{errorCode = TApplicationException.MISSING_RESULT})
@@ -494,17 +494,20 @@ function ITimProcessor:process(iprot, oprot, server_ctx)
   local name, mtype, seqid = iprot:readMessageBegin()
   local func_name = 'process_' .. name
   if not self[func_name] or ttype(self[func_name]) ~= 'function' then
-    iprot:skip(TType.STRUCT)
-    iprot:readMessageEnd()
-    x = TApplicationException:new{
-      errorCode = TApplicationException.UNKNOWN_METHOD
-    }
-    oprot:writeMessageBegin(name, TMessageType.EXCEPTION, seqid)
-    x:write(oprot)
-    oprot:writeMessageEnd()
-    oprot.trans:flush()
+    if oprot ~= nil then
+      iprot:skip(TType.STRUCT)
+      iprot:readMessageEnd()
+      x = TApplicationException:new{
+        errorCode = TApplicationException.UNKNOWN_METHOD
+      }
+      oprot:writeMessageBegin(name, TMessageType.EXCEPTION, seqid)
+      x:write(oprot)
+      oprot:writeMessageEnd()
+      oprot.trans:flush()
+    end
+    return false, 'Unknown function '..name
   else
-    self[func_name](self, seqid, iprot, oprot, server_ctx)
+    return self[func_name](self, seqid, iprot, oprot, server_ctx)
   end
 end
 
@@ -513,18 +516,8 @@ function ITimProcessor:process_timStream(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timStream_result:new{}
   local status, res = pcall(self.handler.timStream, self.handler, args.param)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timStream', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timStarttls(seqid, iprot, oprot, server_ctx)
@@ -532,18 +525,8 @@ function ITimProcessor:process_timStarttls(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timStarttls_result:new{}
   local status, res = pcall(self.handler.timStarttls, self.handler)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timStarttls', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timLogin(seqid, iprot, oprot, server_ctx)
@@ -551,18 +534,8 @@ function ITimProcessor:process_timLogin(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timLogin_result:new{}
   local status, res = pcall(self.handler.timLogin, self.handler, args.tid, args.pwd)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timLogin', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timAck(seqid, iprot, oprot, server_ctx)
@@ -570,18 +543,8 @@ function ITimProcessor:process_timAck(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timAck_result:new{}
   local status, res = pcall(self.handler.timAck, self.handler, args.ab)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timAck', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timPresence(seqid, iprot, oprot, server_ctx)
@@ -589,18 +552,8 @@ function ITimProcessor:process_timPresence(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timPresence_result:new{}
   local status, res = pcall(self.handler.timPresence, self.handler, args.pbean)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timPresence', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timMessage(seqid, iprot, oprot, server_ctx)
@@ -608,18 +561,8 @@ function ITimProcessor:process_timMessage(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timMessage_result:new{}
   local status, res = pcall(self.handler.timMessage, self.handler, args.mbean)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timMessage', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timPing(seqid, iprot, oprot, server_ctx)
@@ -627,18 +570,8 @@ function ITimProcessor:process_timPing(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timPing_result:new{}
   local status, res = pcall(self.handler.timPing, self.handler, args.threadId)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timPing', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timError(seqid, iprot, oprot, server_ctx)
@@ -646,18 +579,8 @@ function ITimProcessor:process_timError(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timError_result:new{}
   local status, res = pcall(self.handler.timError, self.handler, args.e)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timError', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timLogout(seqid, iprot, oprot, server_ctx)
@@ -665,18 +588,8 @@ function ITimProcessor:process_timLogout(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timLogout_result:new{}
   local status, res = pcall(self.handler.timLogout, self.handler)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timLogout', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timRegist(seqid, iprot, oprot, server_ctx)
@@ -684,18 +597,8 @@ function ITimProcessor:process_timRegist(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timRegist_result:new{}
   local status, res = pcall(self.handler.timRegist, self.handler, args.tid, args.auth)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timRegist', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timRoser(seqid, iprot, oprot, server_ctx)
@@ -703,18 +606,8 @@ function ITimProcessor:process_timRoser(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timRoser_result:new{}
   local status, res = pcall(self.handler.timRoser, self.handler, args.roster)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timRoser', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timMessageList(seqid, iprot, oprot, server_ctx)
@@ -722,18 +615,8 @@ function ITimProcessor:process_timMessageList(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timMessageList_result:new{}
   local status, res = pcall(self.handler.timMessageList, self.handler, args.mbeanList)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timMessageList', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timPresenceList(seqid, iprot, oprot, server_ctx)
@@ -741,18 +624,8 @@ function ITimProcessor:process_timPresenceList(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timPresenceList_result:new{}
   local status, res = pcall(self.handler.timPresenceList, self.handler, args.pbeanList)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timPresenceList', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timMessageIq(seqid, iprot, oprot, server_ctx)
@@ -760,18 +633,8 @@ function ITimProcessor:process_timMessageIq(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timMessageIq_result:new{}
   local status, res = pcall(self.handler.timMessageIq, self.handler, args.timMsgIq, args.iqType)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timMessageIq', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timMessageResult(seqid, iprot, oprot, server_ctx)
@@ -779,18 +642,8 @@ function ITimProcessor:process_timMessageResult(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timMessageResult_result:new{}
   local status, res = pcall(self.handler.timMessageResult, self.handler, args.mbean)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timMessageResult', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timProperty(seqid, iprot, oprot, server_ctx)
@@ -798,18 +651,8 @@ function ITimProcessor:process_timProperty(seqid, iprot, oprot, server_ctx)
   local reply_type = TMessageType.REPLY
   args:read(iprot)
   iprot:readMessageEnd()
-  local result = timProperty_result:new{}
   local status, res = pcall(self.handler.timProperty, self.handler, args.tpb)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('timProperty', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timRemoteUserAuth(seqid, iprot, oprot, server_ctx)
@@ -829,6 +672,7 @@ function ITimProcessor:process_timRemoteUserAuth(seqid, iprot, oprot, server_ctx
   result:write(oprot)
   oprot:writeMessageEnd()
   oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timRemoteUserGet(seqid, iprot, oprot, server_ctx)
@@ -848,6 +692,7 @@ function ITimProcessor:process_timRemoteUserGet(seqid, iprot, oprot, server_ctx)
   result:write(oprot)
   oprot:writeMessageEnd()
   oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timRemoteUserEdit(seqid, iprot, oprot, server_ctx)
@@ -867,6 +712,7 @@ function ITimProcessor:process_timRemoteUserEdit(seqid, iprot, oprot, server_ctx
   result:write(oprot)
   oprot:writeMessageEnd()
   oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timResponsePresence(seqid, iprot, oprot, server_ctx)
@@ -886,6 +732,7 @@ function ITimProcessor:process_timResponsePresence(seqid, iprot, oprot, server_c
   result:write(oprot)
   oprot:writeMessageEnd()
   oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timResponseMessage(seqid, iprot, oprot, server_ctx)
@@ -905,6 +752,7 @@ function ITimProcessor:process_timResponseMessage(seqid, iprot, oprot, server_ct
   result:write(oprot)
   oprot:writeMessageEnd()
   oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timResponseMessageIq(seqid, iprot, oprot, server_ctx)
@@ -924,6 +772,7 @@ function ITimProcessor:process_timResponseMessageIq(seqid, iprot, oprot, server_
   result:write(oprot)
   oprot:writeMessageEnd()
   oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timResponsePresenceList(seqid, iprot, oprot, server_ctx)
@@ -943,6 +792,7 @@ function ITimProcessor:process_timResponsePresenceList(seqid, iprot, oprot, serv
   result:write(oprot)
   oprot:writeMessageEnd()
   oprot.trans:flush()
+  return status, res
 end
 
 function ITimProcessor:process_timResponseMessageList(seqid, iprot, oprot, server_ctx)
@@ -962,6 +812,7 @@ function ITimProcessor:process_timResponseMessageList(seqid, iprot, oprot, serve
   result:write(oprot)
   oprot:writeMessageEnd()
   oprot.trans:flush()
+  return status, res
 end
 
 -- HELPER FUNCTIONS AND STRUCTURES
@@ -993,7 +844,7 @@ end
 
 function timStream_args:write(oprot)
   oprot:writeStructBegin('timStream_args')
-  if self.param then
+  if self.param ~= nil then
     oprot:writeFieldBegin('param', TType.STRUCT, 1)
     self.param:write(oprot)
     oprot:writeFieldEnd()
@@ -1060,12 +911,12 @@ end
 
 function timLogin_args:write(oprot)
   oprot:writeStructBegin('timLogin_args')
-  if self.tid then
+  if self.tid ~= nil then
     oprot:writeFieldBegin('tid', TType.STRUCT, 1)
     self.tid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.pwd then
+  if self.pwd ~= nil then
     oprot:writeFieldBegin('pwd', TType.STRING, 2)
     oprot:writeString(self.pwd)
     oprot:writeFieldEnd()
@@ -1101,7 +952,7 @@ end
 
 function timAck_args:write(oprot)
   oprot:writeStructBegin('timAck_args')
-  if self.ab then
+  if self.ab ~= nil then
     oprot:writeFieldBegin('ab', TType.STRUCT, 1)
     self.ab:write(oprot)
     oprot:writeFieldEnd()
@@ -1137,7 +988,7 @@ end
 
 function timPresence_args:write(oprot)
   oprot:writeStructBegin('timPresence_args')
-  if self.pbean then
+  if self.pbean ~= nil then
     oprot:writeFieldBegin('pbean', TType.STRUCT, 1)
     self.pbean:write(oprot)
     oprot:writeFieldEnd()
@@ -1173,7 +1024,7 @@ end
 
 function timMessage_args:write(oprot)
   oprot:writeStructBegin('timMessage_args')
-  if self.mbean then
+  if self.mbean ~= nil then
     oprot:writeFieldBegin('mbean', TType.STRUCT, 1)
     self.mbean:write(oprot)
     oprot:writeFieldEnd()
@@ -1208,7 +1059,7 @@ end
 
 function timPing_args:write(oprot)
   oprot:writeStructBegin('timPing_args')
-  if self.threadId then
+  if self.threadId ~= nil then
     oprot:writeFieldBegin('threadId', TType.STRING, 1)
     oprot:writeString(self.threadId)
     oprot:writeFieldEnd()
@@ -1244,7 +1095,7 @@ end
 
 function timError_args:write(oprot)
   oprot:writeStructBegin('timError_args')
-  if self.e then
+  if self.e ~= nil then
     oprot:writeFieldBegin('e', TType.STRUCT, 1)
     self.e:write(oprot)
     oprot:writeFieldEnd()
@@ -1311,12 +1162,12 @@ end
 
 function timRegist_args:write(oprot)
   oprot:writeStructBegin('timRegist_args')
-  if self.tid then
+  if self.tid ~= nil then
     oprot:writeFieldBegin('tid', TType.STRUCT, 1)
     self.tid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.auth then
+  if self.auth ~= nil then
     oprot:writeFieldBegin('auth', TType.STRING, 2)
     oprot:writeString(self.auth)
     oprot:writeFieldEnd()
@@ -1352,7 +1203,7 @@ end
 
 function timRoser_args:write(oprot)
   oprot:writeStructBegin('timRoser_args')
-  if self.roster then
+  if self.roster ~= nil then
     oprot:writeFieldBegin('roster', TType.STRUCT, 1)
     self.roster:write(oprot)
     oprot:writeFieldEnd()
@@ -1388,7 +1239,7 @@ end
 
 function timMessageList_args:write(oprot)
   oprot:writeStructBegin('timMessageList_args')
-  if self.mbeanList then
+  if self.mbeanList ~= nil then
     oprot:writeFieldBegin('mbeanList', TType.STRUCT, 1)
     self.mbeanList:write(oprot)
     oprot:writeFieldEnd()
@@ -1424,7 +1275,7 @@ end
 
 function timPresenceList_args:write(oprot)
   oprot:writeStructBegin('timPresenceList_args')
-  if self.pbeanList then
+  if self.pbeanList ~= nil then
     oprot:writeFieldBegin('pbeanList', TType.STRUCT, 1)
     self.pbeanList:write(oprot)
     oprot:writeFieldEnd()
@@ -1467,12 +1318,12 @@ end
 
 function timMessageIq_args:write(oprot)
   oprot:writeStructBegin('timMessageIq_args')
-  if self.timMsgIq then
+  if self.timMsgIq ~= nil then
     oprot:writeFieldBegin('timMsgIq', TType.STRUCT, 1)
     self.timMsgIq:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.iqType then
+  if self.iqType ~= nil then
     oprot:writeFieldBegin('iqType', TType.STRING, 2)
     oprot:writeString(self.iqType)
     oprot:writeFieldEnd()
@@ -1508,7 +1359,7 @@ end
 
 function timMessageResult_args:write(oprot)
   oprot:writeStructBegin('timMessageResult_args')
-  if self.mbean then
+  if self.mbean ~= nil then
     oprot:writeFieldBegin('mbean', TType.STRUCT, 1)
     self.mbean:write(oprot)
     oprot:writeFieldEnd()
@@ -1544,7 +1395,7 @@ end
 
 function timProperty_args:write(oprot)
   oprot:writeStructBegin('timProperty_args')
-  if self.tpb then
+  if self.tpb ~= nil then
     oprot:writeFieldBegin('tpb', TType.STRUCT, 1)
     self.tpb:write(oprot)
     oprot:writeFieldEnd()
@@ -1595,17 +1446,17 @@ end
 
 function timRemoteUserAuth_args:write(oprot)
   oprot:writeStructBegin('timRemoteUserAuth_args')
-  if self.tid then
+  if self.tid ~= nil then
     oprot:writeFieldBegin('tid', TType.STRUCT, 1)
     self.tid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.pwd then
+  if self.pwd ~= nil then
     oprot:writeFieldBegin('pwd', TType.STRING, 2)
     oprot:writeString(self.pwd)
     oprot:writeFieldEnd()
   end
-  if self.auth then
+  if self.auth ~= nil then
     oprot:writeFieldBegin('auth', TType.STRUCT, 3)
     self.auth:write(oprot)
     oprot:writeFieldEnd()
@@ -1641,7 +1492,7 @@ end
 
 function timRemoteUserAuth_result:write(oprot)
   oprot:writeStructBegin('timRemoteUserAuth_result')
-  if self.success then
+  if self.success ~= nil then
     oprot:writeFieldBegin('success', TType.STRUCT, 0)
     self.success:write(oprot)
     oprot:writeFieldEnd()
@@ -1685,12 +1536,12 @@ end
 
 function timRemoteUserGet_args:write(oprot)
   oprot:writeStructBegin('timRemoteUserGet_args')
-  if self.tid then
+  if self.tid ~= nil then
     oprot:writeFieldBegin('tid', TType.STRUCT, 1)
     self.tid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.auth then
+  if self.auth ~= nil then
     oprot:writeFieldBegin('auth', TType.STRUCT, 2)
     self.auth:write(oprot)
     oprot:writeFieldEnd()
@@ -1726,7 +1577,7 @@ end
 
 function timRemoteUserGet_result:write(oprot)
   oprot:writeStructBegin('timRemoteUserGet_result')
-  if self.success then
+  if self.success ~= nil then
     oprot:writeFieldBegin('success', TType.STRUCT, 0)
     self.success:write(oprot)
     oprot:writeFieldEnd()
@@ -1778,17 +1629,17 @@ end
 
 function timRemoteUserEdit_args:write(oprot)
   oprot:writeStructBegin('timRemoteUserEdit_args')
-  if self.tid then
+  if self.tid ~= nil then
     oprot:writeFieldBegin('tid', TType.STRUCT, 1)
     self.tid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.ub then
+  if self.ub ~= nil then
     oprot:writeFieldBegin('ub', TType.STRUCT, 2)
     self.ub:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.auth then
+  if self.auth ~= nil then
     oprot:writeFieldBegin('auth', TType.STRUCT, 3)
     self.auth:write(oprot)
     oprot:writeFieldEnd()
@@ -1824,7 +1675,7 @@ end
 
 function timRemoteUserEdit_result:write(oprot)
   oprot:writeStructBegin('timRemoteUserEdit_result')
-  if self.success then
+  if self.success ~= nil then
     oprot:writeFieldBegin('success', TType.STRUCT, 0)
     self.success:write(oprot)
     oprot:writeFieldEnd()
@@ -1868,12 +1719,12 @@ end
 
 function timResponsePresence_args:write(oprot)
   oprot:writeStructBegin('timResponsePresence_args')
-  if self.pbean then
+  if self.pbean ~= nil then
     oprot:writeFieldBegin('pbean', TType.STRUCT, 1)
     self.pbean:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.auth then
+  if self.auth ~= nil then
     oprot:writeFieldBegin('auth', TType.STRUCT, 2)
     self.auth:write(oprot)
     oprot:writeFieldEnd()
@@ -1909,7 +1760,7 @@ end
 
 function timResponsePresence_result:write(oprot)
   oprot:writeStructBegin('timResponsePresence_result')
-  if self.success then
+  if self.success ~= nil then
     oprot:writeFieldBegin('success', TType.STRUCT, 0)
     self.success:write(oprot)
     oprot:writeFieldEnd()
@@ -1953,12 +1804,12 @@ end
 
 function timResponseMessage_args:write(oprot)
   oprot:writeStructBegin('timResponseMessage_args')
-  if self.mbean then
+  if self.mbean ~= nil then
     oprot:writeFieldBegin('mbean', TType.STRUCT, 1)
     self.mbean:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.auth then
+  if self.auth ~= nil then
     oprot:writeFieldBegin('auth', TType.STRUCT, 2)
     self.auth:write(oprot)
     oprot:writeFieldEnd()
@@ -1994,7 +1845,7 @@ end
 
 function timResponseMessage_result:write(oprot)
   oprot:writeStructBegin('timResponseMessage_result')
-  if self.success then
+  if self.success ~= nil then
     oprot:writeFieldBegin('success', TType.STRUCT, 0)
     self.success:write(oprot)
     oprot:writeFieldEnd()
@@ -2045,17 +1896,17 @@ end
 
 function timResponseMessageIq_args:write(oprot)
   oprot:writeStructBegin('timResponseMessageIq_args')
-  if self.timMsgIq then
+  if self.timMsgIq ~= nil then
     oprot:writeFieldBegin('timMsgIq', TType.STRUCT, 1)
     self.timMsgIq:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.iqType then
+  if self.iqType ~= nil then
     oprot:writeFieldBegin('iqType', TType.STRING, 2)
     oprot:writeString(self.iqType)
     oprot:writeFieldEnd()
   end
-  if self.auth then
+  if self.auth ~= nil then
     oprot:writeFieldBegin('auth', TType.STRUCT, 3)
     self.auth:write(oprot)
     oprot:writeFieldEnd()
@@ -2091,7 +1942,7 @@ end
 
 function timResponseMessageIq_result:write(oprot)
   oprot:writeStructBegin('timResponseMessageIq_result')
-  if self.success then
+  if self.success ~= nil then
     oprot:writeFieldBegin('success', TType.STRUCT, 0)
     self.success:write(oprot)
     oprot:writeFieldEnd()
@@ -2135,12 +1986,12 @@ end
 
 function timResponsePresenceList_args:write(oprot)
   oprot:writeStructBegin('timResponsePresenceList_args')
-  if self.pbeanList then
+  if self.pbeanList ~= nil then
     oprot:writeFieldBegin('pbeanList', TType.STRUCT, 1)
     self.pbeanList:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.auth then
+  if self.auth ~= nil then
     oprot:writeFieldBegin('auth', TType.STRUCT, 2)
     self.auth:write(oprot)
     oprot:writeFieldEnd()
@@ -2176,7 +2027,7 @@ end
 
 function timResponsePresenceList_result:write(oprot)
   oprot:writeStructBegin('timResponsePresenceList_result')
-  if self.success then
+  if self.success ~= nil then
     oprot:writeFieldBegin('success', TType.STRUCT, 0)
     self.success:write(oprot)
     oprot:writeFieldEnd()
@@ -2220,12 +2071,12 @@ end
 
 function timResponseMessageList_args:write(oprot)
   oprot:writeStructBegin('timResponseMessageList_args')
-  if self.mbeanList then
+  if self.mbeanList ~= nil then
     oprot:writeFieldBegin('mbeanList', TType.STRUCT, 1)
     self.mbeanList:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.auth then
+  if self.auth ~= nil then
     oprot:writeFieldBegin('auth', TType.STRUCT, 2)
     self.auth:write(oprot)
     oprot:writeFieldEnd()
@@ -2261,7 +2112,7 @@ end
 
 function timResponseMessageList_result:write(oprot)
   oprot:writeStructBegin('timResponseMessageList_result')
-  if self.success then
+  if self.success ~= nil then
     oprot:writeFieldBegin('success', TType.STRUCT, 0)
     self.success:write(oprot)
     oprot:writeFieldEnd()

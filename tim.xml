@@ -2,9 +2,9 @@
 	<Port>6666</Port>
 	<Addr>0.0.0.0</Addr>
 	<HeartBeat>120</HeartBeat>
-	<Logdir>C:/Users/dong/Desktop/tim</Logdir>
+	<Logdir>log</Logdir>
 	<LogName>tim.log</LogName>
-	<Db_dataSourceName>root:123456@tcp(127.0.0.1:3306)/tim</Db_dataSourceName>
+	<Db_dataSourceName>root:123@tcp(127.0.0.1:3306)/tim</Db_dataSourceName>
 	<Db_MaxOpenConns>20</Db_MaxOpenConns>
 	<Db_MaxIdleConns>5</Db_MaxIdleConns>
 	<HttpPort>0</HttpPort>

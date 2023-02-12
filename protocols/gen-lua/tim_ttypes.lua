@@ -42,12 +42,12 @@ end
 
 function TimError:write(oprot)
   oprot:writeStructBegin('TimError')
-  if self.errCode then
+  if self.errCode ~= nil then
     oprot:writeFieldBegin('errCode', TType.I32, 1)
     oprot:writeI32(self.errCode)
     oprot:writeFieldEnd()
   end
-  if self.errMsg then
+  if self.errMsg ~= nil then
     oprot:writeFieldBegin('errMsg', TType.STRING, 2)
     oprot:writeString(self.errMsg)
     oprot:writeFieldEnd()
@@ -89,12 +89,12 @@ end
 
 function TimNode:write(oprot)
   oprot:writeStructBegin('TimNode')
-  if self.key then
+  if self.key ~= nil then
     oprot:writeFieldBegin('key', TType.STRING, 1)
     oprot:writeString(self.key)
     oprot:writeFieldEnd()
   end
-  if self.value then
+  if self.value ~= nil then
     oprot:writeFieldBegin('value', TType.STRING, 2)
     oprot:writeString(self.value)
     oprot:writeFieldEnd()
@@ -179,22 +179,22 @@ end
 
 function TimAckBean:write(oprot)
   oprot:writeStructBegin('TimAckBean')
-  if self.id then
+  if self.id ~= nil then
     oprot:writeFieldBegin('id', TType.STRING, 1)
     oprot:writeString(self.id)
     oprot:writeFieldEnd()
   end
-  if self.ackType then
+  if self.ackType ~= nil then
     oprot:writeFieldBegin('ackType', TType.STRING, 2)
     oprot:writeString(self.ackType)
     oprot:writeFieldEnd()
   end
-  if self.ackStatus then
+  if self.ackStatus ~= nil then
     oprot:writeFieldBegin('ackStatus', TType.STRING, 3)
     oprot:writeString(self.ackStatus)
     oprot:writeFieldEnd()
   end
-  if self.extraList then
+  if self.extraList ~= nil then
     oprot:writeFieldBegin('extraList', TType.LIST, 4)
     oprot:writeListBegin(TType.STRUCT, #self.extraList)
     for _,iter11 in ipairs(self.extraList) do
@@ -203,12 +203,12 @@ function TimAckBean:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.err then
+  if self.err ~= nil then
     oprot:writeFieldBegin('err', TType.STRUCT, 5)
     self.err:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 6)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter12,viter13 in pairs(self.extraMap) do
@@ -262,17 +262,17 @@ end
 
 function TimHBean:write(oprot)
   oprot:writeStructBegin('TimHBean')
-  if self.chl then
+  if self.chl ~= nil then
     oprot:writeFieldBegin('chl', TType.I32, 1)
     oprot:writeI32(self.chl)
     oprot:writeFieldEnd()
   end
-  if self.platform then
+  if self.platform ~= nil then
     oprot:writeFieldBegin('platform', TType.I32, 2)
     oprot:writeI32(self.platform)
     oprot:writeFieldEnd()
   end
-  if self.version then
+  if self.version ~= nil then
     oprot:writeFieldBegin('version', TType.I16, 3)
     oprot:writeI16(self.version)
     oprot:writeFieldEnd()
@@ -363,22 +363,22 @@ end
 
 function TimParam:write(oprot)
   oprot:writeStructBegin('TimParam')
-  if self.timestamp then
+  if self.timestamp ~= nil then
     oprot:writeFieldBegin('timestamp', TType.STRING, 1)
     oprot:writeString(self.timestamp)
     oprot:writeFieldEnd()
   end
-  if self.version then
+  if self.version ~= nil then
     oprot:writeFieldBegin('version', TType.I16, 2)
     oprot:writeI16(self.version)
     oprot:writeFieldEnd()
   end
-  if self.lang then
+  if self.lang ~= nil then
     oprot:writeFieldBegin('lang', TType.STRING, 3)
     oprot:writeString(self.lang)
     oprot:writeFieldEnd()
   end
-  if self.extraList then
+  if self.extraList ~= nil then
     oprot:writeFieldBegin('extraList', TType.LIST, 4)
     oprot:writeListBegin(TType.STRUCT, #self.extraList)
     for _,iter25 in ipairs(self.extraList) do
@@ -387,7 +387,7 @@ function TimParam:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 5)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter26,viter27 in pairs(self.extraMap) do
@@ -397,12 +397,12 @@ function TimParam:write(oprot)
     oprot:writeMapEnd()
     oprot:writeFieldEnd()
   end
-  if self.interflow then
+  if self.interflow ~= nil then
     oprot:writeFieldBegin('interflow', TType.STRING, 6)
     oprot:writeString(self.interflow)
     oprot:writeFieldEnd()
   end
-  if self.tls then
+  if self.tls ~= nil then
     oprot:writeFieldBegin('tls', TType.STRING, 7)
     oprot:writeString(self.tls)
     oprot:writeFieldEnd()
@@ -444,12 +444,12 @@ end
 
 function TimTime:write(oprot)
   oprot:writeStructBegin('TimTime')
-  if self.timestamp then
+  if self.timestamp ~= nil then
     oprot:writeFieldBegin('timestamp', TType.STRING, 1)
     oprot:writeString(self.timestamp)
     oprot:writeFieldEnd()
   end
-  if self.formattime then
+  if self.formattime ~= nil then
     oprot:writeFieldBegin('formattime', TType.STRING, 2)
     oprot:writeString(self.formattime)
     oprot:writeFieldEnd()
@@ -526,22 +526,22 @@ end
 
 function TimArea:write(oprot)
   oprot:writeStructBegin('TimArea')
-  if self.country then
+  if self.country ~= nil then
     oprot:writeFieldBegin('country', TType.STRING, 1)
     oprot:writeString(self.country)
     oprot:writeFieldEnd()
   end
-  if self.province then
+  if self.province ~= nil then
     oprot:writeFieldBegin('province', TType.STRING, 2)
     oprot:writeString(self.province)
     oprot:writeFieldEnd()
   end
-  if self.city then
+  if self.city ~= nil then
     oprot:writeFieldBegin('city', TType.STRING, 3)
     oprot:writeString(self.city)
     oprot:writeFieldEnd()
   end
-  if self.extraList then
+  if self.extraList ~= nil then
     oprot:writeFieldBegin('extraList', TType.LIST, 4)
     oprot:writeListBegin(TType.STRUCT, #self.extraList)
     for _,iter39 in ipairs(self.extraList) do
@@ -550,7 +550,7 @@ function TimArea:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 5)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter40,viter41 in pairs(self.extraMap) do
@@ -639,27 +639,27 @@ end
 
 function Tid:write(oprot)
   oprot:writeStructBegin('Tid')
-  if self.name then
+  if self.name ~= nil then
     oprot:writeFieldBegin('name', TType.STRING, 1)
     oprot:writeString(self.name)
     oprot:writeFieldEnd()
   end
-  if self.domain then
+  if self.domain ~= nil then
     oprot:writeFieldBegin('domain', TType.STRING, 2)
     oprot:writeString(self.domain)
     oprot:writeFieldEnd()
   end
-  if self.resource then
+  if self.resource ~= nil then
     oprot:writeFieldBegin('resource', TType.STRING, 3)
     oprot:writeString(self.resource)
     oprot:writeFieldEnd()
   end
-  if self.type then
+  if self.type ~= nil then
     oprot:writeFieldBegin('type', TType.STRING, 4)
     oprot:writeString(self.type)
     oprot:writeFieldEnd()
   end
-  if self.extraList then
+  if self.extraList ~= nil then
     oprot:writeFieldBegin('extraList', TType.LIST, 5)
     oprot:writeListBegin(TType.STRUCT, #self.extraList)
     for _,iter53 in ipairs(self.extraList) do
@@ -668,7 +668,7 @@ function Tid:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 6)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter54,viter55 in pairs(self.extraMap) do
@@ -800,47 +800,47 @@ end
 
 function TimUserBean:write(oprot)
   oprot:writeStructBegin('TimUserBean')
-  if self.tid then
+  if self.tid ~= nil then
     oprot:writeFieldBegin('tid', TType.STRUCT, 1)
     self.tid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.nickname then
+  if self.nickname ~= nil then
     oprot:writeFieldBegin('nickname', TType.STRING, 2)
     oprot:writeString(self.nickname)
     oprot:writeFieldEnd()
   end
-  if self.remarkname then
+  if self.remarkname ~= nil then
     oprot:writeFieldBegin('remarkname', TType.STRING, 3)
     oprot:writeString(self.remarkname)
     oprot:writeFieldEnd()
   end
-  if self.brithday then
+  if self.brithday ~= nil then
     oprot:writeFieldBegin('brithday', TType.STRING, 4)
     oprot:writeString(self.brithday)
     oprot:writeFieldEnd()
   end
-  if self.gender then
+  if self.gender ~= nil then
     oprot:writeFieldBegin('gender', TType.I16, 5)
     oprot:writeI16(self.gender)
     oprot:writeFieldEnd()
   end
-  if self.headurl then
+  if self.headurl ~= nil then
     oprot:writeFieldBegin('headurl', TType.STRING, 6)
     oprot:writeString(self.headurl)
     oprot:writeFieldEnd()
   end
-  if self.area then
+  if self.area ~= nil then
     oprot:writeFieldBegin('area', TType.STRUCT, 7)
     self.area:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.headbyte then
+  if self.headbyte ~= nil then
     oprot:writeFieldBegin('headbyte', TType.STRING, 8)
     oprot:writeString(self.headbyte)
     oprot:writeFieldEnd()
   end
-  if self.photoBytes then
+  if self.photoBytes ~= nil then
     oprot:writeFieldBegin('photoBytes', TType.LIST, 9)
     oprot:writeListBegin(TType.STRING, #self.photoBytes)
     for _,iter72 in ipairs(self.photoBytes) do
@@ -849,7 +849,7 @@ function TimUserBean:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.extraList then
+  if self.extraList ~= nil then
     oprot:writeFieldBegin('extraList', TType.LIST, 10)
     oprot:writeListBegin(TType.STRUCT, #self.extraList)
     for _,iter73 in ipairs(self.extraList) do
@@ -858,7 +858,7 @@ function TimUserBean:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 11)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter74,viter75 in pairs(self.extraMap) do
@@ -992,17 +992,17 @@ end
 
 function TimRoom:write(oprot)
   oprot:writeStructBegin('TimRoom')
-  if self.tid then
+  if self.tid ~= nil then
     oprot:writeFieldBegin('tid', TType.STRUCT, 1)
     self.tid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.founderTid then
+  if self.founderTid ~= nil then
     oprot:writeFieldBegin('founderTid', TType.STRUCT, 2)
     self.founderTid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.HostsTid then
+  if self.HostsTid ~= nil then
     oprot:writeFieldBegin('HostsTid', TType.LIST, 3)
     oprot:writeListBegin(TType.STRUCT, #self.HostsTid)
     for _,iter97 in ipairs(self.HostsTid) do
@@ -1011,7 +1011,7 @@ function TimRoom:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.membersTid then
+  if self.membersTid ~= nil then
     oprot:writeFieldBegin('membersTid', TType.LIST, 4)
     oprot:writeListBegin(TType.STRUCT, #self.membersTid)
     for _,iter98 in ipairs(self.membersTid) do
@@ -1020,27 +1020,27 @@ function TimRoom:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.headurl then
+  if self.headurl ~= nil then
     oprot:writeFieldBegin('headurl', TType.STRING, 5)
     oprot:writeString(self.headurl)
     oprot:writeFieldEnd()
   end
-  if self.roomName then
+  if self.roomName ~= nil then
     oprot:writeFieldBegin('roomName', TType.STRING, 6)
     oprot:writeString(self.roomName)
     oprot:writeFieldEnd()
   end
-  if self.desc then
+  if self.desc ~= nil then
     oprot:writeFieldBegin('desc', TType.STRING, 7)
     oprot:writeString(self.desc)
     oprot:writeFieldEnd()
   end
-  if self.createTime then
+  if self.createTime ~= nil then
     oprot:writeFieldBegin('createTime', TType.STRUCT, 8)
     self.createTime:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.extraList then
+  if self.extraList ~= nil then
     oprot:writeFieldBegin('extraList', TType.LIST, 9)
     oprot:writeListBegin(TType.STRUCT, #self.extraList)
     for _,iter99 in ipairs(self.extraList) do
@@ -1049,7 +1049,7 @@ function TimRoom:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 10)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter100,viter101 in pairs(self.extraMap) do
@@ -1177,47 +1177,47 @@ end
 
 function TimPBean:write(oprot)
   oprot:writeStructBegin('TimPBean')
-  if self.threadId then
+  if self.threadId ~= nil then
     oprot:writeFieldBegin('threadId', TType.STRING, 1)
     oprot:writeString(self.threadId)
     oprot:writeFieldEnd()
   end
-  if self.fromTid then
+  if self.fromTid ~= nil then
     oprot:writeFieldBegin('fromTid', TType.STRUCT, 2)
     self.fromTid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.toTid then
+  if self.toTid ~= nil then
     oprot:writeFieldBegin('toTid', TType.STRUCT, 3)
     self.toTid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.status then
+  if self.status ~= nil then
     oprot:writeFieldBegin('status', TType.STRING, 4)
     oprot:writeString(self.status)
     oprot:writeFieldEnd()
   end
-  if self.type then
+  if self.type ~= nil then
     oprot:writeFieldBegin('type', TType.STRING, 5)
     oprot:writeString(self.type)
     oprot:writeFieldEnd()
   end
-  if self.priority then
+  if self.priority ~= nil then
     oprot:writeFieldBegin('priority', TType.I32, 6)
     oprot:writeI32(self.priority)
     oprot:writeFieldEnd()
   end
-  if self.show then
+  if self.show ~= nil then
     oprot:writeFieldBegin('show', TType.STRING, 7)
     oprot:writeString(self.show)
     oprot:writeFieldEnd()
   end
-  if self.leaguerTid then
+  if self.leaguerTid ~= nil then
     oprot:writeFieldBegin('leaguerTid', TType.STRUCT, 8)
     self.leaguerTid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.extraList then
+  if self.extraList ~= nil then
     oprot:writeFieldBegin('extraList', TType.LIST, 9)
     oprot:writeListBegin(TType.STRUCT, #self.extraList)
     for _,iter113 in ipairs(self.extraList) do
@@ -1226,12 +1226,12 @@ function TimPBean:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.error then
+  if self.error ~= nil then
     oprot:writeFieldBegin('error', TType.STRUCT, 10)
     self.error:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 11)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter114,viter115 in pairs(self.extraMap) do
@@ -1381,52 +1381,52 @@ end
 
 function TimMBean:write(oprot)
   oprot:writeStructBegin('TimMBean')
-  if self.threadId then
+  if self.threadId ~= nil then
     oprot:writeFieldBegin('threadId', TType.STRING, 1)
     oprot:writeString(self.threadId)
     oprot:writeFieldEnd()
   end
-  if self.mid then
+  if self.mid ~= nil then
     oprot:writeFieldBegin('mid', TType.STRING, 2)
     oprot:writeString(self.mid)
     oprot:writeFieldEnd()
   end
-  if self.fromTid then
+  if self.fromTid ~= nil then
     oprot:writeFieldBegin('fromTid', TType.STRUCT, 3)
     self.fromTid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.toTid then
+  if self.toTid ~= nil then
     oprot:writeFieldBegin('toTid', TType.STRUCT, 4)
     self.toTid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.body then
+  if self.body ~= nil then
     oprot:writeFieldBegin('body', TType.STRING, 5)
     oprot:writeString(self.body)
     oprot:writeFieldEnd()
   end
-  if self.type then
+  if self.type ~= nil then
     oprot:writeFieldBegin('type', TType.STRING, 6)
     oprot:writeString(self.type)
     oprot:writeFieldEnd()
   end
-  if self.msgType then
+  if self.msgType ~= nil then
     oprot:writeFieldBegin('msgType', TType.I16, 7)
     oprot:writeI16(self.msgType)
     oprot:writeFieldEnd()
   end
-  if self.offline then
+  if self.offline ~= nil then
     oprot:writeFieldBegin('offline', TType.STRUCT, 8)
     self.offline:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.leaguerTid then
+  if self.leaguerTid ~= nil then
     oprot:writeFieldBegin('leaguerTid', TType.STRUCT, 9)
     self.leaguerTid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.extraList then
+  if self.extraList ~= nil then
     oprot:writeFieldBegin('extraList', TType.LIST, 10)
     oprot:writeListBegin(TType.STRUCT, #self.extraList)
     for _,iter127 in ipairs(self.extraList) do
@@ -1435,17 +1435,17 @@ function TimMBean:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.timestamp then
+  if self.timestamp ~= nil then
     oprot:writeFieldBegin('timestamp', TType.STRING, 11)
     oprot:writeString(self.timestamp)
     oprot:writeFieldEnd()
   end
-  if self.error then
+  if self.error ~= nil then
     oprot:writeFieldBegin('error', TType.STRUCT, 12)
     self.error:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 13)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter128,viter129 in pairs(self.extraMap) do
@@ -1455,7 +1455,7 @@ function TimMBean:write(oprot)
     oprot:writeMapEnd()
     oprot:writeFieldEnd()
   end
-  if self.readstatus then
+  if self.readstatus ~= nil then
     oprot:writeFieldBegin('readstatus', TType.I16, 14)
     oprot:writeI16(self.readstatus)
     oprot:writeFieldEnd()
@@ -1549,27 +1549,27 @@ end
 
 function TimIqBean:write(oprot)
   oprot:writeStructBegin('TimIqBean')
-  if self.threadId then
+  if self.threadId ~= nil then
     oprot:writeFieldBegin('threadId', TType.STRING, 1)
     oprot:writeString(self.threadId)
     oprot:writeFieldEnd()
   end
-  if self.fromTid then
+  if self.fromTid ~= nil then
     oprot:writeFieldBegin('fromTid', TType.STRUCT, 2)
     self.fromTid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.toTid then
+  if self.toTid ~= nil then
     oprot:writeFieldBegin('toTid', TType.STRUCT, 3)
     self.toTid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.type then
+  if self.type ~= nil then
     oprot:writeFieldBegin('type', TType.STRING, 4)
     oprot:writeString(self.type)
     oprot:writeFieldEnd()
   end
-  if self.extraList then
+  if self.extraList ~= nil then
     oprot:writeFieldBegin('extraList', TType.LIST, 5)
     oprot:writeListBegin(TType.STRUCT, #self.extraList)
     for _,iter141 in ipairs(self.extraList) do
@@ -1578,12 +1578,12 @@ function TimIqBean:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.error then
+  if self.error ~= nil then
     oprot:writeFieldBegin('error', TType.STRUCT, 6)
     self.error:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 7)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter142,viter143 in pairs(self.extraMap) do
@@ -1652,22 +1652,22 @@ end
 
 function TimRoster:write(oprot)
   oprot:writeStructBegin('TimRoster')
-  if self.subscription then
+  if self.subscription ~= nil then
     oprot:writeFieldBegin('subscription', TType.STRING, 1)
     oprot:writeString(self.subscription)
     oprot:writeFieldEnd()
   end
-  if self.tid then
+  if self.tid ~= nil then
     oprot:writeFieldBegin('tid', TType.STRUCT, 2)
     self.tid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.name then
+  if self.name ~= nil then
     oprot:writeFieldBegin('name', TType.STRING, 3)
     oprot:writeString(self.name)
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 4)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter150,viter151 in pairs(self.extraMap) do
@@ -1730,17 +1730,17 @@ end
 
 function TimRemoteUserBean:write(oprot)
   oprot:writeStructBegin('TimRemoteUserBean')
-  if self.error then
+  if self.error ~= nil then
     oprot:writeFieldBegin('error', TType.STRUCT, 1)
     self.error:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.ub then
+  if self.ub ~= nil then
     oprot:writeFieldBegin('ub', TType.STRUCT, 2)
     self.ub:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 3)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter158,viter159 in pairs(self.extraMap) do
@@ -1803,17 +1803,17 @@ end
 
 function TimRemoteRoom:write(oprot)
   oprot:writeStructBegin('TimRemoteRoom')
-  if self.error then
+  if self.error ~= nil then
     oprot:writeFieldBegin('error', TType.STRUCT, 1)
     self.error:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.room then
+  if self.room ~= nil then
     oprot:writeFieldBegin('room', TType.STRUCT, 2)
     self.room:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 3)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter166,viter167 in pairs(self.extraMap) do
@@ -1889,17 +1889,17 @@ end
 
 function TimResponseBean:write(oprot)
   oprot:writeStructBegin('TimResponseBean')
-  if self.threadId then
+  if self.threadId ~= nil then
     oprot:writeFieldBegin('threadId', TType.STRING, 1)
     oprot:writeString(self.threadId)
     oprot:writeFieldEnd()
   end
-  if self.error then
+  if self.error ~= nil then
     oprot:writeFieldBegin('error', TType.STRUCT, 2)
     self.error:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.extraList then
+  if self.extraList ~= nil then
     oprot:writeFieldBegin('extraList', TType.LIST, 3)
     oprot:writeListBegin(TType.STRUCT, #self.extraList)
     for _,iter179 in ipairs(self.extraList) do
@@ -1908,7 +1908,7 @@ function TimResponseBean:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 4)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter180,viter181 in pairs(self.extraMap) do
@@ -1999,37 +1999,37 @@ end
 
 function TimSock5Bean:write(oprot)
   oprot:writeStructBegin('TimSock5Bean')
-  if self.fromTid then
+  if self.fromTid ~= nil then
     oprot:writeFieldBegin('fromTid', TType.STRUCT, 1)
     self.fromTid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.toTid then
+  if self.toTid ~= nil then
     oprot:writeFieldBegin('toTid', TType.STRUCT, 2)
     self.toTid:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.addr then
+  if self.addr ~= nil then
     oprot:writeFieldBegin('addr', TType.STRING, 3)
     oprot:writeString(self.addr)
     oprot:writeFieldEnd()
   end
-  if self.port then
+  if self.port ~= nil then
     oprot:writeFieldBegin('port', TType.I32, 4)
     oprot:writeI32(self.port)
     oprot:writeFieldEnd()
   end
-  if self.transport then
+  if self.transport ~= nil then
     oprot:writeFieldBegin('transport', TType.I16, 5)
     oprot:writeI16(self.transport)
     oprot:writeFieldEnd()
   end
-  if self.pubId then
+  if self.pubId ~= nil then
     oprot:writeFieldBegin('pubId', TType.STRING, 6)
     oprot:writeString(self.pubId)
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 7)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter188,viter189 in pairs(self.extraMap) do
@@ -2103,17 +2103,17 @@ end
 
 function TimSock5Bytes:write(oprot)
   oprot:writeStructBegin('TimSock5Bytes')
-  if self.pubId then
+  if self.pubId ~= nil then
     oprot:writeFieldBegin('pubId', TType.STRING, 1)
     oprot:writeString(self.pubId)
     oprot:writeFieldEnd()
   end
-  if self.index then
+  if self.index ~= nil then
     oprot:writeFieldBegin('index', TType.I32, 2)
     oprot:writeI32(self.index)
     oprot:writeFieldEnd()
   end
-  if self.bytes then
+  if self.bytes ~= nil then
     oprot:writeFieldBegin('bytes', TType.LIST, 3)
     oprot:writeListBegin(TType.STRING, #self.bytes)
     for _,iter201 in ipairs(self.bytes) do
@@ -2122,7 +2122,7 @@ function TimSock5Bytes:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 4)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter202,viter203 in pairs(self.extraMap) do
@@ -2190,22 +2190,22 @@ end
 
 function TimPage:write(oprot)
   oprot:writeStructBegin('TimPage')
-  if self.fromTimeStamp then
+  if self.fromTimeStamp ~= nil then
     oprot:writeFieldBegin('fromTimeStamp', TType.STRING, 1)
     oprot:writeString(self.fromTimeStamp)
     oprot:writeFieldEnd()
   end
-  if self.toTimeStamp then
+  if self.toTimeStamp ~= nil then
     oprot:writeFieldBegin('toTimeStamp', TType.STRING, 2)
     oprot:writeString(self.toTimeStamp)
     oprot:writeFieldEnd()
   end
-  if self.limitCount then
+  if self.limitCount ~= nil then
     oprot:writeFieldBegin('limitCount', TType.I32, 3)
     oprot:writeI32(self.limitCount)
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 4)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter210,viter211 in pairs(self.extraMap) do
@@ -2286,7 +2286,7 @@ end
 
 function TimMessageIq:write(oprot)
   oprot:writeStructBegin('TimMessageIq')
-  if self.tidlist then
+  if self.tidlist ~= nil then
     oprot:writeFieldBegin('tidlist', TType.LIST, 1)
     oprot:writeListBegin(TType.STRING, #self.tidlist)
     for _,iter228 in ipairs(self.tidlist) do
@@ -2295,12 +2295,12 @@ function TimMessageIq:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.timPage then
+  if self.timPage ~= nil then
     oprot:writeFieldBegin('timPage', TType.STRUCT, 2)
     self.timPage:write(oprot)
     oprot:writeFieldEnd()
   end
-  if self.midlist then
+  if self.midlist ~= nil then
     oprot:writeFieldBegin('midlist', TType.LIST, 3)
     oprot:writeListBegin(TType.STRING, #self.midlist)
     for _,iter229 in ipairs(self.midlist) do
@@ -2309,7 +2309,7 @@ function TimMessageIq:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 4)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter230,viter231 in pairs(self.extraMap) do
@@ -2363,17 +2363,17 @@ end
 
 function TimAuth:write(oprot)
   oprot:writeStructBegin('TimAuth')
-  if self.domain then
+  if self.domain ~= nil then
     oprot:writeFieldBegin('domain', TType.STRING, 1)
     oprot:writeString(self.domain)
     oprot:writeFieldEnd()
   end
-  if self.username then
+  if self.username ~= nil then
     oprot:writeFieldBegin('username', TType.STRING, 2)
     oprot:writeString(self.username)
     oprot:writeFieldEnd()
   end
-  if self.pwd then
+  if self.pwd ~= nil then
     oprot:writeFieldBegin('pwd', TType.STRING, 3)
     oprot:writeString(self.pwd)
     oprot:writeFieldEnd()
@@ -2443,12 +2443,12 @@ end
 
 function TimMBeanList:write(oprot)
   oprot:writeStructBegin('TimMBeanList')
-  if self.threadId then
+  if self.threadId ~= nil then
     oprot:writeFieldBegin('threadId', TType.STRING, 1)
     oprot:writeString(self.threadId)
     oprot:writeFieldEnd()
   end
-  if self.timMBeanList then
+  if self.timMBeanList ~= nil then
     oprot:writeFieldBegin('timMBeanList', TType.LIST, 2)
     oprot:writeListBegin(TType.STRUCT, #self.timMBeanList)
     for _,iter243 in ipairs(self.timMBeanList) do
@@ -2457,12 +2457,12 @@ function TimMBeanList:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.reqType then
+  if self.reqType ~= nil then
     oprot:writeFieldBegin('reqType', TType.STRING, 3)
     oprot:writeString(self.reqType)
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 4)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter244,viter245 in pairs(self.extraMap) do
@@ -2537,12 +2537,12 @@ end
 
 function TimPBeanList:write(oprot)
   oprot:writeStructBegin('TimPBeanList')
-  if self.threadId then
+  if self.threadId ~= nil then
     oprot:writeFieldBegin('threadId', TType.STRING, 1)
     oprot:writeString(self.threadId)
     oprot:writeFieldEnd()
   end
-  if self.timPBeanList then
+  if self.timPBeanList ~= nil then
     oprot:writeFieldBegin('timPBeanList', TType.LIST, 2)
     oprot:writeListBegin(TType.STRUCT, #self.timPBeanList)
     for _,iter257 in ipairs(self.timPBeanList) do
@@ -2551,12 +2551,12 @@ function TimPBeanList:write(oprot)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
-  if self.reqType then
+  if self.reqType ~= nil then
     oprot:writeFieldBegin('reqType', TType.STRING, 3)
     oprot:writeString(self.reqType)
     oprot:writeFieldEnd()
   end
-  if self.extraMap then
+  if self.extraMap ~= nil then
     oprot:writeFieldBegin('extraMap', TType.MAP, 4)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.extraMap))
     for kiter258,viter259 in pairs(self.extraMap) do
@@ -2610,17 +2610,17 @@ end
 
 function TimPropertyBean:write(oprot)
   oprot:writeStructBegin('TimPropertyBean')
-  if self.threadId then
+  if self.threadId ~= nil then
     oprot:writeFieldBegin('threadId', TType.STRING, 1)
     oprot:writeString(self.threadId)
     oprot:writeFieldEnd()
   end
-  if self.interflow then
+  if self.interflow ~= nil then
     oprot:writeFieldBegin('interflow', TType.STRING, 2)
     oprot:writeString(self.interflow)
     oprot:writeFieldEnd()
   end
-  if self.tls then
+  if self.tls ~= nil then
     oprot:writeFieldBegin('tls', TType.STRING, 3)
     oprot:writeString(self.tls)
     oprot:writeFieldEnd()

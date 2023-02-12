@@ -8,15 +8,18 @@ import (
 	"fmt"
 	"os"
 
-	gdao "github.com/donnie4w/gdao"
+	. "tim/common"
+
+	"tim/DB"
+	"tim/cluster"
+	"tim/daoService"
+	"tim/service"
+	"tim/ticker"
+
+	. "tim/protocol"
+
+	"github.com/donnie4w/gdao"
 	"github.com/donnie4w/go-logger/logger"
-	"tim.DB"
-	"tim.cluster"
-	. "tim.common"
-	"tim.daoService"
-	. "tim.protocol"
-	"tim.service"
-	"tim.ticker"
 )
 
 func init() {

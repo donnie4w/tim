@@ -12,8 +12,6 @@ using namespace ::apache::thrift::protocol;
 using namespace ::apache::thrift::transport;
 using namespace ::apache::thrift::server;
 
-using boost::shared_ptr;
-
 class ITimHandler : virtual public ITimIf {
  public:
   ITimHandler() {
@@ -274,11 +272,11 @@ class ITimHandler : virtual public ITimIf {
 
 int main(int argc, char **argv) {
   int port = 9090;
-  shared_ptr<ITimHandler> handler(new ITimHandler());
-  shared_ptr<TProcessor> processor(new ITimProcessor(handler));
-  shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
-  shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
-  shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+  ::std::shared_ptr<ITimHandler> handler(new ITimHandler());
+  ::std::shared_ptr<TProcessor> processor(new ITimProcessor(handler));
+  ::std::shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
+  ::std::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+  ::std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
   TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
   server.serve();
