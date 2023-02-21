@@ -50,19 +50,19 @@ func initLog(loglevel string) {
 	logger.SetRollingDaily(CF.GetLog())
 	switch loglevel {
 	case "debug":
-		logger.SetLevel(logger.DEBUG)
+		logger.SetLevel(logger.LEVEL_DEBUG)
 	case "info":
-		logger.SetLevel(logger.INFO)
+		logger.SetLevel(logger.LEVEL_INFO)
 	case "warn":
-		logger.SetLevel(logger.WARN)
+		logger.SetLevel(logger.LEVEL_WARN)
 	case "error":
-		logger.SetLevel(logger.ERROR)
+		logger.SetLevel(logger.LEVEL_ERROR)
 	default:
-		logger.SetLevel(logger.WARN)
+		logger.SetLevel(logger.LEVEL_WARN)
 	}
 }
 
-//tim f tim.xml c cluster.xml d debug
+// tim f tim.xml c cluster.xml d debug
 func main() {
 	flag.Parse()
 	wd, _ := os.Getwd()
