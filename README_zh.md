@@ -1,4 +1,4 @@
-## TIM即时通讯引擎    [[English]](https://github.com/donnie4w/tim/blob/main/README.md "[English]")
+## TIM即时通讯引擎    [[English]](https://github.com/donnie4w/tim/blob/master/README.md "[English]")
 
 > 前言：tim2.x 与 tim1.x
 tim2.x与tim1.x没有直接的关系，tim1.x是早期的一套im实现，而tim2.x是重新设计开发的另一套程序。tim1.x的实现有许多根本的设计问题，导致无法在程序的基础上继续扩展和优化。所有只能抛弃tim1.x的所有代码与设计方案，重新设计和实现。

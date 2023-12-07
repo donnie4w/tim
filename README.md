@@ -1,4 +1,4 @@
-## TIM   IM Engine    [[中文]](https://github.com/donnie4w/tim/blob/main/README_zh.md "[中文]")
+## TIM   IM Engine    [[中文]](https://github.com/donnie4w/tim/blob/master/README_zh.md "[中文]")
 
 > preface：tim2.x  vs  tim1.x
 
