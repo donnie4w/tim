@@ -413,11 +413,11 @@ func (this *timservice) modifyauth(bs []byte, ws *tlnet.Websocket) (err sys.ERRO
 		return sys.ERR_MODIFYAUTH
 	}
 	if wss, b := wsware.Get(ws); b {
+		t := int64(sys.BUSINESS_MODIFYAUTH)
 		if err = data.Handler.Modify(util.NodeToUUID(wss.tid.Node), tr.ReqStr, *tr.ReqStr2, wss.tid.Domain); err == nil {
-			t := int64(sys.BUSINESS_MODIFYAUTH)
 			wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMBUSINESS), T: &t}, sys.TIMACK)
 		} else {
-			return sys.ERR_MODIFYAUTH
+			wsware.SendWs(ws.Id, &TimAck{Ok: false, Error: sys.ERR_MODIFYAUTH.TimError(), TimType: int8(sys.TIMBUSINESS), T: &t}, sys.TIMACK)
 		}
 	}
 	return
