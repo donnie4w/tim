@@ -31,12 +31,14 @@ const (
 )
 
 const (
-	ORDER_INOF     int8 = 1
-	ORDER_REVOKE   int8 = 2
-	ORDER_BURN     int8 = 3
-	ORDER_BUSINESS int8 = 4
-	ORDER_STREAM   int8 = 5
-	ORDER_RESERVED int8 = 30
+	ORDER_INOF      int8 = 1
+	ORDER_REVOKE    int8 = 2
+	ORDER_BURN      int8 = 3
+	ORDER_BUSINESS  int8 = 4
+	ORDER_STREAM    int8 = 5
+	ORDER_BIGSTRING int8 = 6
+	ORDER_BIGBINARY int8 = 7
+	ORDER_RESERVED  int8 = 30
 )
 
 const (
@@ -63,6 +65,8 @@ var (
 	LA                   bool
 	TIMJSON              string
 	KEYSTORE             string
+	SEP_BIN              = byte(131)
+	SEP_STR              = "|"
 	Stat                 istat
 	Conf                 *ConfBean
 	Bind                 string
@@ -77,6 +81,8 @@ var (
 	DeviceLimit          = 1
 	DeviceTypeLimit      = 1
 	MaxBackup            = 3
+	NodeMaxlength        = 64
+	ForBitIfaceMap       *Map[TIMTYPE, int8]
 	OpenSSL              = &openssl{}
 	defaultPwd           = "tim20171212"
 	defaultAesencryptkey = "ie8*&(I984){bW{@a@#￥%H'"
