@@ -75,8 +75,30 @@ func (this *vgate) Register(fnode, vnode string) (_r bool) {
 }
 
 func (this *vgate) Sub(vnode string, uuid int64, wsId int64) {
+	// if vr, ok := this.vmap.Get(vnode); ok {
+	// 	vr.sub(uuid, wsId)
+	// 	if wsId > 0 {
+	// 		this.umapSub(wsId, vnode)
+	// 	}
+	// } else {
+	// 	this.strLock.Lock(vnode)
+	// 	defer this.strLock.Unlock(vnode)
+	// 	if !this.vmap.Has(vnode) {
+	// 		v := &VRoom{vnode: vnode, subuuid: NewMap[int64, int8](), subnode: NewMapL[int64, int8](), pushAuth: NewMap[string, int8](), lastupdatetime: time.Now().UnixNano()}
+	// 		this.vmap.Put(vnode, v)
+	// 		go this.Sub(vnode, uuid, wsId)
+	// 	}
+	// }
+	this._sub(vnode, uuid, wsId, false)
+}
+
+func (this *vgate) SubBinary(vnode string, uuid int64, wsId int64) {
+	this._sub(vnode, uuid, wsId, true)
+}
+
+func (this *vgate) _sub(vnode string, uuid int64, wsId int64, isBinary bool) {
 	if vr, ok := this.vmap.Get(vnode); ok {
-		vr.sub(uuid, wsId)
+		vr.sub(uuid, wsId, isBinary)
 		if wsId > 0 {
 			this.umapSub(wsId, vnode)
 		}
@@ -86,7 +108,7 @@ func (this *vgate) Sub(vnode string, uuid int64, wsId int64) {
 		if !this.vmap.Has(vnode) {
 			v := &VRoom{vnode: vnode, subuuid: NewMap[int64, int8](), subnode: NewMapL[int64, int8](), pushAuth: NewMap[string, int8](), lastupdatetime: time.Now().UnixNano()}
 			this.vmap.Put(vnode, v)
-			go this.Sub(vnode, uuid, wsId)
+			go this._sub(vnode, uuid, wsId, isBinary)
 		}
 	}
 }
@@ -188,11 +210,15 @@ type VRoom struct {
 	lastupdatetime int64
 }
 
-func (this *VRoom) sub(uuid int64, wsId int64) {
+func (this *VRoom) sub(uuid int64, wsId int64, isBinary bool) {
 	if uuid != sys.UUID {
 		this.subuuid.Put(uuid, 0)
 	} else {
-		this.subnode.Put(wsId, 0)
+		if isBinary {
+			this.subnode.Put(wsId, 1)
+		} else {
+			this.subnode.Put(wsId, 0)
+		}
 	}
 }
 
