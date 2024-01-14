@@ -15,6 +15,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/donnie4w/gofer/hashmap"
 	. "github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/simplelog/logging"
 )
@@ -49,6 +50,9 @@ func praseflag() {
 	}
 	if Conf.MaxBackup != nil {
 		MaxBackup = *Conf.MaxBackup
+	}
+	if Conf.NodeMaxlength != nil {
+		NodeMaxlength = *Conf.NodeMaxlength
 	}
 	if Conf.TaskLimit == nil || *Conf.TaskLimit <= 0 {
 		Conf.TaskLimit = &defaultTasks
@@ -91,6 +95,12 @@ func praseflag() {
 	}
 	if Conf.Keystore != nil {
 		KEYSTORE = *Conf.Keystore
+	}
+	if Conf.Security != nil && Conf.Security.ForBidIface != nil {
+		ForBitIfaceMap = hashmap.NewMap[TIMTYPE, int8]()
+		for _, v := range Conf.Security.ForBidIface {
+			ForBitIfaceMap.Put(TIMTYPE(v), 0)
+		}
 	}
 
 	debug.SetMemoryLimit(int64(Conf.Memlimit) * MB)
