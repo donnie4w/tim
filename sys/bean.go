@@ -36,6 +36,7 @@ type ConfBean struct {
 	TldbExtent           []*tldb   `json:"tldb.extent"`
 	Property             *property `json:"sql.property"`
 	Security             *security `json:"security"`
+	Notice               *notice   `json:"notice"`
 	NoDBAuth             *noDBAuth `json:"nodbauth"`
 	Listen               int       `json:"im.listen"`
 	Ssl_crt              string    `json:"ssl_certificate"`
@@ -46,6 +47,7 @@ type ConfBean struct {
 	Public               string    `json:"public.node"`
 	CacheExpireTime      int       `json:"cache.expiretime"`
 	Pwd                  string    `json:"cluser.pwd"`
+	NodeMaxlength        *int      `json:"node.maxlength"`
 	EncryptKey           string    `json:"cluser.encryptkey"`
 	ClusListen           string    `json:"cluser.listen"`
 	AdminListen          string    `json:"admin.listen"`
@@ -103,9 +105,14 @@ type property struct {
 type security struct {
 	MaxDatalimit   int64   `json:"maxdata"`
 	ReqHzSecond    int     `json:"reqhzsecond"`
-	ForBidRegister bool    `json:"forbidregister"`
-	ForBidToken    bool    `json:"forbidtoken"`
-	ConnectAuthUrl *string `json:"connectauthurl"`
+	ForBidRegister bool    `json:"forbid.register"`
+	ForBidToken    bool    `json:"forbid.token"`
+	ConnectAuthUrl *string `json:"connectauth.url"`
+	ForBidIface    []int8  `json:"forbid.ifaces"`
+}
+
+type notice struct {
+	Loginstat *string `json:"loginstat.url"`
 }
 
 type openssl struct {
