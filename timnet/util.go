@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	. "github.com/donnie4w/gofer/buffer"
 	. "github.com/donnie4w/gofer/hashmap"
 	"github.com/donnie4w/gofer/httputil"
 	. "github.com/donnie4w/gofer/util"
@@ -87,4 +88,66 @@ func connectAuth(bs []byte) (_r bool) {
 		return true
 	}
 	return
+}
+
+var bigMap = NewMap[int64, *bm]()
+
+type bm struct {
+	buf    *Buffer
+	length int
+}
+
+func (this *bm) addData(bs []byte) (_bs []byte, ok bool) {
+	if l := this.length - this.buf.Len() - len(bs); l > 0 {
+		this.buf.Write(bs)
+		return nil, false
+	} else if l == 0 {
+		this.buf.Write(bs)
+		return this.buf.Bytes(), true
+	} else if l < 0 {
+		return bs, true
+	}
+	return
+}
+
+func addBigData(hc *tlnet.HttpContext, bs []byte) {
+	if m, ok := bigMap.Get(hc.WS.Id); ok {
+		if _bs, b := m.addData(bs); b {
+			bigMap.Del(hc.WS.Id)
+			parseWsData(_bs, hc)
+		}
+	}
+}
+
+func newBigData(hc *tlnet.HttpContext, bs []byte, len int) {
+	bigMap.Put(hc.WS.Id, &bm{buf: NewBufferBySlice(bs), length: len})
+}
+
+func parseBigData(hc *tlnet.HttpContext, bs []byte) {
+	if len(bs) < 6 {
+		return
+	}
+	length := int(BytesToInt32(bs[1:5]))
+	if fg := length - len(bs); fg == 0 {
+		parseWsData(bs, hc)
+	} else if fg > 0 {
+		newBigData(hc, bs, length)
+	} else {
+		go sys.SendWs(hc.WS.Id, &TimAck{Ok: false, TimType: int8(sys.TIMBIGBINARY), Error: sys.ERR_BIGDATA.TimError()}, sys.TIMACK)
+	}
+}
+
+func rmBigDataId(id int64) {
+	bigMap.Del(id)
+}
+
+func isBigData(id int64) bool {
+	return bigMap.Has(id)
+}
+
+func isForBitIface(b byte) bool {
+	if sys.ForBitIfaceMap != nil {
+		return sys.ForBitIfaceMap.Has(sys.TIMTYPE(b & 0x7f))
+	}
+	return false
 }
