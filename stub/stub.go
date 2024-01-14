@@ -199,12 +199,14 @@ func (p *TimError) Validate() error {
 //  - Error
 //  - T
 //  - N
+//  - AckInt
 type TimAck struct {
   Ok bool `thrift:"ok,1,required" db:"ok" json:"ok"`
   TimType int8 `thrift:"timType,2,required" db:"timType" json:"timType"`
   Error *TimError `thrift:"error,3" db:"error" json:"error,omitempty"`
   T *int64 `thrift:"t,4" db:"t" json:"t,omitempty"`
   N *string `thrift:"n,5" db:"n" json:"n,omitempty"`
+  AckInt *int64 `thrift:"ackInt,6" db:"ackInt" json:"ackInt,omitempty"`
 }
 
 func NewTimAck() *TimAck {
@@ -240,6 +242,13 @@ func (p *TimAck) GetN() string {
   }
 return *p.N
 }
+var TimAck_AckInt_DEFAULT int64
+func (p *TimAck) GetAckInt() int64 {
+  if !p.IsSetAckInt() {
+    return TimAck_AckInt_DEFAULT
+  }
+return *p.AckInt
+}
 func (p *TimAck) IsSetError() bool {
   return p.Error != nil
 }
@@ -250,6 +259,10 @@ func (p *TimAck) IsSetT() bool {
 
 func (p *TimAck) IsSetN() bool {
   return p.N != nil
+}
+
+func (p *TimAck) IsSetAckInt() bool {
+  return p.AckInt != nil
 }
 
 func (p *TimAck) Read(ctx context.Context, iprot thrift.TProtocol) error {
@@ -312,6 +325,16 @@ func (p *TimAck) Read(ctx context.Context, iprot thrift.TProtocol) error {
     case 5:
       if fieldTypeId == thrift.STRING {
         if err := p.ReadField5(ctx, iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+          return err
+        }
+      }
+    case 6:
+      if fieldTypeId == thrift.I64 {
+        if err := p.ReadField6(ctx, iprot); err != nil {
           return err
         }
       } else {
@@ -385,6 +408,15 @@ func (p *TimAck)  ReadField5(ctx context.Context, iprot thrift.TProtocol) error 
   return nil
 }
 
+func (p *TimAck)  ReadField6(ctx context.Context, iprot thrift.TProtocol) error {
+  if v, err := iprot.ReadI64(ctx); err != nil {
+  return thrift.PrependError("error reading field 6: ", err)
+} else {
+  p.AckInt = &v
+}
+  return nil
+}
+
 func (p *TimAck) Write(ctx context.Context, oprot thrift.TProtocol) error {
   if err := oprot.WriteStructBegin(ctx, "TimAck"); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
@@ -394,6 +426,7 @@ func (p *TimAck) Write(ctx context.Context, oprot thrift.TProtocol) error {
     if err := p.writeField3(ctx, oprot); err != nil { return err }
     if err := p.writeField4(ctx, oprot); err != nil { return err }
     if err := p.writeField5(ctx, oprot); err != nil { return err }
+    if err := p.writeField6(ctx, oprot); err != nil { return err }
   }
   if err := oprot.WriteFieldStop(ctx); err != nil {
     return thrift.PrependError("write field stop error: ", err) }
@@ -459,6 +492,18 @@ func (p *TimAck) writeField5(ctx context.Context, oprot thrift.TProtocol) (err e
   return err
 }
 
+func (p *TimAck) writeField6(ctx context.Context, oprot thrift.TProtocol) (err error) {
+  if p.IsSetAckInt() {
+    if err := oprot.WriteFieldBegin(ctx, "ackInt", thrift.I64, 6); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 6:ackInt: ", p), err) }
+    if err := oprot.WriteI64(ctx, int64(*p.AckInt)); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T.ackInt (6) field write error: ", p), err) }
+    if err := oprot.WriteFieldEnd(ctx); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 6:ackInt: ", p), err) }
+  }
+  return err
+}
+
 func (p *TimAck) Equals(other *TimAck) bool {
   if p == other {
     return true
@@ -479,6 +524,12 @@ func (p *TimAck) Equals(other *TimAck) bool {
       return false
     }
     if (*p.N) != (*other.N) { return false }
+  }
+  if p.AckInt != other.AckInt {
+    if p.AckInt == nil || other.AckInt == nil {
+      return false
+    }
+    if (*p.AckInt) != (*other.AckInt) { return false }
   }
   return true
 }
