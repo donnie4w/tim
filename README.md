@@ -102,8 +102,8 @@ Tim's deployment and startup do not rely on any third-party components or servic
 ------------
 
 - [TIM development and usage document](https://tlnet.top/timdoc "TIM development and usage document")
--[ TIM source code address](https://github.com/donnie4w/tim " TIM source code address")
--[ Online experience](https://tim.tlnet.top/ " Online experience")
+- [ TIM source code address](https://github.com/donnie4w/tim " TIM source code address")
+- [ Online experience](https://tim.tlnet.top/ " Online experience")
 - [Download address of TIM](https://tlnet.top/download "Download address of TIM")
 
 ------------
