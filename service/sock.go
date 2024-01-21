@@ -49,6 +49,7 @@ func (this *_wsWare) AddTid(ws *tlnet.Websocket, tid *Tid) {
 		this.uMap.Put(tid.Node, append(a, ws.Id))
 	}
 	go sys.Csuser(tid.Node, true, ws.Id)
+	go loginstat(tid.Node, true, tid, ws.Id)
 }
 
 func (this *_wsWare) SetJsonOn(ws *tlnet.Websocket) {
@@ -63,6 +64,26 @@ func (this *_wsWare) SendNode(node string, ts thrift.TStruct, tt sys.TIMTYPE) (_
 			if this.SendWs(id, ts, tt) {
 				_r = true
 			}
+		}
+	}
+	return
+}
+
+func (this *_wsWare) SendBigData(node string, data []byte, tt sys.TIMTYPE) (_r bool) {
+	if ids, ok := this.uMap.Get(node); ok {
+		for _, id := range ids {
+			if this.SendBigDataByWs(id, data, tt) {
+				_r = true
+			}
+		}
+	}
+	return
+}
+
+func (this *_wsWare) SendBigDataByWs(id int64, data []byte, tt sys.TIMTYPE) (_r bool) {
+	if wss, ok := this.wsmap.Get(id); ok {
+		if err := wss.sendBigData(data, tt); err == nil {
+			_r = ok
 		}
 	}
 	return
@@ -177,6 +198,7 @@ func (this *_wsWare) delId(id int64) {
 				this.uMap.Del(sk.tid.Node)
 				go sys.Csuser(sk.tid.Node, false, id)
 				go sys.Interrupt(sk.tid)
+				go loginstat(sk.tid.Node, false, sk.tid, id)
 			}
 		}
 	}
@@ -248,6 +270,13 @@ func (this *WsSock) send(ts thrift.TStruct, t sys.TIMTYPE, sync bool) (err error
 	}
 END:
 	return
+}
+
+func (this *WsSock) sendBigData(data []byte, t sys.TIMTYPE) (err error) {
+	buf := NewBuffer()
+	buf.WriteByte(byte(t))
+	buf.Write(data)
+	return this._send(buf)
 }
 
 func (this *WsSock) close() {
