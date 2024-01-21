@@ -80,8 +80,10 @@ func CheckUUID(uuid uint64) bool {
 }
 
 func CheckNode(node string) bool {
-	if _r := NodeToUUID(node); _r > 0 {
-		return CheckUUID(_r)
+	if len(node) <= sys.NodeMaxlength {
+		if _r := NodeToUUID(node); _r > 0 {
+			return CheckUUID(_r)
+		}
 	}
 	return false
 }
