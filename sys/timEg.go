@@ -19,24 +19,27 @@ type TIMTYPE byte
 const (
 	TIMEX TIMTYPE = 0
 
-	TIMACK           TIMTYPE = 12
-	TIMPING          TIMTYPE = 13
-	TIMREGISTER      TIMTYPE = 14
-	TIMTOKEN         TIMTYPE = 15
-	TIMAUTH          TIMTYPE = 16
-	TIMOFFLINEMSG    TIMTYPE = 17
-	TIMOFFLINEMSGEND TIMTYPE = 18
-	TIMBROADPRESENCE TIMTYPE = 19
-	TIMLOGOUT        TIMTYPE = 20
-	TIMPULLMESSAGE   TIMTYPE = 21
-	TIMVROOM         TIMTYPE = 22
-	TIMBUSINESS      TIMTYPE = 41
-	TIMNODES         TIMTYPE = 42
-	TIMMESSAGE       TIMTYPE = 90
-	TIMPRESENCE      TIMTYPE = 91
-	TIMREVOKEMESSAGE TIMTYPE = 92
-	TIMBURNMESSAGE   TIMTYPE = 93
-	TIMSTREAM        TIMTYPE = 94
+	TIMACK             TIMTYPE = 12
+	TIMPING            TIMTYPE = 13
+	TIMREGISTER        TIMTYPE = 14
+	TIMTOKEN           TIMTYPE = 15
+	TIMAUTH            TIMTYPE = 16
+	TIMOFFLINEMSG      TIMTYPE = 17
+	TIMOFFLINEMSGEND   TIMTYPE = 18
+	TIMBROADPRESENCE   TIMTYPE = 19
+	TIMLOGOUT          TIMTYPE = 20
+	TIMPULLMESSAGE     TIMTYPE = 21
+	TIMVROOM           TIMTYPE = 22
+	TIMBUSINESS        TIMTYPE = 41
+	TIMNODES           TIMTYPE = 42
+	TIMMESSAGE         TIMTYPE = 90
+	TIMPRESENCE        TIMTYPE = 91
+	TIMREVOKEMESSAGE   TIMTYPE = 92
+	TIMBURNMESSAGE     TIMTYPE = 93
+	TIMSTREAM          TIMTYPE = 94
+	TIMBIGSTRING       TIMTYPE = 95
+	TIMBIGBINARY       TIMTYPE = 96
+	TIMBIGBINARYSTREAM TIMTYPE = 97
 )
 
 const (
@@ -84,25 +87,28 @@ var (
 )
 
 var (
-	AckHandle           func([]byte) (err ERROR)
-	PingHandle          func(*tlnet.Websocket) (err ERROR)
-	RegisterHandle      func([]byte) (node string, err ERROR)
-	TokenHandle         func([]byte) (_r int64, err ERROR)
-	AuthHandle          func([]byte, *tlnet.Websocket) (err ERROR)
-	OfflinemsgHandle    func(*tlnet.Websocket) (err ERROR)
-	BroadpresenceHandle func([]byte, *tlnet.Websocket) (err ERROR)
-	PullMessageHandle   func([]byte, *tlnet.Websocket) (err ERROR)
-	VRoomHandle         func([]byte, *tlnet.Websocket) (err ERROR)
-	MessageHandle       func([]byte, *tlnet.Websocket) (err ERROR)
-	RevokemessageHandle func([]byte, *tlnet.Websocket) (err ERROR)
-	BurnmessageHandle   func([]byte, *tlnet.Websocket) (err ERROR)
-	PresenceHandle      func([]byte, *tlnet.Websocket) (err ERROR)
-	StreamHandle        func([]byte, *tlnet.Websocket) (err ERROR)
-	BusinessHandle      func([]byte, *tlnet.Websocket) (err ERROR)
-	NodeInfoHandle      func([]byte, *tlnet.Websocket) (err ERROR)
+	AckHandle             func([]byte) (err ERROR)
+	PingHandle            func(*tlnet.Websocket) (err ERROR)
+	RegisterHandle        func([]byte) (node string, err ERROR)
+	TokenHandle           func([]byte) (_r int64, err ERROR)
+	AuthHandle            func([]byte, *tlnet.Websocket) (err ERROR)
+	OfflinemsgHandle      func(*tlnet.Websocket) (err ERROR)
+	BroadpresenceHandle   func([]byte, *tlnet.Websocket) (err ERROR)
+	PullMessageHandle     func([]byte, *tlnet.Websocket) (err ERROR)
+	VRoomHandle           func([]byte, *tlnet.Websocket) (err ERROR)
+	MessageHandle         func([]byte, *tlnet.Websocket) (err ERROR)
+	BigStringHandle       func([]byte, *tlnet.Websocket) (err ERROR)
+	BigBinaryHandle       func([]byte, *tlnet.Websocket) (err ERROR)
+	BigBinaryStreamHandle func([]byte, *tlnet.Websocket) (err ERROR)
+	RevokemessageHandle   func([]byte, *tlnet.Websocket) (err ERROR)
+	BurnmessageHandle     func([]byte, *tlnet.Websocket) (err ERROR)
+	PresenceHandle        func([]byte, *tlnet.Websocket) (err ERROR)
+	StreamHandle          func([]byte, *tlnet.Websocket) (err ERROR)
+	BusinessHandle        func([]byte, *tlnet.Websocket) (err ERROR)
+	NodeInfoHandle        func([]byte, *tlnet.Websocket) (err ERROR)
 
 	DataInit             func() error
-	OsToken              func(string, *string) (int64, ERROR)
+	OsToken              func(string, *string, *string) (int64, string, ERROR)
 	OsRegister           func(string, string, *string) (string, ERROR)
 	OsUserBean           func(string, *TimUserBean) ERROR
 	OsRoom               func(string, string, *string, int8) (string, ERROR)
@@ -113,6 +119,7 @@ var (
 	TimSteamProcessor    func(*VBean) ERROR
 	OsMessage            func(*TimNodes, *TimMessage) (err ERROR)
 	OsModify             func(string, string, *string) ERROR
+	OsVroomprocess       func(string, int8) string
 	CsMessage            func(*TimMessage, int8) bool
 	CsPresence           func(*TimPresence, int8) bool
 	CsVBean              func(*VBean) bool
