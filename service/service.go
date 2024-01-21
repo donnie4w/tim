@@ -7,7 +7,9 @@
 package service
 
 import (
+	"bytes"
 	"sort"
+	"strings"
 	"time"
 
 	. "github.com/donnie4w/gofer/util"
@@ -65,16 +67,27 @@ func (this *timservice) ack(bs []byte) (err sys.ERROR) {
 	return
 }
 
-func (this *timservice) ostoken(node string, domain *string) (_r int64, e sys.ERROR) {
+func (this *timservice) ostoken(nodeorname string, password, domain *string) (_r int64, _n string, e sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
-	if !existUser(&Tid{Node: node, Domain: domain}) {
-		return _r, sys.ERR_NOEXIST
+	if password != nil {
+		var node string
+		if node, e = data.Handler.Token(nodeorname, *password, domain); e == nil {
+			tid := &Tid{Node: node, Domain: domain}
+			_r = token()
+			_n = node
+			tokenTempCache.Add(_r, tid)
+		}
+	} else {
+		if !existUser(&Tid{Node: nodeorname, Domain: domain}) {
+			return _r, "", sys.ERR_NOEXIST
+		}
+		tid := &Tid{Node: nodeorname, Domain: domain}
+		_r = token()
+		_n = nodeorname
+		tokenTempCache.Add(_r, tid)
 	}
-	tid := &Tid{Node: node, Domain: domain}
-	_r = token()
-	tokenTempCache.Add(_r, tid)
 	return
 }
 
@@ -117,6 +130,8 @@ func (this *timservice) auth(bs []byte, ws *tlnet.Websocket) (e sys.ERROR) {
 				if !isblock(tid.Node) {
 					isAuth = true
 				}
+			} else {
+				return sys.ERR_TOKEN
 			}
 		} else if ta.Name != nil && ta.Pwd != nil && !isblock(*ta.Name) {
 			if _r, err := data.Handler.Login(*ta.Name, *ta.Pwd, ta.Domain); err == nil {
@@ -189,18 +204,47 @@ func (this *timservice) osmessage(tm *TimMessage) (err sys.ERROR) {
 	return sys.TimMessageProcessor(tm, sys.TRANS_SOURCE)
 }
 
+func (this *timservice) bigString(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
+	bigstring := string(bs[5:])
+	idx := strings.Index(bigstring, sys.SEP_STR)
+	datastring := bigstring[idx+1:]
+	if wss, b := wsware.Get(ws); b {
+		_r = this.messagehandle(nil, &TimMessage{MsType: 2, OdType: sys.ORDER_BIGSTRING, DataString: &datastring, FromTid: wss.tid, ToTid: &Tid{Node: bigstring[:idx]}})
+	}
+	return
+}
+
+func (this *timservice) bigBinary(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
+	idx := bytes.IndexByte(bs[5:], sys.SEP_BIN)
+	if wss, b := wsware.Get(ws); b {
+		_r = this.messagehandle(nil, &TimMessage{MsType: 2, OdType: sys.ORDER_BIGBINARY, DataBinary: bs[5:][idx+1:], FromTid: wss.tid, ToTid: &Tid{Node: string(bs[5:][:idx])}})
+	}
+	return
+}
+
+func (this *timservice) bigBinaryStreamHandle(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
+	idx := bytes.IndexByte(bs[5:], sys.SEP_BIN)
+	if wss, b := wsware.Get(ws); b {
+		ts := &TimStream{ID: RandId(), VNode: string(bs[5:][:idx]), Body: bs[5:][idx+1:], FromNode: wss.tid.Node}
+		return this.streamhandler(ts, ws)
+	}
+	return
+}
+
 func (this *timservice) message(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
 	tm := newTimMessage(bs)
-	if tm == nil || tm.MsType == sys.SOURCE_OS {
+	if tm == nil {
+		return sys.ERR_FORMAT
+	}
+	if tm.MsType == sys.SOURCE_OS {
 		return sys.ERR_PARAMS
 	}
 	if !checkTid(tm.ToTid) || !checkTid(tm.RoomTid) {
 		return sys.ERR_ACCOUNT
 	}
-
 	if wss, b := wsware.Get(ws); b {
 		tm.FromTid = wss.tid
 		if !existUser(tm.ToTid) || !existGroup(tm.RoomTid) {
@@ -219,26 +263,31 @@ func (this *timservice) message(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
 					tid := util.ChatIdByRoom(tm.RoomTid.Node, wss.tid.Domain)
 					if _t, err := data.Handler.GetMessageByMid(tid, *tm.Mid); err == nil && _t != nil {
 						if _t.FromTid.Node == tm.FromTid.Node && _t.RoomTid.Node == tm.RoomTid.Node {
-							err = data.Handler.DelMessageByMid(tid, *tm.Mid)
+							if err = data.Handler.DelMessageByMid(tid, *tm.Mid); err == nil {
+								t := int64(sys.SOURCE_ROOM)
+								wsware.SendNode(tm.FromTid.Node, &TimAck{Ok: true, TimType: int8(sys.TIMREVOKEMESSAGE), N: &tm.RoomTid.Node, T: &t, AckInt: tm.Mid}, sys.TIMACK)
+							} else {
+								return sys.ERR_DATABASE
+							}
 						} else {
 							return sys.ERR_AUTH
 						}
 					} else {
 						return sys.ERR_PARAMS
 					}
-				case sys.ORDER_STREAM:
+				case sys.ORDER_STREAM, sys.ORDER_BIGSTRING, sys.ORDER_BIGBINARY:
 				default:
 					return sys.ERR_PARAMS
 				}
 				if err == nil {
-					if tm.OdType != sys.ORDER_STREAM {
+					if tm.OdType == sys.ORDER_INOF {
 						wsware.SendNode(tm.FromTid.Node, tm, sys.TIMMESSAGE)
 					}
 					if rs := data.Handler.GroupRoster(tm.RoomTid.Node); rs != nil && len(rs) > 0 {
 						for _, u := range rs {
 							if u != wss.tid.Node {
-								t := newTimMessage(bs)
-								t.FromTid, t.Mid, t.Timestamp, t.ToTid = wss.tid, tm.Mid, tm.Timestamp, &Tid{Node: u}
+								t := shallowcloneTimMessageData(tm)
+								t.FromTid, t.ToTid = wss.tid, &Tid{Node: u}
 								util.GoPoolTx.Go(func() { sys.TimMessageProcessor(t, sys.TRANS_SOURCE) })
 							}
 						}
@@ -283,9 +332,10 @@ func (this *timservice) messagehandle(bs []byte, tm *TimMessage) (_r sys.ERROR) 
 		if _t, err := data.Handler.GetMessageByMid(tid, *tm.Mid); err == nil && _t != nil {
 			if _t.FromTid.Node == tm.FromTid.Node && _t.ToTid.Node == tm.ToTid.Node {
 				if err = data.Handler.DelMessageByMid(tid, *tm.Mid); err == nil {
-					t := newTimMessage(bs)
-					t.FromTid, t.ToTid = tm.FromTid, tm.FromTid
-					sys.TimMessageProcessor(t, sys.TRANS_SOURCE)
+					t := int64(sys.SOURCE_USER)
+					wsware.SendNode(tm.FromTid.Node, &TimAck{Ok: true, TimType: int8(sys.TIMREVOKEMESSAGE), N: &tm.ToTid.Node, T: &t, AckInt: tm.Mid}, sys.TIMACK)
+				} else {
+					return sys.ERR_DATABASE
 				}
 				ok = true
 			} else {
@@ -302,9 +352,10 @@ func (this *timservice) messagehandle(bs []byte, tm *TimMessage) (_r sys.ERROR) 
 		if _t, err := data.Handler.GetMessageByMid(tid, *tm.Mid); err == nil && _t != nil {
 			if _t.FromTid.Node == tm.ToTid.Node && _t.ToTid.Node == tm.FromTid.Node {
 				if err = data.Handler.DelMessageByMid(tid, *tm.Mid); err == nil {
-					t := newTimMessage(bs)
-					t.FromTid, t.ToTid = tm.FromTid, tm.FromTid
-					sys.TimMessageProcessor(t, sys.TRANS_SOURCE)
+					t := int64(sys.SOURCE_USER)
+					wsware.SendNode(tm.FromTid.Node, &TimAck{Ok: true, TimType: int8(sys.TIMBURNMESSAGE), N: &tm.ToTid.Node, T: &t, AckInt: tm.Mid}, sys.TIMACK)
+				} else {
+					return sys.ERR_DATABASE
 				}
 				ok = true
 			} else {
@@ -313,7 +364,7 @@ func (this *timservice) messagehandle(bs []byte, tm *TimMessage) (_r sys.ERROR) 
 		} else {
 			return sys.ERR_PARAMS
 		}
-	case sys.ORDER_BUSINESS, sys.ORDER_STREAM:
+	case sys.ORDER_BUSINESS, sys.ORDER_STREAM, sys.ORDER_BIGSTRING, sys.ORDER_BIGBINARY:
 	default:
 		if tm.OdType <= sys.ORDER_RESERVED {
 			return sys.ERR_PARAMS
@@ -333,7 +384,7 @@ func (this *timservice) presence(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) 
 	defer sys.Stat.TxDone()
 	tp := newTimPresence(bs)
 	if tp == nil {
-		return sys.ERR_PARAMS
+		return sys.ERR_FORMAT
 	}
 	if !checkTid(tp.ToTid) || !checkList(tp.ToList) {
 		return sys.ERR_ACCOUNT
@@ -417,7 +468,7 @@ func (this *timservice) broadpresence(bs []byte, ws *tlnet.Websocket) (e sys.ERR
 	defer sys.Stat.TxDone()
 	tp := newTimPresence(bs)
 	if tp == nil {
-		return sys.ERR_PARAMS
+		return sys.ERR_FORMAT
 	}
 	if wss, ok := wsware.Get(ws); ok {
 		fid := wss.tid
@@ -524,7 +575,11 @@ func (this *timservice) vroomprocess(bs []byte, ws *tlnet.Websocket) (err sys.ER
 			if tr.Node == nil || !util.CheckNode(*tr.Node) {
 				return sys.ERR_PARAMS
 			}
-			vgate.VGate.Sub(*tr.Node, sys.UUID, wss.ws.Id)
+			if tr.ReqInt == nil {
+				vgate.VGate.Sub(*tr.Node, sys.UUID, wss.ws.Id)
+			} else if *tr.ReqInt == 1 {
+				vgate.VGate.SubBinary(*tr.Node, sys.UUID, wss.ws.Id)
+			}
 			if sys.CsVBean(&VBean{Rtype: 5, Vnode: *tr.Node, Rnode: &wss.tid.Node}) {
 				wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMVROOM), N: tr.Node, T: &t}, sys.TIMACK)
 			} else {
@@ -550,6 +605,10 @@ func (this *timservice) stream(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
 	ts := newTimStream(bs)
+	return this.streamhandler(ts, ws)
+}
+
+func (this *timservice) streamhandler(ts *TimStream, ws *tlnet.Websocket) (err sys.ERROR) {
 	if ts == nil || !util.CheckNode(ts.VNode) {
 		return sys.ERR_PARAMS
 	}
@@ -564,8 +623,6 @@ func (this *timservice) stream(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 				return
 			}
 		}
-		// vb := &VBean{Vnode: ts.VNode, Rnode: &wss.tid.Node, Body: ts.Body, Dtype: ts.Dtype, StreamId: &ts.ID}
-		// go sys.TimSteamProcessor(vb)
 		csvb := &VBean{Vnode: ts.VNode, Rnode: &wss.tid.Node, Body: ts.Body, Dtype: ts.Dtype, Rtype: 7, StreamId: &ts.ID}
 		sys.CsVBean(csvb)
 	}
