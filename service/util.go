@@ -11,6 +11,7 @@ import (
 
 	"github.com/donnie4w/gofer/cache"
 	. "github.com/donnie4w/gofer/hashmap"
+	"github.com/donnie4w/gofer/httputil"
 	. "github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/data"
 	. "github.com/donnie4w/tim/stub"
@@ -18,7 +19,7 @@ import (
 	"github.com/donnie4w/tim/util"
 )
 
-var chatIdTempCache = cache.NewLruCache[int64](1 << 15)
+var chatIdTempCache = NewLimitMap[uint64, int64](1 << 15)
 var tokenTempCache = cache.NewLruCache[*Tid](1 << 13)
 var userCache = NewLimitMap[uint32, int8](1 << 19)
 var groupCache = NewLimitMap[uint32, int8](1 << 19)
@@ -39,12 +40,16 @@ func init() {
 	sys.BusinessHandle = service.business
 	sys.VRoomHandle = service.vroomprocess
 	sys.StreamHandle = service.stream
+	sys.BigStringHandle = service.bigString
+	sys.BigBinaryHandle = service.bigBinary
+	sys.BigBinaryStreamHandle = service.bigBinaryStreamHandle
 	sys.NodeInfoHandle = service.nodeinfo
 	sys.OsModify = service.sysmodifyauth
 	sys.OsMessage = sysMessage
 	sys.OsUserBean = service.osuserbean
 	sys.OsRoom = service.osnewgroup
 	sys.OsRoomBean = service.osModifygroupInfo
+	sys.OsVroomprocess = service.osvroomprocess
 	sys.TimMessageProcessor = timMessage
 	sys.TimPresenceProcessor = timPresence
 	sys.TimSteamProcessor = timStream
@@ -64,7 +69,7 @@ func init() {
 }
 
 func token() (_r int64) {
-	return RandId()
+	return int64(CRC32(Int64ToBytes(RandId())))
 }
 
 func existUser(tid *Tid) (_r bool) {
@@ -121,12 +126,12 @@ func authTidNode(fTid, tTid *Tid) (ok bool) {
 	}
 	if sys.Conf.CacheExpireTime > 0 {
 		cid := util.ChatIdByNode(fTid.Node, tTid.Node, fTid.Domain)
-		if t, b := chatIdTempCache.Get(cid); !b || t+int64(sys.Conf.CacheExpireTime*int(time.Second)) < time.Now().Unix() {
+		if t, b := chatIdTempCache.Get(cid); !b || t+int64(sys.Conf.CacheExpireTime*int(time.Second)) < time.Now().UnixNano() {
 			if ok = data.Handler.AuthUserAndUser(fTid.Node, tTid.Node, fTid.Domain); ok {
-				chatIdTempCache.Add(cid, time.Now().Unix())
+				chatIdTempCache.Put(cid, time.Now().UnixNano())
 			}
 		} else {
-			chatIdTempCache.Add(cid, time.Now().Unix())
+			chatIdTempCache.Put(cid, time.Now().UnixNano())
 			ok = true
 		}
 	} else {
@@ -142,12 +147,12 @@ func authGroup(gnode, unode string, domain *string) (ok bool) {
 	}
 	if sys.Conf.CacheExpireTime > 0 {
 		rid := util.RelateIdForGroup(gnode, unode, domain)
-		if t, b := chatIdTempCache.Get(rid); !b || t+int64(sys.Conf.CacheExpireTime*int(time.Second)) < time.Now().Unix() {
+		if t, b := chatIdTempCache.Get(rid); !b || t+int64(sys.Conf.CacheExpireTime*int(time.Second)) < time.Now().UnixNano() {
 			if ok, _ = data.Handler.AuthGroupAndUser(gnode, unode, domain); ok {
-				chatIdTempCache.Add(rid, time.Now().Unix())
+				chatIdTempCache.Put(rid, time.Now().UnixNano())
 			}
 		} else {
-			chatIdTempCache.Add(rid, time.Now().Unix())
+			chatIdTempCache.Put(rid, time.Now().UnixNano())
 			ok = true
 		}
 	} else {
@@ -157,37 +162,62 @@ func authGroup(gnode, unode string, domain *string) (ok bool) {
 }
 
 func newTimMessage(bs []byte) (tm *TimMessage) {
+	var err error
 	if util.JTP(bs[0]) {
-		tm, _ = JsonDecode[*TimMessage](bs[1:])
+		tm, err = JsonDecode[*TimMessage](bs[1:])
 	} else {
-		tm, _ = TDecode(bs[1:], &TimMessage{})
+		tm, err = TDecode(bs[1:], &TimMessage{})
 	}
-	if tm.ID == nil {
-		id := RandId()
-		tm.ID = &id
+	if err == nil {
+		if tm.ID == nil {
+			id := RandId()
+			tm.ID = &id
+		}
+		t := time.Now().UnixNano()
+		tm.Timestamp = &t
 	}
-	t := time.Now().UnixNano()
-	tm.Timestamp = &t
+	return
+}
+
+func shallowcloneTimMessageData(tm *TimMessage) (_r *TimMessage) {
+	_r = &TimMessage{MsType: tm.MsType, OdType: tm.OdType, BnType: tm.BnType, Mid: tm.Mid, ID: tm.ID}
+	_r.DataBinary = tm.DataBinary
+	_r.DataString = tm.DataString
+	_r.Extend = tm.Extend
+	_r.Extra = tm.Extra
+	_r.Timestamp = tm.Timestamp
+	_r.Udshow = tm.Udshow
+	_r.Udtype = tm.Udtype
+	_r.FromTid = tm.FromTid
+	_r.ToTid = tm.ToTid
+	_r.RoomTid = tm.RoomTid
 	return
 }
 
 func newTimPresence(bs []byte) (tp *TimPresence) {
+	var err error
 	if util.JTP(bs[0]) {
-		tp, _ = JsonDecode[*TimPresence](bs[1:])
+		tp, err = JsonDecode[*TimPresence](bs[1:])
 	} else {
-		tp, _ = TDecode(bs[1:], &TimPresence{})
+		tp, err = TDecode(bs[1:], &TimPresence{})
 	}
-	if tp.ID == nil {
-		id := RandId()
-		tp.ID = &id
+	if err == nil {
+		if tp.ID == nil {
+			id := RandId()
+			tp.ID = &id
+		}
+		tp.Offline = nil
 	}
-	tp.Offline = nil
 	return
 }
 
 func checkTid(tid *Tid) (_r bool) {
 	if sys.UseDefaultDB() && tid != nil {
 		return util.CheckNode(tid.Node)
+	}
+
+	if tid != nil && len(tid.Node) > sys.NodeMaxlength {
+		return false
 	}
 	return true
 }
@@ -196,12 +226,18 @@ func checkNode(node string) (_r bool) {
 	if sys.UseDefaultDB() && node != "" {
 		return util.CheckNode(node)
 	}
+	if len(node) > sys.NodeMaxlength {
+		return false
+	}
 	return true
 }
 
 func checkList(ls []string) (_r bool) {
 	if sys.UseDefaultDB() && ls != nil {
 		for _, u := range ls {
+			if len(u) > sys.NodeMaxlength {
+				return false
+			}
 			if !util.CheckNode(u) {
 				return false
 			}
@@ -238,12 +274,15 @@ func newAuth(bs []byte) (ta *TimAuth) {
 }
 
 func newTimStream(bs []byte) (ts *TimStream) {
+	var err error
 	if util.JTP(bs[0]) {
-		ts, _ = JsonDecode[*TimStream](bs[1:])
+		ts, err = JsonDecode[*TimStream](bs[1:])
 	} else {
-		ts, _ = TDecode(bs[1:], &TimStream{})
+		ts, err = TDecode(bs[1:], &TimStream{})
 	}
-	ts.ID = RandId()
+	if err == nil {
+		ts.ID = RandId()
+	}
 	return
 }
 
@@ -287,5 +326,18 @@ func ticker() {
 				})
 			}()
 		}
+	}
+}
+
+func loginstat(node string, on bool, tid *Tid, wsId int64) {
+	defer util.Recover()
+	if sys.Conf.Notice != nil && sys.Conf.Notice.Loginstat != nil {
+		type tk struct {
+			Node   string `json:"node"`
+			Active bool   `json:"active"`
+			Tid    *Tid   `json:"tid"`
+			WsId   int64  `json:"wsId"`
+		}
+		httputil.HttpPost(JsonEncode(&tk{Node: node, Active: on, Tid: tid, WsId: wsId}), true, *sys.Conf.Notice.Loginstat)
 	}
 }
