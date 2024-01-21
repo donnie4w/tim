@@ -9,9 +9,6 @@
 package tc
 
 import (
-	"bytes"
-	"io"
-
 	"github.com/donnie4w/tlnet"
 )
 
@@ -21,10 +18,4 @@ func reqjson(hc *tlnet.HttpContext) bool {
 
 func reqform(hc *tlnet.HttpContext) bool {
 	return "application/x-www-form-urlencoded" == hc.Request().Header.Get("content-type")
-}
-
-func getHttpBody(hc *tlnet.HttpContext) []byte{
-	var buf bytes.Buffer
-	io.Copy(&buf, hc.Request().Body)
-	return  buf.Bytes()
 }
