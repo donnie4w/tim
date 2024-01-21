@@ -79,6 +79,7 @@ func (this *adminService) _serve(addr string, TLS bool, serverCrt, serverKey str
 	this.tlAdmin.HandleWithFilter("/timBlockUser", authFilter(), timBlockUserHandler)
 	this.tlAdmin.HandleWithFilter("/timBlockList", authFilter(), timBlockListHandler)
 	this.tlAdmin.HandleWithFilter("/timOnline", authFilter(), timOnlineHandler)
+	this.tlAdmin.HandleWithFilter("/timVroom", authFilter(), timVroomHandler)
 	this.tlAdmin.HandleWithFilter("/timNewRoom", authFilter(), timNewRoomHandler)
 	this.tlAdmin.HandleWithFilter("/timModifyRoomInfo", authFilter(), timModifyRoomInfoHandler)
 	this.tlAdmin.HandleWithFilter("/monitor", loginFilter(), monitorHtml)
@@ -178,33 +179,43 @@ func isAdmin(hc *tlnet.HttpContext) (_r bool) {
 
 func timTokenHandler(hc *tlnet.HttpContext) {
 	type tk struct {
-		Name   string `json:"name"`
-		Domain string `json:"domain"`
+		Name     string `json:"name"`
+		Password string `json:"password"`
+		Domain   string `json:"domain"`
 	}
 	defer util.Recover()
-	var name string
+	var nodeOrName string
+	var password *string
 	var domain *string
 
 	if reqform(hc) {
-		name = hc.PostParamTrimSpace("name")
+		nodeOrName = hc.PostParamTrimSpace("name")
 		_domain := hc.PostParamTrimSpace("domain")
+		_password := hc.PostParamTrimSpace("password")
+
 		if _domain != "" {
 			domain = &_domain
 		}
+		if _password != "" {
+			password = &_password
+		}
 	} else {
-		bs := getHttpBody(hc)
+		bs := hc.RequestBody()
 		if t, err := JsonDecode[tk](bs); err == nil {
-			name = t.Name
+			nodeOrName = t.Name
 			if t.Domain != "" {
 				domain = &t.Domain
+			}
+			if t.Password != "" {
+				password = &t.Password
 			}
 		}
 	}
 
 	var ta *TimAck
-	if name != "" {
-		if t, err := sys.OsToken(name, domain); err == nil {
-			ta = &TimAck{Ok: true, TimType: int8(sys.TIMTOKEN), T: &t}
+	if nodeOrName != "" {
+		if t, n, err := sys.OsToken(nodeOrName, password, domain); err == nil {
+			ta = &TimAck{Ok: true, TimType: int8(sys.TIMTOKEN), N: &n, T: &t}
 		} else {
 			ta = &TimAck{Ok: false, TimType: int8(sys.TIMTOKEN), Error: err.TimError()}
 		}
@@ -227,7 +238,7 @@ func timMessageHandler(hc *tlnet.HttpContext) {
 		nodes, _ = JsonDecode[*TimNodes]([]byte(hc.PostParam("nodes")))
 		message, _ = JsonDecode[*TimMessage]([]byte(hc.PostParam("message")))
 	} else {
-		bs := getHttpBody(hc)
+		bs := hc.RequestBody()
 		if t, err := JsonDecode[tk](bs); err == nil {
 			nodes = t.Nodes
 			message = t.Message
@@ -261,7 +272,7 @@ func timRegisterHandler(hc *tlnet.HttpContext) {
 			domain = &d
 		}
 	} else {
-		bs := getHttpBody(hc)
+		bs := hc.RequestBody()
 		if t, err := JsonDecode[tk](bs); err == nil {
 			username = t.Username
 			password = t.Password
@@ -296,7 +307,7 @@ func timBlockUserHandler(hc *tlnet.HttpContext) {
 			hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, N: &account, Error: sys.ERR_PARAMS.TimError()})))
 		}
 	} else {
-		bs := getHttpBody(hc)
+		bs := hc.RequestBody()
 		if t, err := JsonDecode[tk](bs); err == nil {
 			account = t.Account
 			_time = t.Time
@@ -327,7 +338,7 @@ func timResetAuthHandler(hc *tlnet.HttpContext) {
 		}
 		pwd = hc.PostParam("pwd")
 	} else {
-		bs := getHttpBody(hc)
+		bs := hc.RequestBody()
 		if t, err := JsonDecode[tk](bs); err == nil {
 			loginname = t.Loginname
 			domain = t.Domain
@@ -368,7 +379,7 @@ func timNewRoomHandler(hc *tlnet.HttpContext) {
 			gtype = 2
 		}
 	} else {
-		bs := getHttpBody(hc)
+		bs := hc.RequestBody()
 		if t, err := JsonDecode[tk](bs); err == nil {
 			node = t.Node
 			domain = t.Domain
@@ -397,7 +408,7 @@ func timModifyRoomInfoHandler(hc *tlnet.HttpContext) {
 		unode, gnode = hc.PostParam("unode"), hc.PostParam("gnode")
 		trb, _ = JsonDecode[*TimRoomBean]([]byte(hc.PostParam("roombean")))
 	} else {
-		bs := getHttpBody(hc)
+		bs := hc.RequestBody()
 		if t, err := JsonDecode[tk](bs); err == nil {
 			unode = t.Unode
 			gnode = t.Gnode
@@ -424,6 +435,36 @@ func timOnlineHandler(hc *tlnet.HttpContext) {
 	defer util.Recover()
 	hc.ResponseString(string(JsonEncode(sys.WssList())))
 }
+
+func timVroomHandler(hc *tlnet.HttpContext) {
+	defer util.Recover()
+	type tk struct {
+		Node  string `json:"node"`
+		Rtype int8   `json:"rtype"`
+	}
+	var node string
+	var rtype int8
+	if reqform(hc) {
+		node = hc.PostParamTrimSpace("node")
+		if r, err := strconv.Atoi(hc.PostParamTrimSpace("rtype")); err == nil {
+			rtype = int8(r)
+		}
+	} else {
+		bs := hc.RequestBody()
+		if t, err := JsonDecode[tk](bs); err == nil {
+			node = t.Node
+			rtype = t.Rtype
+		}
+	}
+	if node != "" && rtype > 0 {
+		if _r := sys.OsVroomprocess(node, rtype); _r != "" {
+			hc.ResponseString(string(JsonEncode(&TimAck{Ok: true, N: &_r})))
+			return
+		}
+	}
+	hc.ResponseString(string(JsonEncode(&TimAck{Ok: false})))
+}
+
 func timModifyUserInfo(hc *tlnet.HttpContext) {
 	defer util.Recover()
 	type tk struct {
@@ -436,7 +477,7 @@ func timModifyUserInfo(hc *tlnet.HttpContext) {
 		node = hc.PostParamTrimSpace("node")
 		userBean, _ = JsonDecode[*TimUserBean]([]byte(hc.PostParam("userbean")))
 	} else {
-		bs := getHttpBody(hc)
+		bs := hc.RequestBody()
 		if t, err := JsonDecode[tk](bs); err == nil {
 			node = t.Node
 			userBean = t.UserBean
