@@ -9,9 +9,7 @@
 package timnet
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -88,6 +86,7 @@ func wsConfig() *tlnet.WebsocketConfig {
 	wc.Origin = sys.ORIGIN
 	wc.OnError = func(self *tlnet.Websocket) {
 		sys.DelWs(self)
+		rmBigDataId(self.Id)
 	}
 	wc.OnOpen = func(hc *tlnet.HttpContext) {
 		if !d(hc) {
@@ -102,13 +101,15 @@ func httpHandler(hc *tlnet.HttpContext) {
 	if sys.ORIGIN != "" && hc.ReqInfo.Header.Get("Origin") != sys.ORIGIN {
 		return
 	}
-	var buf bytes.Buffer
-	io.Copy(&buf, hc.Request().Body)
-	if overMaxData(nil, int64(buf.Len())) {
+	bs := hc.RequestBody()
+	if isForBitIface(bs[0]) {
+		return
+	}
+	if overMaxData(nil, int64(len(bs))) {
 		return
 	}
 	if tasklimit() {
-		b(hc, buf.Bytes())
+		b(hc, bs)
 	} else {
 		hc.ResponseBytes(http.StatusInternalServerError, nil)
 	}
@@ -167,7 +168,22 @@ func wsHandler(hc *tlnet.HttpContext) {
 	}
 	bs := make([]byte, len(hc.WS.Read()))
 	sys.Stat.Ib(int64(len(bs)))
+	if isForBitIface(bs[0]) {
+		return
+	}
 	copy(bs, hc.WS.Read())
+	if isBigData(hc.WS.Id) {
+		addBigData(hc, bs)
+	} else {
+		if t := sys.TIMTYPE(bs[0] & 0x7f); t == sys.TIMBIGBINARY || t == sys.TIMBIGSTRING || t == sys.TIMBIGBINARYSTREAM {
+			parseBigData(hc, bs)
+		} else {
+			parseWsData(bs, hc)
+		}
+	}
+}
+
+func parseWsData(bs []byte, hc *tlnet.HttpContext) {
 	t := sys.TIMTYPE(bs[0] & 0x7f)
 	if bs == nil || (t != sys.TIMAUTH && t != sys.TIMPING && !isAuth(hc.WS)) {
 		hc.WS.Close()
@@ -177,7 +193,7 @@ func wsHandler(hc *tlnet.HttpContext) {
 		return
 	}
 	switch t {
-	case sys.TIMMESSAGE, sys.TIMREVOKEMESSAGE, sys.TIMBURNMESSAGE, sys.TIMPRESENCE, sys.TIMSTREAM:
+	case sys.TIMMESSAGE, sys.TIMREVOKEMESSAGE, sys.TIMBURNMESSAGE, sys.TIMPRESENCE, sys.TIMSTREAM, sys.TIMBIGSTRING, sys.TIMBIGBINARY, sys.TIMBIGBINARYSTREAM:
 		if tasklimit() {
 			go g(hc, bs, t)
 		} else {
@@ -200,7 +216,14 @@ func g(hc *tlnet.HttpContext, bs []byte, t sys.TIMTYPE) {
 		err = sys.PresenceHandle(bs, hc.WS)
 	case sys.TIMSTREAM:
 		err = sys.StreamHandle(bs, hc.WS)
+	case sys.TIMBIGSTRING:
+		err = sys.BigStringHandle(bs, hc.WS)
+	case sys.TIMBIGBINARY:
+		err = sys.BigBinaryHandle(bs, hc.WS)
+	case sys.TIMBIGBINARYSTREAM:
+		err = sys.BigBinaryStreamHandle(bs, hc.WS)
 	}
+
 	if err != nil {
 		sys.SendWs(hc.WS.Id, &TimAck{Ok: false, TimType: int8(t), Error: err.TimError()}, sys.TIMACK)
 	}
