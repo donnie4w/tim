@@ -750,6 +750,9 @@ func (this *tldbhandler) ModifygroupInfo(node, fnode string, tu *TimRoomBean) (e
 					if tu.Topic != nil {
 						tr.Topic = tu.Topic
 					}
+					if tu.Kind != nil {
+						tr.Kind = tu.Kind
+					}
 					if tu.Label != nil {
 						tr.Label = tu.Label
 					}
@@ -774,6 +777,7 @@ func (this *tldbhandler) ModifygroupInfo(node, fnode string, tu *TimRoomBean) (e
 	}
 	return
 }
+
 func (this *tldbhandler) GetGroupInfo(nodes []string) (m map[string]*TimRoomBean, err sys.ERROR) {
 	if nodes != nil {
 		m = make(map[string]*TimRoomBean, 0)
