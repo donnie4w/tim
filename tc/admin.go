@@ -42,6 +42,9 @@ func (this *adminService) Serve() (err error) {
 		go tlDebug()
 		<-time.After(500 * time.Millisecond)
 	}
+	if sys.Conf.Init {
+		initAccount()
+	}
 	if strings.TrimSpace(sys.WEBADMINADDR) != "" {
 		err = this._serve(strings.TrimSpace(sys.WEBADMINADDR), sys.Conf.AdminTls, sys.Conf.Ssl_crt, sys.Conf.Ssl_crt_key)
 	}
@@ -653,11 +656,11 @@ func loginHtml(hc *tlnet.HttpContext) {
 	tplToHtml(getLang(hc), LOGIN, []byte{}, hc)
 }
 
-// func initAccount() {
-// 	if len(Admin.AdminList()) == 0 {
-// 		Admin.PutAdmin("admin", "123", 1)
-// 	}
-// }
+func initAccount() {
+	if len(Admin.AdminList()) == 0 {
+		Admin.PutAdmin(sys.DefaultAccount[0], sys.DefaultAccount[1], 1)
+	}
+}
 
 /********************************************************/
 func sysVarHtml(hc *tlnet.HttpContext) {
