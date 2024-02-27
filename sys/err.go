@@ -27,6 +27,7 @@ var ERR_MODIFYAUTH = err(4112, "modify password failed")
 var ERR_FORMAT = err(4113, "format error")
 var ERR_BIGDATA = err(4114, "big data error")
 var ERR_TOKEN = err(4115, "error token")
+var ERR_PING = err(4116, "error ping count")
 
 var ERR_UNDEFINED = err(5101, "undefined error")
 var ERR_BLOCKHANDLE = err(5102, "blocking operation")
