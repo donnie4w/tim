@@ -55,7 +55,7 @@ func (this *timservice) ping(ws *tlnet.Websocket) (err sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
-	wsware.SendWs(ws.Id, nil, sys.TIMPING)
+	wsware.Ping(ws.Id)
 	return
 }
 
@@ -265,7 +265,7 @@ func (this *timservice) message(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
 						if _t.FromTid.Node == tm.FromTid.Node && _t.RoomTid.Node == tm.RoomTid.Node {
 							if err = data.Handler.DelMessageByMid(tid, *tm.Mid); err == nil {
 								t := int64(sys.SOURCE_ROOM)
-								wsware.SendNode(tm.FromTid.Node, &TimAck{Ok: true, TimType: int8(sys.TIMREVOKEMESSAGE), N: &tm.RoomTid.Node, T: &t, AckInt: tm.Mid}, sys.TIMACK)
+								wsware.SendNode(tm.FromTid.Node, &TimAck{Ok: true, TimType: int8(sys.TIMREVOKEMESSAGE), N: &tm.RoomTid.Node, T: &t, T2: tm.Mid}, sys.TIMACK)
 							} else {
 								return sys.ERR_DATABASE
 							}
@@ -303,7 +303,7 @@ func (this *timservice) message(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
 				} else {
 					return sys.ERR_AUTH
 				}
-			} else if tm.ToTid != nil && authTidNode(tm.FromTid, tm.ToTid) {
+			} else if tm.ToTid != nil && authTidNode(tm.FromTid, tm.ToTid, false) {
 				return this.messagehandle(bs, tm)
 			} else {
 				return sys.ERR_AUTH
@@ -328,12 +328,15 @@ func (this *timservice) messagehandle(bs []byte, tm *TimMessage) (_r sys.ERROR) 
 		if tm.Mid == nil || *tm.Mid == 0 {
 			return sys.ERR_PARAMS
 		}
+		if !authTidNode(tm.FromTid, tm.ToTid, true) {
+			return sys.ERR_AUTH
+		}
 		tid := util.ChatIdByNode(tm.FromTid.Node, tm.ToTid.Node, tm.FromTid.Domain)
 		if _t, err := data.Handler.GetMessageByMid(tid, *tm.Mid); err == nil && _t != nil {
 			if _t.FromTid.Node == tm.FromTid.Node && _t.ToTid.Node == tm.ToTid.Node {
 				if err = data.Handler.DelMessageByMid(tid, *tm.Mid); err == nil {
 					t := int64(sys.SOURCE_USER)
-					wsware.SendNode(tm.FromTid.Node, &TimAck{Ok: true, TimType: int8(sys.TIMREVOKEMESSAGE), N: &tm.ToTid.Node, T: &t, AckInt: tm.Mid}, sys.TIMACK)
+					wsware.SendNode(tm.FromTid.Node, &TimAck{Ok: true, TimType: int8(sys.TIMREVOKEMESSAGE), N: &tm.ToTid.Node, T: &t, T2: tm.Mid}, sys.TIMACK)
 				} else {
 					return sys.ERR_DATABASE
 				}
@@ -348,12 +351,15 @@ func (this *timservice) messagehandle(bs []byte, tm *TimMessage) (_r sys.ERROR) 
 		if tm.Mid == nil || *tm.Mid == 0 {
 			return sys.ERR_PARAMS
 		}
+		if !authTidNode(tm.FromTid, tm.ToTid, true) {
+			return sys.ERR_AUTH
+		}
 		tid := util.ChatIdByNode(tm.FromTid.Node, tm.ToTid.Node, tm.FromTid.Domain)
 		if _t, err := data.Handler.GetMessageByMid(tid, *tm.Mid); err == nil && _t != nil {
 			if _t.FromTid.Node == tm.ToTid.Node && _t.ToTid.Node == tm.FromTid.Node {
 				if err = data.Handler.DelMessageByMid(tid, *tm.Mid); err == nil {
 					t := int64(sys.SOURCE_USER)
-					wsware.SendNode(tm.FromTid.Node, &TimAck{Ok: true, TimType: int8(sys.TIMBURNMESSAGE), N: &tm.ToTid.Node, T: &t, AckInt: tm.Mid}, sys.TIMACK)
+					wsware.SendNode(tm.FromTid.Node, &TimAck{Ok: true, TimType: int8(sys.TIMBURNMESSAGE), N: &tm.ToTid.Node, T: &t, T2: tm.Mid}, sys.TIMACK)
 				} else {
 					return sys.ERR_DATABASE
 				}
