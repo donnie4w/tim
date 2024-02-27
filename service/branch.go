@@ -139,24 +139,24 @@ func (this *timservice) addroster(bs []byte, ws *tlnet.Websocket) (err sys.ERROR
 }
 
 func (this *timservice) rmroster(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
-	tq := newTimReq(bs)
-	if tq == nil || tq.Node == nil {
+	tr := newTimReq(bs)
+	if tr == nil || tr.Node == nil {
 		return sys.ERR_PARAMS
 	}
-	if !checkNode(*tq.Node) {
+	if !checkNode(*tr.Node) {
 		return sys.ERR_ACCOUNT
 	}
 	if wss, b := wsware.Get(ws); b {
-		if ms, ok := data.Handler.Rmroster(wss.tid.Node, *tq.Node, wss.tid.Domain); !ok {
+		if ms, ok := data.Handler.Rmroster(wss.tid.Node, *tr.Node, wss.tid.Domain); !ok {
 			return sys.ERR_PARAMS
 		} else {
 			if ms {
 				id, _t := RandId(), time.Now().UnixNano()
-				tm := &TimMessage{ID: &id, MsType: sys.SOURCE_USER, BnType: &sys.BUSINESS_REMOVEROSTER, OdType: sys.ORDER_BUSINESS, FromTid: wss.tid, ToTid: &Tid{Node: *tq.Node}, Timestamp: &_t}
+				tm := &TimMessage{ID: &id, MsType: sys.SOURCE_USER, BnType: &sys.BUSINESS_REMOVEROSTER, OdType: sys.ORDER_BUSINESS, FromTid: wss.tid, ToTid: &Tid{Node: *tr.Node}, Timestamp: &_t}
 				sys.TimMessageProcessor(tm, sys.TRANS_SOURCE)
 			}
 			t := int64(sys.BUSINESS_REMOVEROSTER)
-			wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMBUSINESS), N: tq.Node, T: &t}, sys.TIMACK)
+			wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMBUSINESS), N: tr.Node, T: &t}, sys.TIMACK)
 		}
 	}
 	return
@@ -269,7 +269,7 @@ func (this *timservice) pullgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR
 			}
 			sys.TimMessageProcessor(tm, sys.TRANS_SOURCE)
 			t := int64(sys.BUSINESS_PULLROOM)
-			wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMBUSINESS), N: tr.Node2, T: &t}, sys.TIMACK)
+			wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMBUSINESS), N: tr.Node, T: &t, N2: tr.Node2}, sys.TIMACK)
 		}
 	}
 	return
@@ -287,7 +287,7 @@ func (this *timservice) nopassgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERR
 			tm.BnType = &sys.BUSINESS_NOPASSROOM
 			sys.TimMessageProcessor(tm, sys.TRANS_SOURCE)
 			t := int64(sys.BUSINESS_NOPASSROOM)
-			wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMBUSINESS), N: tr.Node2, T: &t}, sys.TIMACK)
+			wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMBUSINESS), N: tr.Node, T: &t, N2: tr.Node2}, sys.TIMACK)
 		}
 	}
 	return
@@ -307,7 +307,7 @@ func (this *timservice) kickgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR
 			tm := &TimMessage{ID: &id, BnType: &sys.BUSINESS_KICKROOM, FromTid: wss.tid, ToTid: &Tid{Node: *tr.Node2}, RoomTid: &Tid{Node: *tr.Node}, MsType: sys.SOURCE_USER, OdType: sys.ORDER_BUSINESS, Timestamp: &_t}
 			sys.TimMessageProcessor(tm, sys.TRANS_SOURCE)
 			t := int64(sys.BUSINESS_KICKROOM)
-			wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMBUSINESS), N: tr.Node, T: &t}, sys.TIMACK)
+			wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMBUSINESS), N: tr.Node, T: &t, N2: tr.Node2}, sys.TIMACK)
 		}
 	}
 	return
@@ -366,7 +366,7 @@ func (this *timservice) blockgroupmember(bs []byte, ws *tlnet.Websocket) (err sy
 		}
 		if err = data.Handler.Blockgroupmember(*tr.Node, wss.tid.Node, *tr.Node2, wss.tid.Domain); err == nil {
 			t := int64(sys.BUSINESS_BLOCKROOMMEMBER)
-			wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMBUSINESS), N: tr.Node, T: &t}, sys.TIMACK)
+			wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMBUSINESS), N: tr.Node, T: &t, N2: tr.Node2}, sys.TIMACK)
 		}
 	}
 	return
