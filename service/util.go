@@ -119,12 +119,12 @@ func existGroup(tid *Tid) (_r bool) {
 	return
 }
 
-func authTidNode(fTid, tTid *Tid) (ok bool) {
+func authTidNode(fTid, tTid *Tid, readtime bool) (ok bool) {
 	defer util.Recover()
 	if sys.Conf.MessageNoauth {
 		return true
 	}
-	if sys.Conf.CacheExpireTime > 0 {
+	if sys.Conf.CacheExpireTime > 0 && !readtime {
 		cid := util.ChatIdByNode(fTid.Node, tTid.Node, fTid.Domain)
 		if t, b := chatIdTempCache.Get(cid); !b || t+int64(sys.Conf.CacheExpireTime*int(time.Second)) < time.Now().UnixNano() {
 			if ok = data.Handler.AuthUserAndUser(fTid.Node, tTid.Node, fTid.Domain); ok {
@@ -314,6 +314,7 @@ func blocklist() map[string]int64 {
 func ticker() {
 	tk := time.NewTicker(time.Second << 4)
 	for {
+		sys.InaccurateTime = time.Now().UnixNano()
 		select {
 		case <-tk.C:
 			func() {
