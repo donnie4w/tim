@@ -71,10 +71,13 @@ var (
 	Conf                 *ConfBean
 	Bind                 string
 	DBtype               byte
+	DefaultAccount       = [2]string{"admin", "123"}
 	MaskSeed             = Int64ToBytes(int64(1 << 60))
 	WEBADMINADDR         = fmt.Sprint(6 << 10)
 	CSADDR               = fmt.Sprint(7 << 10)
 	IMADDR               = 5 << 10
+	InaccurateTime       = time.Now().UnixNano()
+	PINGTO               = int64(500)
 	ConnectTimeout       = 10 * time.Second
 	WaitTimeout          = 10 * time.Second
 	MaxTransLength       = 10 * MB
