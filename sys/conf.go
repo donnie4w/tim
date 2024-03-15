@@ -48,6 +48,9 @@ func praseflag() {
 	if Conf.Salt == "" {
 		Conf.Salt = defaultsyssalt
 	}
+	if Conf.PingTo > 0 {
+		PINGTO = Conf.PingTo
+	}
 	if Conf.MaxBackup != nil {
 		MaxBackup = *Conf.MaxBackup
 	}
