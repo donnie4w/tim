@@ -139,6 +139,13 @@ func (this *_wsWare) GetUserDeviceTypeLen(node string) (_r []byte) {
 	return
 }
 
+func (this *_wsWare) Ping(id int64) {
+	if wss, ok := this.wsmap.Get(id); ok {
+		wss.send(nil, sys.TIMPING, false)
+		wss.pingt = sys.InaccurateTime
+	}
+}
+
 func (this *_wsWare) Get(ws *tlnet.Websocket) (*WsSock, bool) {
 	return this.wsmap.Get(ws.Id)
 }
@@ -216,10 +223,11 @@ type WsSock struct {
 	ws     *tlnet.Websocket
 	tid    *Tid
 	jsonOn bool
+	pingt  int64
 }
 
 func NewWsSock(ws *tlnet.Websocket) (_r *WsSock) {
-	_r = &WsSock{ws: ws}
+	_r = &WsSock{ws: ws, pingt: sys.InaccurateTime}
 	return
 }
 
@@ -228,6 +236,10 @@ func (this *WsSock) SetJsonOn(on bool) {
 }
 
 func (this *WsSock) _send(buf *Buffer) (err error) {
+	if this.pingt+int64(sys.PINGTO*int64(time.Second)) < sys.InaccurateTime {
+		this.close()
+		return sys.ERR_PING.Error()
+	}
 	sys.Stat.Ob(int64(buf.Len()))
 	return this.ws.Send(buf.Bytes())
 }
