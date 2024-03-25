@@ -13,9 +13,9 @@ import (
 )
 
 func reqjson(hc *tlnet.HttpContext) bool {
-	return "application/json" == hc.Request().Header.Get("content-type")
+	return hc.Request().Header.Get("content-type") == "application/json"
 }
 
 func reqform(hc *tlnet.HttpContext) bool {
-	return "application/x-www-form-urlencoded" == hc.Request().Header.Get("content-type")
+	return hc.Request().Header.Get("content-type") == "application/x-www-form-urlencoded"
 }
