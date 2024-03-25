@@ -1,10 +1,9 @@
 // Copyright (c) 2023, donnie <donnie4w@gmail.com>
 // All rights reserved.
-// Use of this source code is governed by a BSD-style
+// Use of t source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package timnet
 
@@ -37,42 +36,42 @@ type timService struct {
 
 var timservice = &timService{false, tlnet.NewTlnet()}
 
-func (this *timService) Serve() (err error) {
+func (t *timService) Serve() (err error) {
 	tls := sys.Conf.Ssl_crt != "" && sys.Conf.Ssl_crt_key != ""
-	err = this._serve(sys.IMADDR, tls, sys.Conf.Ssl_crt, sys.Conf.Ssl_crt_key)
+	err = t._serve(sys.IMADDR, tls, sys.Conf.Ssl_crt, sys.Conf.Ssl_crt_key)
 	return
 }
 
-func (this *timService) Close() (err error) {
+func (t *timService) Close() (err error) {
 	defer util.Recover()
-	this.isClose = true
-	err = this.tlnetTim.Close()
+	t.isClose = true
+	err = t.tlnetTim.Close()
 	return
 }
 
-func (this *timService) _serve(listen int, TLS bool, serverCrt, serverKey string) (err error) {
+func (t *timService) _serve(listen int, TLS bool, serverCrt, serverKey string) (err error) {
 	defer util.Recover()
 	tlnet.SetLogOFF()
-	addr := strings.TrimSpace(fmt.Sprint(":", sys.IMADDR))
-	this.tlnetTim.Handle("/tim2", httpHandler)
-	this.tlnetTim.HandleWebSocketBindConfig("/tim", wsHandler, wsConfig())
+	addr := strings.TrimSpace(fmt.Sprint(":", listen))
+	t.tlnetTim.Handle("/tim2", httpHandler)
+	t.tlnetTim.HandleWebSocketBindConfig("/tim", wsHandler, wsConfig())
 	sys.FmtLog("tim uuid[", sys.UUID, "]")
 
 	if TLS {
 		if IsFileExist(serverCrt) && IsFileExist(serverKey) {
 			sys.FmtLog("tim listen tls[", addr, "]")
-			err = this.tlnetTim.HttpStartTLS(addr, serverCrt, serverKey)
+			err = t.tlnetTim.HttpStartTLS(addr, serverCrt, serverKey)
 		} else {
 			sys.FmtLog("tim listen tls[", addr, "]")
-			err = this.tlnetTim.HttpStartTlsBytes(addr, []byte(keystore.ServerCrt), []byte(keystore.ServerKey))
+			err = t.tlnetTim.HttpStartTlsBytes(addr, []byte(keystore.ServerCrt), []byte(keystore.ServerKey))
 		}
 	}
-	if !this.isClose {
+	if !t.isClose {
 		sys.FmtLog("tim listen[", addr, "]")
-		err = this.tlnetTim.HttpStart(addr)
+		err = t.tlnetTim.HttpStart(addr)
 	}
 
-	if !this.isClose && err != nil {
+	if !t.isClose && err != nil {
 		sys.FmtLog("tim start failed:", err.Error())
 		os.Exit(0)
 	}
@@ -197,7 +196,7 @@ func parseWsData(bs []byte, hc *tlnet.HttpContext) {
 		if tasklimit() {
 			go g(hc, bs, t)
 		} else {
-			go e(hc, bs, t)
+			go e(hc, t)
 		}
 	default:
 		go f(hc, bs, t)
@@ -270,15 +269,15 @@ func f(hc *tlnet.HttpContext, bs []byte, t sys.TIMTYPE) {
 	}
 }
 
-func e(hc *tlnet.HttpContext, bs []byte, t sys.TIMTYPE) {
+func e(hc *tlnet.HttpContext, t sys.TIMTYPE) {
 	defer util.Recover()
 	sys.SendWs(hc.WS.Id, &TimAck{Ok: false, TimType: int8(t), Error: sys.ERR_OVERLOAD.TimError()}, sys.TIMACK)
 }
 
-func c(hc *tlnet.HttpContext, bs []byte, t sys.TIMTYPE) {
-	defer util.Recover()
-	sys.SendWs(hc.WS.Id, &TimAck{Ok: false, TimType: int8(t), Error: sys.ERR_OVERHZ.TimError()}, sys.TIMACK)
-}
+// func c(hc *tlnet.HttpContext,  t sys.TIMTYPE) {
+// 	defer util.Recover()
+// 	sys.SendWs(hc.WS.Id, &TimAck{Ok: false, TimType: int8(t), Error: sys.ERR_OVERHZ.TimError()}, sys.TIMACK)
+// }
 
 func d(hc *tlnet.HttpContext) (_r bool) {
 	defer util.Recover()
