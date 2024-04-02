@@ -1,6 +1,6 @@
 // Copyright (c) 2023, donnie <donnie4w@gmail.com>
 // All rights reserved.
-// Use of this source code is governed by a BSD-style
+// Use of t source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
@@ -17,7 +17,7 @@ import (
 	"github.com/donnie4w/tlnet"
 )
 
-func (this *timservice) business(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) business(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -28,43 +28,43 @@ func (this *timservice) business(bs []byte, ws *tlnet.Websocket) (err sys.ERROR)
 	if _, ok := wsware.Get(ws); ok {
 		switch *tr.Rtype {
 		case sys.BUSINESS_ROSTER:
-			return this.roster(ws)
+			return t.roster(ws)
 		case sys.BUSINESS_USERROOM:
-			return this.usergroup(ws)
+			return t.usergroup(ws)
 		case sys.BUSINESS_ROOMUSERS:
-			return this.grouproster(bs, ws)
+			return t.grouproster(bs, ws)
 		case sys.BUSINESS_ADDROSTER:
-			return this.addroster(bs, ws)
+			return t.addroster(bs, ws)
 		case sys.BUSINESS_REMOVEROSTER:
-			return this.rmroster(bs, ws)
+			return t.rmroster(bs, ws)
 		case sys.BUSINESS_BLOCKROSTER:
-			return this.blockroster(bs, ws)
+			return t.blockroster(bs, ws)
 		case sys.BUSINESS_NEWROOM:
-			return this.newgroup(bs, ws)
+			return t.newgroup(bs, ws)
 		case sys.BUSINESS_ADDROOM:
-			return this.addgroup(bs, ws)
+			return t.addgroup(bs, ws)
 		case sys.BUSINESS_PULLROOM:
-			return this.pullgroup(bs, ws)
+			return t.pullgroup(bs, ws)
 		case sys.BUSINESS_NOPASSROOM:
-			return this.nopassgroup(bs, ws)
+			return t.nopassgroup(bs, ws)
 		case sys.BUSINESS_KICKROOM:
-			return this.kickgroup(bs, ws)
+			return t.kickgroup(bs, ws)
 		case sys.BUSINESS_LEAVEROOM:
-			return this.leavegroup(bs, ws)
+			return t.leavegroup(bs, ws)
 		case sys.BUSINESS_CANCELROOM:
-			return this.cancelgroup(bs, ws)
+			return t.cancelgroup(bs, ws)
 		case sys.BUSINESS_BLOCKROOM:
-			return this.blockgroup(bs, ws)
+			return t.blockgroup(bs, ws)
 		case sys.BUSINESS_BLOCKROOMMEMBER:
-			return this.blockgroupmember(bs, ws)
+			return t.blockgroupmember(bs, ws)
 		case sys.BUSINESS_BLOCKROSTERLIST:
-			return this.blockrosterlist(ws)
+			return t.blockrosterlist(ws)
 		case sys.BUSINESS_BLOCKROOMLIST:
-			return this.blockroomlist(ws)
+			return t.blockroomlist(ws)
 		case sys.BUSINESS_BLOCKROOMMEMBERLIST:
-			return this.blockroommemberlist(bs, ws)
+			return t.blockroommemberlist(bs, ws)
 		case sys.BUSINESS_MODIFYAUTH:
-			return this.modifyauth(bs, ws)
+			return t.modifyauth(bs, ws)
 		default:
 			return sys.ERR_PARAMS
 		}
@@ -72,27 +72,27 @@ func (this *timservice) business(bs []byte, ws *tlnet.Websocket) (err sys.ERROR)
 	return
 }
 
-func (this *timservice) roster(ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) roster(ws *tlnet.Websocket) (err sys.ERROR) {
 	if wss, ok := wsware.Get(ws); ok {
 		tid := wss.tid
-		if _r := data.Handler.Roster(tid.Node); _r != nil && len(_r) > 0 {
+		if _r := data.Handler.Roster(tid.Node); len(_r) > 0 {
 			wsware.SendWs(ws.Id, &TimNodes{Ntype: sys.NODEINFO_ROSTER, Nodelist: _r}, sys.TIMNODES)
 		}
 	}
 	return
 }
 
-func (this *timservice) usergroup(ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) usergroup(ws *tlnet.Websocket) (err sys.ERROR) {
 	if wss, ok := wsware.Get(ws); ok {
 		tid := wss.tid
-		if _r := data.Handler.UserGroup(tid.Node, tid.Domain); _r != nil && len(_r) > 0 {
+		if _r := data.Handler.UserGroup(tid.Node, tid.Domain); len(_r) > 0 {
 			wsware.SendWs(ws.Id, &TimNodes{Ntype: sys.NODEINFO_ROOM, Nodelist: _r}, sys.TIMNODES)
 		}
 	}
 	return
 }
 
-func (this *timservice) grouproster(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) grouproster(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	if wss, ok := wsware.Get(ws); ok {
 		tr := newTimReq(bs)
 		node := *tr.Node
@@ -100,7 +100,7 @@ func (this *timservice) grouproster(bs []byte, ws *tlnet.Websocket) (err sys.ERR
 			return sys.ERR_ACCOUNT
 		}
 		if ok := authGroup(node, wss.tid.Node, wss.tid.Domain); ok {
-			if gs := data.Handler.GroupRoster(node); gs != nil && len(gs) > 0 {
+			if gs := data.Handler.GroupRoster(node); len(gs) > 0 {
 				wsware.SendWs(ws.Id, &TimNodes{Ntype: sys.NODEINFO_ROOMMEMBER, Nodelist: gs, Node: &node}, sys.TIMNODES)
 			}
 		} else {
@@ -110,7 +110,7 @@ func (this *timservice) grouproster(bs []byte, ws *tlnet.Websocket) (err sys.ERR
 	return
 }
 
-func (this *timservice) addroster(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) addroster(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	tq := newTimReq(bs)
 	if tq == nil || tq.Node == nil || tq.ReqStr == nil {
 		return sys.ERR_PARAMS
@@ -138,7 +138,7 @@ func (this *timservice) addroster(bs []byte, ws *tlnet.Websocket) (err sys.ERROR
 	return
 }
 
-func (this *timservice) rmroster(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) rmroster(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	tr := newTimReq(bs)
 	if tr == nil || tr.Node == nil {
 		return sys.ERR_PARAMS
@@ -162,7 +162,7 @@ func (this *timservice) rmroster(bs []byte, ws *tlnet.Websocket) (err sys.ERROR)
 	return
 }
 
-func (this *timservice) blockroster(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) blockroster(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	tq := newTimReq(bs)
 	if tq == nil || tq.Node == nil {
 		return sys.ERR_PARAMS
@@ -189,7 +189,7 @@ func (this *timservice) blockroster(bs []byte, ws *tlnet.Websocket) (err sys.ERR
 	return
 }
 
-func (this *timservice) newgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) newgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	tr := newTimReq(bs)
 	if tr == nil || tr.Node == nil || tr.ReqInt == nil {
 		return sys.ERR_PARAMS
@@ -208,16 +208,16 @@ func (this *timservice) newgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR)
 	return
 }
 
-func (this *timservice) osnewgroup(unode, gname string, domain *string, gtype int8) (gnode string, err sys.ERROR) {
+func (t *timservice) osnewgroup(unode, gname string, domain *string, gtype int8) (gnode string, err sys.ERROR) {
 	gnode, err = data.Handler.Newgroup(unode, gname, gtype, domain)
 	return
 }
 
-func (this *timservice) osModifygroupInfo(unode, gnode string, trb *TimRoomBean) sys.ERROR {
+func (t *timservice) osModifygroupInfo(unode, gnode string, trb *TimRoomBean) sys.ERROR {
 	return data.Handler.ModifygroupInfo(gnode, unode, trb)
 }
 
-func (this *timservice) addgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) addgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	tr := newTimReq(bs)
 	if tr == nil || tr.Node == nil || !checkNode(*tr.Node) || tr.ReqStr == nil {
 		return sys.ERR_PARAMS
@@ -249,7 +249,7 @@ func (this *timservice) addgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR)
 	return
 }
 
-func (this *timservice) pullgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) pullgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	tr := newTimReq(bs)
 	if tr == nil || tr.Node == nil || tr.Node2 == nil || !checkNode(*tr.Node) || !checkNode(*tr.Node2) {
 		return sys.ERR_PARAMS
@@ -275,7 +275,7 @@ func (this *timservice) pullgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR
 	return
 }
 
-func (this *timservice) nopassgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) nopassgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	tr := newTimReq(bs)
 	if tr == nil || tr.Node == nil || tr.Node2 == nil || !checkNode(*tr.Node) || !checkNode(*tr.Node2) {
 		return sys.ERR_PARAMS
@@ -293,7 +293,7 @@ func (this *timservice) nopassgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERR
 	return
 }
 
-func (this *timservice) kickgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) kickgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	tr := newTimReq(bs)
 	if tr == nil || tr.Node == nil || tr.Node2 == nil || !checkNode(*tr.Node) || !checkNode(*tr.Node2) {
 		return sys.ERR_PARAMS
@@ -313,7 +313,7 @@ func (this *timservice) kickgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR
 	return
 }
 
-func (this *timservice) leavegroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) leavegroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	tr := newTimReq(bs)
 	if tr == nil || tr.Node == nil || !checkNode(*tr.Node) {
 		return sys.ERR_PARAMS
@@ -327,7 +327,7 @@ func (this *timservice) leavegroup(bs []byte, ws *tlnet.Websocket) (err sys.ERRO
 	return
 }
 
-func (this *timservice) cancelgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) cancelgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	tr := newTimReq(bs)
 	if tr == nil || tr.Node == nil || !checkNode(*tr.Node) {
 		return sys.ERR_PARAMS
@@ -341,7 +341,7 @@ func (this *timservice) cancelgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERR
 	return
 }
 
-func (this *timservice) blockgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) blockgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	tr := newTimReq(bs)
 	if tr == nil || tr.Node == nil || !checkNode(*tr.Node) {
 		return sys.ERR_PARAMS
@@ -355,7 +355,7 @@ func (this *timservice) blockgroup(bs []byte, ws *tlnet.Websocket) (err sys.ERRO
 	return
 }
 
-func (this *timservice) blockgroupmember(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) blockgroupmember(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	tr := newTimReq(bs)
 	if tr == nil || tr.Node == nil || !checkNode(*tr.Node) || tr.Node2 == nil || !checkNode(*tr.Node2) {
 		return sys.ERR_PARAMS
@@ -372,42 +372,42 @@ func (this *timservice) blockgroupmember(bs []byte, ws *tlnet.Websocket) (err sy
 	return
 }
 
-func (this *timservice) blockrosterlist(ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) blockrosterlist(ws *tlnet.Websocket) (err sys.ERROR) {
 	if wss, b := wsware.Get(ws); b {
-		if ss := data.Handler.Blockrosterlist(wss.tid.Node); ss != nil && len(ss) > 0 {
+		if ss := data.Handler.Blockrosterlist(wss.tid.Node); len(ss) > 0 {
 			wsware.SendWs(ws.Id, &TimNodes{Ntype: sys.NODEINFO_BLOCKROSTERLIST, Nodelist: ss}, sys.TIMNODES)
 		}
 	}
 	return
 }
 
-func (this *timservice) blockroomlist(ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) blockroomlist(ws *tlnet.Websocket) (err sys.ERROR) {
 	if wss, b := wsware.Get(ws); b {
-		if ss := data.Handler.Blockroomlist(wss.tid.Node); ss != nil && len(ss) > 0 {
+		if ss := data.Handler.Blockroomlist(wss.tid.Node); len(ss) > 0 {
 			wsware.SendWs(ws.Id, &TimNodes{Ntype: sys.NODEINFO_BLOCKROOMLIST, Nodelist: ss}, sys.TIMNODES)
 		}
 	}
 	return
 }
 
-func (this *timservice) blockroommemberlist(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) blockroommemberlist(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	tr := newTimReq(bs)
 	if tr == nil || tr.Node == nil || !checkNode(*tr.Node) {
 		return sys.ERR_PARAMS
 	}
 	if wss, b := wsware.Get(ws); b {
-		if ss := data.Handler.Blockroommemberlist(*tr.Node, wss.tid.Node); ss != nil && len(ss) > 0 {
+		if ss := data.Handler.Blockroommemberlist(*tr.Node, wss.tid.Node); len(ss) > 0 {
 			wsware.SendWs(ws.Id, &TimNodes{Ntype: sys.NODEINFO_BLOCKROOMMEMBERLIST, Nodelist: ss}, sys.TIMNODES)
 		}
 	}
 	return
 }
 
-func (this *timservice) sysmodifyauth(account, pwd string, domain *string) sys.ERROR {
+func (t *timservice) sysmodifyauth(account, pwd string, domain *string) sys.ERROR {
 	return data.Handler.Modify(util.CreateUUID(account, domain), nil, pwd, domain)
 }
 
-func (this *timservice) modifyauth(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) modifyauth(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	tr := newTimReq(bs)
 	if tr == nil || tr.ReqStr == nil || tr.ReqStr2 == nil {
 		return sys.ERR_MODIFYAUTH
@@ -423,11 +423,11 @@ func (this *timservice) modifyauth(bs []byte, ws *tlnet.Websocket) (err sys.ERRO
 	return
 }
 
-func (this *timservice) osuserbean(node string, tb *TimUserBean) (err sys.ERROR) {
+func (t *timservice) osuserbean(node string, tb *TimUserBean) (err sys.ERROR) {
 	return data.Handler.ModifyUserInfo(node, tb)
 }
 
-func (this *timservice) nodeinfo(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) nodeinfo(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -456,7 +456,7 @@ func (this *timservice) nodeinfo(bs []byte, ws *tlnet.Websocket) (err sys.ERROR)
 		case sys.NODEINFO_MODIFYUSER:
 			if tr.Usermap != nil && len(tr.Usermap) == 1 {
 				for _, v := range tr.Usermap {
-					if err = this.osuserbean(wss.tid.Node, v); err == nil {
+					if err = t.osuserbean(wss.tid.Node, v); err == nil {
 						t := int64(sys.NODEINFO_MODIFYUSER)
 						wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMNODES), T: &t}, sys.TIMACK)
 					}
