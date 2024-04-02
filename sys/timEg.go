@@ -139,9 +139,11 @@ var (
 	WssLen               func() int64
 	WssTt                func() int64
 	DelWs                func(*tlnet.Websocket)
+	WsById               func(int64) (*tlnet.Websocket, bool)
 	HasNode              func(string) bool
 	HasWs                func(*tlnet.Websocket) bool
 	Unaccess             func() []int64
 	Interrupt            func(*Tid) ERROR
 	Csuser               func(string, bool, int64) error
+	Detect               func([]string)
 )
