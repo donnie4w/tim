@@ -1,6 +1,6 @@
 // Copyright (c) 2023, donnie <donnie4w@gmail.com>
 // All rights reserved.
-// Use of this source code is governed by a BSD-style
+// Use of t source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
@@ -25,14 +25,14 @@ var service = &timservice{}
 
 type timservice struct{}
 
-func (this *timservice) osregister(name, pwd string, domain *string) (node string, e sys.ERROR) {
+func (t *timservice) osregister(name, pwd string, domain *string) (node string, e sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
 	return data.Handler.Register(name, pwd, domain)
 }
 
-func (this *timservice) register(bs []byte) (node string, e sys.ERROR) {
+func (t *timservice) register(bs []byte) (node string, e sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -51,7 +51,7 @@ func (this *timservice) register(bs []byte) (node string, e sys.ERROR) {
 	return
 }
 
-func (this *timservice) ping(ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) ping(ws *tlnet.Websocket) (err sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -59,7 +59,7 @@ func (this *timservice) ping(ws *tlnet.Websocket) (err sys.ERROR) {
 	return
 }
 
-func (this *timservice) ack(bs []byte) (err sys.ERROR) {
+func (t *timservice) ack(bs []byte) (err sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -67,7 +67,7 @@ func (this *timservice) ack(bs []byte) (err sys.ERROR) {
 	return
 }
 
-func (this *timservice) ostoken(nodeorname string, password, domain *string) (_r int64, _n string, e sys.ERROR) {
+func (t *timservice) ostoken(nodeorname string, password, domain *string) (_r int64, _n string, e sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -91,7 +91,7 @@ func (this *timservice) ostoken(nodeorname string, password, domain *string) (_r
 	return
 }
 
-func (this *timservice) token(bs []byte) (_r int64, e sys.ERROR) {
+func (t *timservice) token(bs []byte) (_r int64, e sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -108,7 +108,7 @@ func (this *timservice) token(bs []byte) (_r int64, e sys.ERROR) {
 	return
 }
 
-func (this *timservice) auth(bs []byte, ws *tlnet.Websocket) (e sys.ERROR) {
+func (t *timservice) auth(bs []byte, ws *tlnet.Websocket) (e sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -120,58 +120,56 @@ func (this *timservice) auth(bs []byte, ws *tlnet.Websocket) (e sys.ERROR) {
 	if ta == nil {
 		return sys.ERR_PARAMS
 	}
-	if ta != nil {
-		isAuth := false
-		var tid *Tid
-		if ta.Token != nil {
-			if tid, _ = tokenTempCache.Get(*ta.Token); tid != nil {
-				tid.Resource, tid.Termtyp = ta.Resource, ta.Termtyp
-				tokenTempCache.Remove(*ta.Token)
-				if !isblock(tid.Node) {
-					isAuth = true
-				}
-			} else {
-				return sys.ERR_TOKEN
+	isAuth := false
+	var tid *Tid
+	if ta.Token != nil {
+		if tid, _ = tokenTempCache.Get(*ta.Token); tid != nil {
+			tid.Resource, tid.Termtyp = ta.Resource, ta.Termtyp
+			tokenTempCache.Remove(*ta.Token)
+			if !isblock(tid.Node) {
+				isAuth = true
 			}
-		} else if ta.Name != nil && ta.Pwd != nil && !isblock(*ta.Name) {
-			if _r, err := data.Handler.Login(*ta.Name, *ta.Pwd, ta.Domain); err == nil {
-				tid = &Tid{Node: _r, Domain: ta.Domain, Extend: ta.Extend, Resource: ta.Resource, Termtyp: ta.Termtyp}
-				if !isblock(_r) {
-					isAuth = true
-				}
+		} else {
+			return sys.ERR_TOKEN
+		}
+	} else if ta.Name != nil && ta.Pwd != nil && !isblock(*ta.Name) {
+		if _r, err := data.Handler.Login(*ta.Name, *ta.Pwd, ta.Domain); err == nil {
+			tid = &Tid{Node: _r, Domain: ta.Domain, Extend: ta.Extend, Resource: ta.Resource, Termtyp: ta.Termtyp}
+			if !isblock(_r) {
+				isAuth = true
 			}
 		}
-		if isAuth {
-			overentry := true
-			if wsware.GetUserDeviceLen(tid.Node) < sys.DeviceLimit {
-				wis := sys.CsWssInfo(tid.Node)
-				if len(wis)+wsware.GetUserDeviceLen(tid.Node) < sys.DeviceLimit {
-					overentry = false
-					if tid.Termtyp != nil {
-						typebs := wsware.GetUserDeviceTypeLen(tid.Node)
-						c := 0
-						for _, u := range append(wis, typebs...) {
-							if u == byte(*tid.Termtyp) {
-								c++
-							}
+	}
+	if isAuth {
+		overentry := true
+		if wsware.GetUserDeviceLen(tid.Node) < sys.DeviceLimit {
+			wis := sys.CsWssInfo(tid.Node)
+			if len(wis)+wsware.GetUserDeviceLen(tid.Node) < sys.DeviceLimit {
+				overentry = false
+				if tid.Termtyp != nil {
+					typebs := wsware.GetUserDeviceTypeLen(tid.Node)
+					c := 0
+					for _, u := range append(wis, typebs...) {
+						if u == byte(*tid.Termtyp) {
+							c++
 						}
-						if c > sys.DeviceTypeLimit {
-							overentry = true
-						}
+					}
+					if c > sys.DeviceTypeLimit {
+						overentry = true
 					}
 				}
 			}
-			if overentry {
-				return sys.ERR_OVERENTRY
-			}
-			wsware.AddTid(ws, tid)
-			if util.JTP(bs[0]) {
-				wsware.SetJsonOn(ws)
-			}
-			wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMAUTH), N: &tid.Node}, sys.TIMACK)
-		} else {
-			e = sys.ERR_AUTH
 		}
+		if overentry {
+			return sys.ERR_OVERENTRY
+		}
+		wsware.AddTid(ws, tid)
+		if util.JTP(bs[0]) {
+			wsware.SetJsonOn(ws)
+		}
+		wsware.SendWs(ws.Id, &TimAck{Ok: true, TimType: int8(sys.TIMAUTH), N: &tid.Node}, sys.TIMACK)
+	} else {
+		e = sys.ERR_AUTH
 	}
 	return
 }
@@ -193,7 +191,7 @@ func sysMessage(tn *TimNodes, tm *TimMessage) (err sys.ERROR) {
 	return
 }
 
-func (this *timservice) osmessage(tm *TimMessage) (err sys.ERROR) {
+func (t *timservice) osmessage(tm *TimMessage) (err sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -204,34 +202,34 @@ func (this *timservice) osmessage(tm *TimMessage) (err sys.ERROR) {
 	return sys.TimMessageProcessor(tm, sys.TRANS_SOURCE)
 }
 
-func (this *timservice) bigString(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
+func (t *timservice) bigString(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
 	bigstring := string(bs[5:])
 	idx := strings.Index(bigstring, sys.SEP_STR)
 	datastring := bigstring[idx+1:]
 	if wss, b := wsware.Get(ws); b {
-		_r = this.messagehandle(nil, &TimMessage{MsType: 2, OdType: sys.ORDER_BIGSTRING, DataString: &datastring, FromTid: wss.tid, ToTid: &Tid{Node: bigstring[:idx]}})
+		_r = t.messagehandle(&TimMessage{MsType: 2, OdType: sys.ORDER_BIGSTRING, DataString: &datastring, FromTid: wss.tid, ToTid: &Tid{Node: bigstring[:idx]}})
 	}
 	return
 }
 
-func (this *timservice) bigBinary(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
+func (t *timservice) bigBinary(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
 	idx := bytes.IndexByte(bs[5:], sys.SEP_BIN)
 	if wss, b := wsware.Get(ws); b {
-		_r = this.messagehandle(nil, &TimMessage{MsType: 2, OdType: sys.ORDER_BIGBINARY, DataBinary: bs[5:][idx+1:], FromTid: wss.tid, ToTid: &Tid{Node: string(bs[5:][:idx])}})
+		_r = t.messagehandle(&TimMessage{MsType: 2, OdType: sys.ORDER_BIGBINARY, DataBinary: bs[5:][idx+1:], FromTid: wss.tid, ToTid: &Tid{Node: string(bs[5:][:idx])}})
 	}
 	return
 }
 
-func (this *timservice) bigBinaryStreamHandle(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
+func (t *timservice) bigBinaryStreamHandle(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
 	idx := bytes.IndexByte(bs[5:], sys.SEP_BIN)
 	if wss, b := wsware.Get(ws); b {
 		ts := &TimStream{ID: RandId(), VNode: string(bs[5:][:idx]), Body: bs[5:][idx+1:], FromNode: wss.tid.Node}
-		return this.streamhandler(ts, ws)
+		return t.streamhandler(ts, ws)
 	}
 	return
 }
 
-func (this *timservice) message(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
+func (t *timservice) message(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -283,7 +281,7 @@ func (this *timservice) message(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
 					if tm.OdType == sys.ORDER_INOF {
 						wsware.SendNode(tm.FromTid.Node, tm, sys.TIMMESSAGE)
 					}
-					if rs := data.Handler.GroupRoster(tm.RoomTid.Node); rs != nil && len(rs) > 0 {
+					if rs := data.Handler.GroupRoster(tm.RoomTid.Node); len(rs) > 0 {
 						for _, u := range rs {
 							if u != wss.tid.Node {
 								t := shallowcloneTimMessageData(tm)
@@ -299,12 +297,12 @@ func (this *timservice) message(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
 		} else if tm.MsType == sys.SOURCE_USER {
 			if tm.RoomTid != nil && tm.ToTid != nil {
 				if authGroup(tm.RoomTid.Node, tm.FromTid.Node, tm.FromTid.Domain) && authGroup(tm.RoomTid.Node, tm.ToTid.Node, tm.FromTid.Domain) {
-					return this.messagehandle(bs, tm)
+					return t.messagehandle(tm)
 				} else {
 					return sys.ERR_AUTH
 				}
 			} else if tm.ToTid != nil && authTidNode(tm.FromTid, tm.ToTid, false) {
-				return this.messagehandle(bs, tm)
+				return t.messagehandle(tm)
 			} else {
 				return sys.ERR_AUTH
 			}
@@ -315,7 +313,7 @@ func (this *timservice) message(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
 	return
 }
 
-func (this *timservice) messagehandle(bs []byte, tm *TimMessage) (_r sys.ERROR) {
+func (t *timservice) messagehandle(tm *TimMessage) (_r sys.ERROR) {
 	ok := true
 	switch tm.OdType {
 	case sys.ORDER_INOF:
@@ -384,7 +382,7 @@ func (this *timservice) messagehandle(bs []byte, tm *TimMessage) (_r sys.ERROR) 
 	return
 }
 
-func (this *timservice) presence(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
+func (t *timservice) presence(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -409,14 +407,14 @@ func (this *timservice) presence(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) 
 	return
 }
 
-func (this *timservice) interrupt(tid *Tid) (err sys.ERROR) {
+func (t *timservice) interrupt(tid *Tid) (err sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
 	if !wsware.hasUser(tid.Node) {
 		if !sys.Conf.PresenceOfflineBlock {
 			a := true
-			if rs := data.Handler.Roster(tid.Node); rs != nil && len(rs) > 0 {
+			if rs := data.Handler.Roster(tid.Node); len(rs) > 0 {
 				rid := RandId()
 				tp := &TimPresence{ID: &rid, FromTid: tid, ToList: rs, Offline: &a}
 				sys.TimPresenceProcessor(tp, sys.TRANS_STAFF)
@@ -429,7 +427,7 @@ func (this *timservice) interrupt(tid *Tid) (err sys.ERROR) {
 	return
 }
 
-func (this *timservice) offlineMsg(ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) offlineMsg(ws *tlnet.Websocket) (err sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -456,7 +454,7 @@ func (this *timservice) offlineMsg(ws *tlnet.Websocket) (err sys.ERROR) {
 			id := RandId()
 			if wsware.SendWsWithAck(ws.Id, &TimMessageList{MessageList: tmList, ID: &id}, sys.TIMOFFLINEMSG) {
 				if _r, err := data.Handler.DelOfflineMessage(util.NodeToUUID(wss.tid.Node), ids...); err == nil && _r > 0 {
-					this.offlineMsg(ws)
+					t.offlineMsg(ws)
 				}
 			}
 		} else if err == nil {
@@ -468,7 +466,7 @@ func (this *timservice) offlineMsg(ws *tlnet.Websocket) (err sys.ERROR) {
 	return
 }
 
-func (this *timservice) broadpresence(bs []byte, ws *tlnet.Websocket) (e sys.ERROR) {
+func (t *timservice) broadpresence(bs []byte, ws *tlnet.Websocket) (e sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -479,7 +477,7 @@ func (this *timservice) broadpresence(bs []byte, ws *tlnet.Websocket) (e sys.ERR
 	if wss, ok := wsware.Get(ws); ok {
 		fid := wss.tid
 		if tp.ToTid == nil && tp.ToList == nil {
-			if rs := data.Handler.Roster(wss.tid.Node); rs != nil && len(rs) > 0 {
+			if rs := data.Handler.Roster(wss.tid.Node); len(rs) > 0 {
 				for i := 0; i < len(rs); i++ {
 					t := &TimPresence{FromTid: fid, ToTid: &Tid{Node: rs[i]}, SubStatus: tp.SubStatus, Show: tp.Show, Status: tp.Status, Extend: tp.Extend, Extra: tp.Extra}
 					sys.TimPresenceProcessor(t, sys.TRANS_SOURCE)
@@ -502,7 +500,7 @@ func (this *timservice) broadpresence(bs []byte, ws *tlnet.Websocket) (e sys.ERR
 	return
 }
 
-func (this *timservice) pullmessage(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) pullmessage(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -527,7 +525,7 @@ func (this *timservice) pullmessage(bs []byte, ws *tlnet.Websocket) (err sys.ERR
 	return
 }
 
-func (this *timservice) osvroomprocess(node string, rtype int8) (_r string) {
+func (t *timservice) osvroomprocess(node string, rtype int8) (_r string) {
 	switch rtype {
 	case 1:
 		vnode := vgate.VGate.NewVRoom(node)
@@ -538,7 +536,7 @@ func (this *timservice) osvroomprocess(node string, rtype int8) (_r string) {
 	return
 }
 
-func (this *timservice) vroomprocess(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) vroomprocess(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -606,15 +604,15 @@ func (this *timservice) vroomprocess(bs []byte, ws *tlnet.Websocket) (err sys.ER
 	return
 }
 
-func (this *timservice) stream(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) stream(bs []byte, ws *tlnet.Websocket) (err sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
 	ts := newTimStream(bs)
-	return this.streamhandler(ts, ws)
+	return t.streamhandler(ts, ws)
 }
 
-func (this *timservice) streamhandler(ts *TimStream, ws *tlnet.Websocket) (err sys.ERROR) {
+func (t *timservice) streamhandler(ts *TimStream, ws *tlnet.Websocket) (err sys.ERROR) {
 	if ts == nil || !util.CheckNode(ts.VNode) {
 		return sys.ERR_PARAMS
 	}
