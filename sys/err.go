@@ -1,6 +1,6 @@
 // Copyright (c) 2023, donnie <donnie4w@gmail.com>
 // All rights reserved.
-// Use of this source code is governed by a BSD-style
+// Use of t source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
@@ -51,10 +51,10 @@ func err(code int32, info string) ERROR {
 	return &timerror{code, info}
 }
 
-func (this *timerror) TimError() *TimError {
-	return &TimError{Code: &this.code, Info: &this.info}
+func (t *timerror) TimError() *TimError {
+	return &TimError{Code: &t.code, Info: &t.info}
 }
 
-func (this *timerror) Error() error {
-	return fmt.Errorf("code:%d,info:%s", this.code, this.info)
+func (t *timerror) Error() error {
+	return fmt.Errorf("code:%d,info:%s", t.code, t.info)
 }
