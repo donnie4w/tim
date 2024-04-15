@@ -1,6 +1,6 @@
 // Copyright (c) 2023, donnie <donnie4w@gmail.com>
 // All rights reserved.
-// Use of this source code is governed by a BSD-style
+// Use of t source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
@@ -34,34 +34,34 @@ type _wsWare struct {
 	wsmap *MapL[int64, *WsSock]
 }
 
-func (this *_wsWare) AddTid(ws *tlnet.Websocket, tid *Tid) {
+func (t *_wsWare) AddTid(ws *tlnet.Websocket, tid *Tid) {
 	numLock.Lock(ws.Id)
 	defer numLock.Unlock(ws.Id)
-	if this.wsmap.Has(ws.Id) {
+	if t.wsmap.Has(ws.Id) {
 		return
 	}
 	wss := NewWsSock(ws)
 	wss.tid = tid
-	this.wsmap.Put(ws.Id, wss)
-	if a, ok := this.uMap.Get(tid.Node); !ok {
-		this.uMap.Put(tid.Node, []int64{ws.Id})
+	t.wsmap.Put(ws.Id, wss)
+	if a, ok := t.uMap.Get(tid.Node); !ok {
+		t.uMap.Put(tid.Node, []int64{ws.Id})
 	} else {
-		this.uMap.Put(tid.Node, append(a, ws.Id))
+		t.uMap.Put(tid.Node, append(a, ws.Id))
 	}
 	go sys.Csuser(tid.Node, true, ws.Id)
 	go loginstat(tid.Node, true, tid, ws.Id)
 }
 
-func (this *_wsWare) SetJsonOn(ws *tlnet.Websocket) {
-	if wss, ok := this.wsmap.Get(ws.Id); ok {
+func (t *_wsWare) SetJsonOn(ws *tlnet.Websocket) {
+	if wss, ok := t.wsmap.Get(ws.Id); ok {
 		wss.SetJsonOn(true)
 	}
 }
 
-func (this *_wsWare) SendNode(node string, ts thrift.TStruct, tt sys.TIMTYPE) (_r bool) {
-	if ids, ok := this.uMap.Get(node); ok {
+func (t *_wsWare) SendNode(node string, ts thrift.TStruct, tt sys.TIMTYPE) (_r bool) {
+	if ids, ok := t.uMap.Get(node); ok {
 		for _, id := range ids {
-			if this.SendWs(id, ts, tt) {
+			if t.SendWs(id, ts, tt) {
 				_r = true
 			}
 		}
@@ -69,10 +69,10 @@ func (this *_wsWare) SendNode(node string, ts thrift.TStruct, tt sys.TIMTYPE) (_
 	return
 }
 
-func (this *_wsWare) SendBigData(node string, data []byte, tt sys.TIMTYPE) (_r bool) {
-	if ids, ok := this.uMap.Get(node); ok {
+func (t *_wsWare) SendBigData(node string, data []byte, tt sys.TIMTYPE) (_r bool) {
+	if ids, ok := t.uMap.Get(node); ok {
 		for _, id := range ids {
-			if this.SendBigDataByWs(id, data, tt) {
+			if t.SendBigDataByWs(id, data, tt) {
 				_r = true
 			}
 		}
@@ -80,8 +80,8 @@ func (this *_wsWare) SendBigData(node string, data []byte, tt sys.TIMTYPE) (_r b
 	return
 }
 
-func (this *_wsWare) SendBigDataByWs(id int64, data []byte, tt sys.TIMTYPE) (_r bool) {
-	if wss, ok := this.wsmap.Get(id); ok {
+func (t *_wsWare) SendBigDataByWs(id int64, data []byte, tt sys.TIMTYPE) (_r bool) {
+	if wss, ok := t.wsmap.Get(id); ok {
 		if err := wss.sendBigData(data, tt); err == nil {
 			_r = ok
 		}
@@ -89,10 +89,10 @@ func (this *_wsWare) SendBigDataByWs(id int64, data []byte, tt sys.TIMTYPE) (_r 
 	return
 }
 
-func (this *_wsWare) SendNodeWithAck(node string, ts thrift.TStruct, tt sys.TIMTYPE) (_r bool) {
-	if ids, ok := this.uMap.Get(node); ok {
+func (t *_wsWare) SendNodeWithAck(node string, ts thrift.TStruct, tt sys.TIMTYPE) (_r bool) {
+	if ids, ok := t.uMap.Get(node); ok {
 		for _, id := range ids {
-			if this.SendWsWithAck(id, ts, tt) {
+			if t.SendWsWithAck(id, ts, tt) {
 				_r = true
 			}
 		}
@@ -100,8 +100,8 @@ func (this *_wsWare) SendNodeWithAck(node string, ts thrift.TStruct, tt sys.TIMT
 	return
 }
 
-func (this *_wsWare) SendWs(id int64, ts thrift.TStruct, tt sys.TIMTYPE) (_r bool) {
-	if wss, ok := this.wsmap.Get(id); ok {
+func (t *_wsWare) SendWs(id int64, ts thrift.TStruct, tt sys.TIMTYPE) (_r bool) {
+	if wss, ok := t.wsmap.Get(id); ok {
 		if err := wss.send(ts, tt, false); err == nil {
 			_r = ok
 		}
@@ -109,8 +109,8 @@ func (this *_wsWare) SendWs(id int64, ts thrift.TStruct, tt sys.TIMTYPE) (_r boo
 	return
 }
 
-func (this *_wsWare) SendWsWithAck(id int64, ts thrift.TStruct, tt sys.TIMTYPE) (_r bool) {
-	if wss, ok := this.wsmap.Get(id); ok {
+func (t *_wsWare) SendWsWithAck(id int64, ts thrift.TStruct, tt sys.TIMTYPE) (_r bool) {
+	if wss, ok := t.wsmap.Get(id); ok {
 		if err := wss.send(ts, tt, true); err == nil {
 			_r = ok
 		}
@@ -118,18 +118,18 @@ func (this *_wsWare) SendWsWithAck(id int64, ts thrift.TStruct, tt sys.TIMTYPE) 
 	return
 }
 
-func (this *_wsWare) GetUserDeviceLen(node string) (_r int) {
-	if as, ok := this.uMap.Get(node); ok {
+func (t *_wsWare) GetUserDeviceLen(node string) (_r int) {
+	if as, ok := t.uMap.Get(node); ok {
 		_r = len(as)
 	}
 	return
 }
 
-func (this *_wsWare) GetUserDeviceTypeLen(node string) (_r []byte) {
+func (t *_wsWare) GetUserDeviceTypeLen(node string) (_r []byte) {
 	_r = make([]byte, 0)
-	if as, ok := this.uMap.Get(node); ok {
+	if as, ok := t.uMap.Get(node); ok {
 		for _, v := range as {
-			if tid, ok := this.wsmap.Get(v); ok {
+			if tid, ok := t.wsmap.Get(v); ok {
 				if tid.tid.Termtyp != nil {
 					_r = append(_r, byte(*tid.tid.Termtyp))
 				}
@@ -139,43 +139,58 @@ func (this *_wsWare) GetUserDeviceTypeLen(node string) (_r []byte) {
 	return
 }
 
-func (this *_wsWare) Ping(id int64) {
-	if wss, ok := this.wsmap.Get(id); ok {
+func (t *_wsWare) Ping(id int64) {
+	if wss, ok := t.wsmap.Get(id); ok {
 		wss.send(nil, sys.TIMPING, false)
 		wss.pingt = sys.InaccurateTime
 	}
 }
 
-func (this *_wsWare) Get(ws *tlnet.Websocket) (*WsSock, bool) {
-	return this.wsmap.Get(ws.Id)
+func (t *_wsWare) detect(node string) {
+	if ids, ok := t.uMap.Get(node); ok {
+		for _, id := range ids {
+			t.Ping(id)
+		}
+	}
 }
 
-func (this *_wsWare) hasws(ws *tlnet.Websocket) bool {
-	return this.wsmap.Has(ws.Id)
+func (t *_wsWare) Get(ws *tlnet.Websocket) (*WsSock, bool) {
+	return t.wsmap.Get(ws.Id)
 }
 
-func (this *_wsWare) hasUser(node string) bool {
-	return this.uMap.Has(node)
+func (t *_wsWare) hasws(ws *tlnet.Websocket) bool {
+	return t.wsmap.Has(ws.Id)
 }
 
-func (this *_wsWare) wsLen() int64 {
-	return this.wsmap.Len()
+func (t *_wsWare) hasUser(node string) bool {
+	return t.uMap.Has(node)
 }
 
-func (this *_wsWare) wssList() (_r []*Tid) {
+func (t *_wsWare) wsById(id int64) (*tlnet.Websocket, bool) {
+	if ws, b := t.wsmap.Get(id); b {
+		return ws.ws, b
+	}
+	return nil, false
+}
+
+func (t *_wsWare) wsLen() int64 {
+	return t.wsmap.Len()
+}
+
+func (t *_wsWare) wssList() (_r []*Tid) {
 	_r = make([]*Tid, 0)
-	this.wsmap.Range(func(_ int64, wss *WsSock) bool {
+	t.wsmap.Range(func(_ int64, wss *WsSock) bool {
 		_r = append(_r, wss.tid)
 		return true
 	})
 	return
 }
 
-func (this *_wsWare) wssInfo(node string) (_r []byte) {
+func (t *_wsWare) wssInfo(node string) (_r []byte) {
 	_r = make([]byte, 0)
-	if as, ok := this.uMap.Get(node); ok {
+	if as, ok := t.uMap.Get(node); ok {
 		for _, v := range as {
-			if ws, ok := this.wsmap.Get(v); ok {
+			if ws, ok := t.wsmap.Get(v); ok {
 				if ws.tid.Termtyp != nil {
 					_r = append(_r, byte(*ws.tid.Termtyp))
 				} else {
@@ -187,22 +202,22 @@ func (this *_wsWare) wssInfo(node string) (_r []byte) {
 	return
 }
 
-func (this *_wsWare) delws(ws *tlnet.Websocket) {
+func (t *_wsWare) delws(ws *tlnet.Websocket) {
 	defer util.Recover()
-	this.delId(ws.Id)
+	t.delId(ws.Id)
 }
 
-func (this *_wsWare) delId(id int64) {
-	if sk, ok := this.wsmap.Get(id); ok {
+func (t *_wsWare) delId(id int64) {
+	if sk, ok := t.wsmap.Get(id); ok {
 		sk.ws.Close()
-		this.wsmap.Del(id)
-		if a, ok := this.uMap.Get(sk.tid.Node); ok {
+		t.wsmap.Del(id)
+		if a, ok := t.uMap.Get(sk.tid.Node); ok {
 			strLock.Lock(sk.tid.Node)
 			defer strLock.Unlock(sk.tid.Node)
 			if _a := util.ArraySub2(a, id); len(_a) > 0 {
-				this.uMap.Put(sk.tid.Node, _a)
+				t.uMap.Put(sk.tid.Node, _a)
 			} else {
-				this.uMap.Del(sk.tid.Node)
+				t.uMap.Del(sk.tid.Node)
 				go sys.Csuser(sk.tid.Node, false, id)
 				go sys.Interrupt(sk.tid)
 				go loginstat(sk.tid.Node, false, sk.tid, id)
@@ -211,10 +226,10 @@ func (this *_wsWare) delId(id int64) {
 	}
 }
 
-func (this *_wsWare) delnode(node string) {
-	if as, ok := this.uMap.Get(node); ok {
+func (t *_wsWare) delnode(node string) {
+	if as, ok := t.uMap.Get(node); ok {
 		for _, v := range as {
-			this.delId(v)
+			t.delId(v)
 		}
 	}
 }
@@ -231,42 +246,42 @@ func NewWsSock(ws *tlnet.Websocket) (_r *WsSock) {
 	return
 }
 
-func (this *WsSock) SetJsonOn(on bool) {
-	this.jsonOn = on
+func (t *WsSock) SetJsonOn(on bool) {
+	t.jsonOn = on
 }
 
-func (this *WsSock) _send(buf *Buffer) (err error) {
-	if this.pingt+int64(sys.PINGTO*int64(time.Second)) < sys.InaccurateTime {
-		this.close()
+func (t *WsSock) _send(buf *Buffer) (err error) {
+	if t.pingt+int64(sys.PINGTO*int64(time.Second)) < sys.InaccurateTime {
+		t.close()
 		return sys.ERR_PING.Error()
 	}
 	sys.Stat.Ob(int64(buf.Len()))
-	return this.ws.Send(buf.Bytes())
+	return t.ws.Send(buf.Bytes())
 }
 
 var seq int32 = 0
 
-func (this *WsSock) send(ts thrift.TStruct, t sys.TIMTYPE, sync bool) (err error) {
+func (t *WsSock) send(ts thrift.TStruct, tt sys.TIMTYPE, sync bool) (err error) {
 	buf := NewBuffer()
 	sendId := atomic.AddInt32(&seq, 1)
 	var ch chan int8
 	if sync {
-		buf.WriteByte(byte(t) | 0x80)
+		buf.WriteByte(byte(tt) | 0x80)
 		buf.Write(Int32ToBytes(sendId))
 		ch = await.Get(int64(sendId))
 	} else {
-		buf.WriteByte(byte(t))
+		buf.WriteByte(byte(tt))
 	}
 	if ts != nil {
-		if this.jsonOn {
+		if t.jsonOn {
 			buf.Write(JsonEncode(ts))
 		} else {
 			buf.Write(TEncode(ts))
 		}
 	}
-	if err = this._send(buf); err == nil && sync {
+	if err = t._send(buf); err == nil && sync {
 		i := 0
-		for this.ws.Error == nil && i < 100 {
+		for t.ws.Error == nil && i < 100 {
 			i++
 			select {
 			case <-ch:
@@ -276,7 +291,7 @@ func (this *WsSock) send(ts thrift.TStruct, t sys.TIMTYPE, sync bool) (err error
 				err = sys.ERR_OVERTIME.Error()
 			}
 		}
-		if this.ws.Error != nil || err != nil {
+		if t.ws.Error != nil || err != nil {
 			err = sys.ERR_OVERTIME.Error()
 		}
 	}
@@ -284,15 +299,15 @@ END:
 	return
 }
 
-func (this *WsSock) sendBigData(data []byte, t sys.TIMTYPE) (err error) {
+func (t *WsSock) sendBigData(data []byte, tt sys.TIMTYPE) (err error) {
 	buf := NewBuffer()
-	buf.WriteByte(byte(t))
+	buf.WriteByte(byte(tt))
 	buf.Write(data)
-	return this._send(buf)
+	return t._send(buf)
 }
 
-func (this *WsSock) close() {
-	wsware.delws(this.ws)
+func (t *WsSock) close() {
+	wsware.delws(t.ws)
 }
 
 func awaitEnd(bs []byte) {
