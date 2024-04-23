@@ -56,6 +56,7 @@ func init() {
 	sys.HasNode = wsware.hasUser
 	sys.HasWs = wsware.hasws
 	sys.DelWs = wsware.delws
+	sys.WsById = wsware.wsById
 	sys.WssLen = wsware.wsLen
 	sys.WssList = wsware.wssList
 	sys.WssInfo = wsware.wssInfo
@@ -65,6 +66,7 @@ func init() {
 	sys.SendWs = wsware.SendWs
 	sys.BlockUser = blocku
 	sys.BlockList = blocklist
+	sys.Detect = detect
 	go ticker()
 }
 
@@ -309,6 +311,12 @@ func blocklist() map[string]int64 {
 		return true
 	})
 	return m
+}
+
+func detect(nodes []string) {
+	for _, node := range nodes {
+		wsware.detect(node)
+	}
 }
 
 func ticker() {
