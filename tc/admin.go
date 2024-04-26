@@ -1,6 +1,6 @@
 // Copyright (c) 2023, donnie <donnie4w@gmail.com>
 // All rights reserved.
-// Use of this source code is governed by a BSD-style
+// Use of t source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
@@ -20,7 +20,7 @@ import (
 	tldbKs "github.com/donnie4w/gofer/keystore"
 	. "github.com/donnie4w/gofer/util"
 	. "github.com/donnie4w/tim/keystore"
-	. "github.com/donnie4w/tim/stub"
+
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
 	"github.com/donnie4w/tlnet"
@@ -37,7 +37,7 @@ type adminService struct {
 
 var adminservice = &adminService{false, tlnet.NewTlnet()}
 
-func (this *adminService) Serve() (err error) {
+func (t *adminService) Serve() (err error) {
 	if strings.TrimSpace(sys.DEBUGADDR) != "" {
 		go tlDebug()
 		<-time.After(500 * time.Millisecond)
@@ -46,64 +46,81 @@ func (this *adminService) Serve() (err error) {
 		initAccount()
 	}
 	if strings.TrimSpace(sys.WEBADMINADDR) != "" {
-		err = this._serve(strings.TrimSpace(sys.WEBADMINADDR), sys.Conf.AdminTls, sys.Conf.Ssl_crt, sys.Conf.Ssl_crt_key)
+		err = t._serve(strings.TrimSpace(sys.WEBADMINADDR), sys.Conf.AdminTls, sys.Conf.Ssl_crt, sys.Conf.Ssl_crt_key)
 	}
 	return
 }
 
-func (this *adminService) Close() (err error) {
+func (t *adminService) Close() (err error) {
 	defer util.Recover()
 	if strings.TrimSpace(sys.WEBADMINADDR) != "" {
-		this.isClose = true
-		err = this.tlAdmin.Close()
+		t.isClose = true
+		err = t.tlAdmin.Close()
 	}
 	return
 }
 
-func (this *adminService) _serve(addr string, TLS bool, serverCrt, serverKey string) (err error) {
+func (t *adminService) _serve(addr string, TLS bool, serverCrt, serverKey string) (err error) {
 	defer util.Recover()
 	if addr, err = util.ParseAddr(addr); err != nil {
 		return
 	}
 	sys.WEBADMINADDR = addr
 	tlnet.SetLogOFF()
-	this.tlAdmin.Handle("/login", loginHandler)
-	this.tlAdmin.Handle("/init", initHandler)
-	this.tlAdmin.Handle("/lang", langHandler)
-	this.tlAdmin.Handle("/", initHandler)
-	this.tlAdmin.Handle("/bootstrap.css", cssHandler)
-	this.tlAdmin.Handle("/bootstrap.min.js", jsHandler)
-	this.tlAdmin.HandleWithFilter("/sysvar", loginFilter(), sysVarHtml)
-	this.tlAdmin.HandleWithFilter("/timResetAuth", authFilter(), timResetAuthHandler)
-	this.tlAdmin.HandleWithFilter("/timToken", authFilter(), timTokenHandler)
-	this.tlAdmin.HandleWithFilter("/timMessage", authFilter(), timMessageHandler)
-	this.tlAdmin.HandleWithFilter("/timRegister", authFilter(), timRegisterHandler)
-	this.tlAdmin.HandleWithFilter("/timModifyUserInfo", authFilter(), timModifyUserInfo)
-	this.tlAdmin.HandleWithFilter("/timBlockUser", authFilter(), timBlockUserHandler)
-	this.tlAdmin.HandleWithFilter("/timBlockList", authFilter(), timBlockListHandler)
-	this.tlAdmin.HandleWithFilter("/timOnline", authFilter(), timOnlineHandler)
-	this.tlAdmin.HandleWithFilter("/timVroom", authFilter(), timVroomHandler)
-	this.tlAdmin.HandleWithFilter("/timNewRoom", authFilter(), timNewRoomHandler)
-	this.tlAdmin.HandleWithFilter("/timModifyRoomInfo", authFilter(), timModifyRoomInfoHandler)
-	this.tlAdmin.HandleWithFilter("/monitor", loginFilter(), monitorHtml)
-	this.tlAdmin.HandleWebSocketBindConfig("/monitorData", mntHandler, mntConfig())
-	this.tlAdmin.HandleWithFilter("/data", loginFilter(), dataMonitorHtml)
-	this.tlAdmin.HandleWebSocketBindConfig("/ddmonitorData", ddmntHandler, ddmntConfig())
+	t.tlAdmin.Handle("/login", loginHandler)
+	t.tlAdmin.Handle("/init", initHandler)
+	t.tlAdmin.Handle("/lang", langHandler)
+	t.tlAdmin.Handle("/", initHandler)
+	t.tlAdmin.Handle("/bootstrap.css", cssHandler)
+	t.tlAdmin.Handle("/bootstrap.min.js", jsHandler)
+	t.tlAdmin.HandleWithFilter("/sysvar", loginFilter(), sysVarHtml)
+	t.tlAdmin.HandleWithFilter("/timResetAuth", authFilter(), timResetAuthHandler)
+	t.tlAdmin.HandleWithFilter("/timToken", authFilter(), timTokenHandler)
+	t.tlAdmin.HandleWithFilter("/timOsMessage", authFilter(), timOsMessageHandler)
+	t.tlAdmin.HandleWithFilter("/timMessage", authFilter(), timMessageHandler)
+	t.tlAdmin.HandleWithFilter("/timRegister", authFilter(), timRegisterHandler)
+	t.tlAdmin.HandleWithFilter("/timModifyUserInfo", authFilter(), timModifyUserInfoHnadler)
+	t.tlAdmin.HandleWithFilter("/timBlockUser", authFilter(), timBlockUserHandler)
+	t.tlAdmin.HandleWithFilter("/timBlockList", authFilter(), timBlockListHandler)
+	t.tlAdmin.HandleWithFilter("/timOnline", authFilter(), timOnlineHandler)
+	t.tlAdmin.HandleWithFilter("/timVroom", authFilter(), timVroomHandler)
+	t.tlAdmin.HandleWithFilter("/timNewRoom", authFilter(), timNewRoomHandler)
+	t.tlAdmin.HandleWithFilter("/timDetect", authFilter(), timDetectHandler)
+	t.tlAdmin.HandleWithFilter("/timModifyRoomInfo", authFilter(), timModifyRoomInfoHandler)
+	t.tlAdmin.HandleWithFilter("/timAddroster", authFilter(), timAddrosterHandler)
+	t.tlAdmin.HandleWithFilter("/timRmroster", authFilter(), timRmrosterHandler)
+	t.tlAdmin.HandleWithFilter("/timBlockroster", authFilter(), timBlockrosterHandler)
+	t.tlAdmin.HandleWithFilter("/timBlockRosterList", authFilter(), timBlockRosterListHandler)
+	t.tlAdmin.HandleWithFilter("/timAddRoom", authFilter(), timAddRoomHandler)
+	t.tlAdmin.HandleWithFilter("/timPullInRoom", authFilter(), timPullInRoomHandler)
+	t.tlAdmin.HandleWithFilter("/timRejectRoom", authFilter(), timRejectRoomHandler)
+	t.tlAdmin.HandleWithFilter("/timKickRoom", authFilter(), timKickRoomHandler)
+	t.tlAdmin.HandleWithFilter("/timLeaveRoom", authFilter(), timLeaveRoomHandler)
+	t.tlAdmin.HandleWithFilter("/timCancelRoom", authFilter(), timCancelRoomHandler)
+	t.tlAdmin.HandleWithFilter("/timBlockRoom", authFilter(), timBlockRoomHandler)
+	t.tlAdmin.HandleWithFilter("/timBlockRoomMember", authFilter(), timBlockRoomMemberHandler)
+	t.tlAdmin.HandleWithFilter("/timBlockRoomList", authFilter(), timBlockRoomListHandler)
+	t.tlAdmin.HandleWithFilter("/timBlockRoomMemberlist", authFilter(), timBlockRoomMemberlistHandler)
+
+	t.tlAdmin.HandleWithFilter("/monitor", loginFilter(), monitorHtml)
+	t.tlAdmin.HandleWebSocketBindConfig("/monitorData", mntHandler, mntConfig())
+	t.tlAdmin.HandleWithFilter("/data", loginFilter(), dataMonitorHtml)
+	t.tlAdmin.HandleWebSocketBindConfig("/ddmonitorData", ddmntHandler, ddmntConfig())
 
 	if TLS {
 		if IsFileExist(serverCrt) && IsFileExist(serverKey) {
 			sys.FmtLog("webAdmin start tls [", addr, "]")
-			err = this.tlAdmin.HttpStartTLS(addr, serverCrt, serverKey)
+			err = t.tlAdmin.HttpStartTLS(addr, serverCrt, serverKey)
 		} else {
 			sys.FmtLog("webAdmin start tls by bytes [", addr, "]")
-			err = this.tlAdmin.HttpStartTlsBytes(addr, []byte(tldbKs.ServerCrt), []byte(tldbKs.ServerKey))
+			err = t.tlAdmin.HttpStartTlsBytes(addr, []byte(tldbKs.ServerCrt), []byte(tldbKs.ServerKey))
 		}
 	}
-	if !this.isClose {
+	if !t.isClose {
 		sys.FmtLog("webAdmin start [", addr, "]")
-		err = this.tlAdmin.HttpStart(addr)
+		err = t.tlAdmin.HttpStart(addr)
 	}
-	if !this.isClose && err != nil {
+	if !t.isClose && err != nil {
 		sys.FmtLog("webAdmin start failed:", err.Error())
 	}
 	return
@@ -144,11 +161,11 @@ func authFilter() (f *tlnet.Filter) {
 		name := hc.Request().Header.Get("username")
 		pwd := hc.Request().Header.Get("password")
 		if _r, ok := Admin.GetAdmin(name); ok {
-			if strings.ToLower(_r.Pwd) == strings.ToLower(Md5Str(pwd)) {
+			if strings.EqualFold(_r.Pwd, Md5Str(pwd)) {
 				return false
 			}
 		}
-		hc.ResponseBytes(http.StatusMethodNotAllowed, nil)
+		hc.ResponseBytes(http.StatusUnauthorized, nil)
 		return true
 	})
 	return
@@ -180,321 +197,7 @@ func isAdmin(hc *tlnet.HttpContext) (_r bool) {
 	return
 }
 
-func timTokenHandler(hc *tlnet.HttpContext) {
-	type tk struct {
-		Name     string `json:"name"`
-		Password string `json:"password"`
-		Domain   string `json:"domain"`
-	}
-	defer util.Recover()
-	var nodeOrName string
-	var password *string
-	var domain *string
-
-	if reqform(hc) {
-		nodeOrName = hc.PostParamTrimSpace("name")
-		_domain := hc.PostParamTrimSpace("domain")
-		_password := hc.PostParamTrimSpace("password")
-
-		if _domain != "" {
-			domain = &_domain
-		}
-		if _password != "" {
-			password = &_password
-		}
-	} else {
-		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
-			nodeOrName = t.Name
-			if t.Domain != "" {
-				domain = &t.Domain
-			}
-			if t.Password != "" {
-				password = &t.Password
-			}
-		}
-	}
-
-	var ta *TimAck
-	if nodeOrName != "" {
-		if t, n, err := sys.OsToken(nodeOrName, password, domain); err == nil {
-			ta = &TimAck{Ok: true, TimType: int8(sys.TIMTOKEN), N: &n, T: &t}
-		} else {
-			ta = &TimAck{Ok: false, TimType: int8(sys.TIMTOKEN), Error: err.TimError()}
-		}
-	} else {
-		ta = &TimAck{Ok: false, TimType: int8(sys.TIMTOKEN), Error: sys.ERR_PARAMS.TimError()}
-	}
-	hc.ResponseBytes(http.StatusOK, JsonEncode(ta))
-}
-
-func timMessageHandler(hc *tlnet.HttpContext) {
-	defer util.Recover()
-	type tk struct {
-		Nodes   *TimNodes   `json:"nodes"`
-		Message *TimMessage `json:"message"`
-	}
-	var nodes *TimNodes
-	var message *TimMessage
-
-	if reqform(hc) {
-		nodes, _ = JsonDecode[*TimNodes]([]byte(hc.PostParam("nodes")))
-		message, _ = JsonDecode[*TimMessage]([]byte(hc.PostParam("message")))
-	} else {
-		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
-			nodes = t.Nodes
-			message = t.Message
-		}
-	}
-
-	if err := sys.OsMessage(nodes, message); err == nil {
-		tk := &TimAck{Ok: true}
-		hc.ResponseString(string(JsonEncode(tk)))
-	} else {
-		tk := &TimAck{Ok: false, Error: err.TimError()}
-		hc.ResponseString(string(JsonEncode(tk)))
-	}
-}
-
-func timRegisterHandler(hc *tlnet.HttpContext) {
-	defer util.Recover()
-	var username string
-	var password string
-	var domain *string
-	type tk struct {
-		Username string  `json:"username"`
-		Password string  `json:"password"`
-		Domain   *string `json:"domain"`
-	}
-
-	if reqform(hc) {
-		username = hc.PostParamTrimSpace("username")
-		password = hc.PostParam("password")
-		if d := hc.PostParam("domain"); d != "" {
-			domain = &d
-		}
-	} else {
-		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
-			username = t.Username
-			password = t.Password
-			domain = t.Domain
-		}
-	}
-
-	if node, err := sys.OsRegister(username, password, domain); err == nil {
-		tk := &TimAck{Ok: true, N: &node}
-		hc.ResponseString(string(JsonEncode(tk)))
-	} else {
-		tk := &TimAck{Ok: false, Error: err.TimError()}
-		hc.ResponseString(string(JsonEncode(tk)))
-	}
-}
-
-func timBlockUserHandler(hc *tlnet.HttpContext) {
-	defer util.Recover()
-	var account string
-	var _time int64
-	type tk struct {
-		Account string `json:"account"`
-		Time    int64  `json:"time"`
-	}
-
-	if reqform(hc) {
-		account = hc.PostParam("account")
-		t := hc.PostParam("time")
-		if i, e := strconv.Atoi(t); e == nil {
-			_time = int64(i)
-		} else {
-			hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, N: &account, Error: sys.ERR_PARAMS.TimError()})))
-		}
-	} else {
-		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
-			account = t.Account
-			_time = t.Time
-		}
-	}
-
-	if sys.HasNode(account) {
-		sys.SendNode(account, &TimAck{Ok: true, TimType: int8(sys.TIMLOGOUT)}, sys.TIMACK)
-	}
-	sys.BlockUser(account, int64(_time))
-	hc.ResponseString(string(JsonEncode(&TimAck{Ok: true, N: &account})))
-}
-
-func timResetAuthHandler(hc *tlnet.HttpContext) {
-	defer util.Recover()
-	var loginname string
-	var domain *string
-	var pwd string
-	type tk struct {
-		Loginname string  `json:"loginname"`
-		Domain    *string `json:"domain"`
-		Pwd       string  `json:"pwd"`
-	}
-	if reqform(hc) {
-		loginname = hc.PostParam("loginname")
-		if d := hc.PostParam("domain"); d != "" {
-			domain = &d
-		}
-		pwd = hc.PostParam("pwd")
-	} else {
-		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
-			loginname = t.Loginname
-			domain = t.Domain
-			pwd = t.Pwd
-		}
-	}
-	if loginname == "" || pwd == "" {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, N: &loginname, Error: sys.ERR_PARAMS.TimError()})))
-		return
-	}
-	if err := sys.OsModify(loginname, pwd, domain); err == nil {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: true, N: &loginname})))
-	} else {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, Error: err.TimError()})))
-	}
-}
-
-func timNewRoomHandler(hc *tlnet.HttpContext) {
-	defer util.Recover()
-	var node string
-	var domain *string
-	var topic string
-	var gtype int8
-	type tk struct {
-		Node   string  `json:"node"`
-		Topic  string  `json:"topic"`
-		Domain *string `json:"domain"`
-		Gtype  int8    `json:"gtype"`
-	}
-	if reqform(hc) {
-		node, topic = hc.PostParam("node"), hc.PostParam("topic")
-		if d := hc.PostParam("domain"); d != "" {
-			domain = &d
-		}
-		if hc.PostParam("gtype") == "1" {
-			gtype = 1
-		} else {
-			gtype = 2
-		}
-	} else {
-		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
-			node = t.Node
-			domain = t.Domain
-			gtype = t.Gtype
-			topic = t.Topic
-		}
-	}
-	if gnode, err := sys.OsRoom(node, topic, domain, gtype); err == nil {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: true, N: &gnode})))
-	} else {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, Error: err.TimError()})))
-	}
-}
-
-func timModifyRoomInfoHandler(hc *tlnet.HttpContext) {
-	defer util.Recover()
-	var unode string
-	var gnode string
-	var trb *TimRoomBean
-	type tk struct {
-		Unode    string       `json:"unode"`
-		Gnode    string       `json:"gnode"`
-		RoomBean *TimRoomBean `json:"roombean"`
-	}
-	if reqform(hc) {
-		unode, gnode = hc.PostParam("unode"), hc.PostParam("gnode")
-		trb, _ = JsonDecode[*TimRoomBean]([]byte(hc.PostParam("roombean")))
-	} else {
-		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
-			unode = t.Unode
-			gnode = t.Gnode
-			trb = t.RoomBean
-		}
-	}
-	if unode == "" || gnode == "" {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, Error: sys.ERR_PARAMS.TimError()})))
-		return
-	}
-	if err := sys.OsRoomBean(unode, gnode, trb); err == nil {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: true})))
-	} else {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, Error: err.TimError()})))
-	}
-}
-
-func timBlockListHandler(hc *tlnet.HttpContext) {
-	defer util.Recover()
-	hc.ResponseString(string(JsonEncode(sys.BlockList())))
-}
-
-func timOnlineHandler(hc *tlnet.HttpContext) {
-	defer util.Recover()
-	hc.ResponseString(string(JsonEncode(sys.WssList())))
-}
-
-func timVroomHandler(hc *tlnet.HttpContext) {
-	defer util.Recover()
-	type tk struct {
-		Node  string `json:"node"`
-		Rtype int8   `json:"rtype"`
-	}
-	var node string
-	var rtype int8
-	if reqform(hc) {
-		node = hc.PostParamTrimSpace("node")
-		if r, err := strconv.Atoi(hc.PostParamTrimSpace("rtype")); err == nil {
-			rtype = int8(r)
-		}
-	} else {
-		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
-			node = t.Node
-			rtype = t.Rtype
-		}
-	}
-	if node != "" && rtype > 0 {
-		if _r := sys.OsVroomprocess(node, rtype); _r != "" {
-			hc.ResponseString(string(JsonEncode(&TimAck{Ok: true, N: &_r})))
-			return
-		}
-	}
-	hc.ResponseString(string(JsonEncode(&TimAck{Ok: false})))
-}
-
-func timModifyUserInfo(hc *tlnet.HttpContext) {
-	defer util.Recover()
-	type tk struct {
-		Node     string       `json:"node"`
-		UserBean *TimUserBean `json:"userbean"`
-	}
-	var node string
-	var userBean *TimUserBean
-	if reqform(hc) {
-		node = hc.PostParamTrimSpace("node")
-		userBean, _ = JsonDecode[*TimUserBean]([]byte(hc.PostParam("userbean")))
-	} else {
-		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
-			node = t.Node
-			userBean = t.UserBean
-		}
-	}
-	if err := sys.OsUserBean(node, userBean); err == nil {
-		tk := &TimAck{Ok: true}
-		hc.ResponseString(string(JsonEncode(tk)))
-	} else {
-		tk := &TimAck{Ok: false, Error: err.TimError()}
-		hc.ResponseString(string(JsonEncode(tk)))
-	}
-}
-
+/***********************************************************************/
 func langHandler(hc *tlnet.HttpContext) {
 	defer util.Recover()
 	lang := hc.GetParamTrimSpace("lang")
@@ -604,7 +307,7 @@ func loginHandler(hc *tlnet.HttpContext) {
 	if hc.PostParamTrimSpace("type") == "1" {
 		name, pwd := hc.PostParamTrimSpace("name"), hc.PostParamTrimSpace("pwd")
 		if _r, ok := Admin.GetAdmin(name); ok {
-			if strings.ToLower(_r.Pwd) == strings.ToLower(Md5Str(pwd)) {
+			if strings.EqualFold(_r.Pwd, Md5Str(pwd)) {
 				sid := Md5Str(fmt.Sprint(time.Now().UnixNano()))
 				sessionMap.Put(sid, _r)
 				hc.SetCookie(getSessionid(), sid, "/", 86400)
@@ -698,10 +401,7 @@ func sysvar() (s *SysVar) {
 	s.CSNUM = int32(len(sys.GetALLUUIDS()))
 	s.ADDR = fmt.Sprint(sys.CSADDR)
 	s.ADMINADDR = sys.WEBADMINADDR
-	aus := make([]int64, 0)
-	for _, v := range sys.GetALLUUIDS() {
-		aus = append(aus, v)
-	}
+	aus := append([]int64{}, sys.GetALLUUIDS()...)
 	sort.Slice(aus, func(i, j int) bool { return aus[i] > aus[j] })
 	s.ALLUUIDS = fmt.Sprint(aus)
 	return
