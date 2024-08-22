@@ -1,9 +1,10 @@
 // Copyright (c) 2023, donnie <donnie4w@gmail.com>
 // All rights reserved.
-// Use of t source code is governed by a BSD-style
+// Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
+
 package service
 
 import (
@@ -174,13 +175,13 @@ func (t *timservice) auth(bs []byte, ws *tlnet.Websocket) (e sys.ERROR) {
 	return
 }
 
-func sysMessage(tn *TimNodes, tm *TimMessage) (err sys.ERROR) {
-	if tn == nil && tm == nil {
+func sysMessage(nodelist []string, tm *TimMessage) (err sys.ERROR) {
+	if nodelist == nil && tm == nil {
 		return sys.ERR_PARAMS
 	}
-	if checkList(tn.Nodelist) {
+	if checkList(nodelist) {
 		t := time.Now().UnixNano()
-		for _, u := range tn.Nodelist {
+		for _, u := range nodelist {
 			tm.ToTid = &Tid{Node: u}
 			tm.Timestamp = &t
 			service.osmessage(tm)
@@ -200,6 +201,15 @@ func (t *timservice) osmessage(tm *TimMessage) (err sys.ERROR) {
 	}
 	tm.MsType, tm.OdType = sys.SOURCE_OS, sys.ORDER_INOF
 	return sys.TimMessageProcessor(tm, sys.TRANS_SOURCE)
+}
+
+func (t *timservice) pxmessage(connectid int64, tm *TimMessage) (err sys.ERROR) {
+	if ws, b := sys.WsById(connectid); b {
+		err = t.message(tm, ws)
+	} else {
+		err = sys.ERR_NOEXIST
+	}
+	return
 }
 
 func (t *timservice) bigString(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
@@ -229,11 +239,15 @@ func (t *timservice) bigBinaryStreamHandle(bs []byte, ws *tlnet.Websocket) (_r s
 	return
 }
 
-func (t *timservice) message(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
+func (t *timservice) messageByBytes(bs []byte, ws *tlnet.Websocket) (_r sys.ERROR) {
+	return t.message(newTimMessage(bs), ws)
+}
+
+func (t *timservice) message(tm *TimMessage, ws *tlnet.Websocket) (_r sys.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
-	tm := newTimMessage(bs)
+	//tm := newTimMessage(bs)
 	if tm == nil {
 		return sys.ERR_FORMAT
 	}
