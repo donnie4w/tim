@@ -1,6 +1,6 @@
 // Copyright (c) 2023, donnie <donnie4w@gmail.com>
 // All rights reserved.
-// Use of t source code is governed by a BSD-style
+// Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
@@ -177,10 +177,17 @@ func (t *_wsWare) wsLen() int64 {
 	return t.wsmap.Len()
 }
 
-func (t *_wsWare) wssList() (_r []*Tid) {
+func (t *_wsWare) wssList(index, limit int64) (_r []*Tid, length int64) {
 	_r = make([]*Tid, 0)
+	count := index
+	length = t.wsmap.Len()
 	t.wsmap.Range(func(_ int64, wss *WsSock) bool {
-		_r = append(_r, wss.tid)
+		if limit == 0 {
+			_r = append(_r, wss.tid)
+		} else if count < limit {
+			_r = append(_r, wss.tid)
+			count++
+		}
 		return true
 	})
 	return
