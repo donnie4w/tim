@@ -32,7 +32,7 @@ func init() {
 	sys.TokenHandle = service.token
 	sys.AuthHandle = service.auth
 	sys.Interrupt = service.interrupt
-	sys.MessageHandle = service.message
+	sys.MessageHandle = service.messageByBytes
 	sys.PresenceHandle = service.presence
 	sys.PullMessageHandle = service.pullmessage
 	sys.OfflinemsgHandle = service.offlineMsg
@@ -50,6 +50,7 @@ func init() {
 	sys.OsRoom = service.osnewgroup
 	sys.OsRoomBean = service.osModifygroupInfo
 	sys.OsVroomprocess = service.osvroomprocess
+	sys.PxMessage = service.pxmessage
 	sys.TimMessageProcessor = timMessage
 	sys.TimPresenceProcessor = timPresence
 	sys.TimSteamProcessor = timStream
