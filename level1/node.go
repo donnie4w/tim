@@ -447,7 +447,7 @@ func (this *nodeware) csuserBatch(uuid int64) {
 	if sys.WssList == nil || uuid == sys.UUID {
 		return
 	}
-	us := sys.WssList()
+	us, _ := sys.WssList(0, 0)
 	m := map[string]int8{}
 	for _, u := range us {
 		if node, _ := this.csMap.GetStr(u.Node); node == uuid {
