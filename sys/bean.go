@@ -52,6 +52,7 @@ type ConfBean struct {
 	ClusListen           string    `json:"cluser.listen"`
 	AdminListen          string    `json:"admin.listen"`
 	AdminTls             bool      `json:"admin.tls"`
+	AdmListen            *string   `json:"adm.listen"`
 	Init                 bool      `json:"init"`
 	Bind                 *string   `json:"bind"`
 	PingTo               int64     `json:"ping.timeout"`
