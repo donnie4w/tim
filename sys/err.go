@@ -1,6 +1,6 @@
 // Copyright (c) 2023, donnie <donnie4w@gmail.com>
 // All rights reserved.
-// Use of t source code is governed by a BSD-style
+// Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
@@ -28,6 +28,7 @@ var ERR_FORMAT = err(4113, "format error")
 var ERR_BIGDATA = err(4114, "big data error")
 var ERR_TOKEN = err(4115, "error token")
 var ERR_PING = err(4116, "error ping count")
+var ERR_TYPEERROR = err(4117, "parameter type error")
 
 var ERR_UNDEFINED = err(5101, "undefined error")
 var ERR_BLOCKHANDLE = err(5102, "blocking operation")
