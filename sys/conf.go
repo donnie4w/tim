@@ -69,6 +69,10 @@ func praseflag() {
 		CSADDR = Conf.ClusListen
 	}
 
+	if Conf.AdmListen != nil {
+		ADMADDR = *Conf.AdmListen
+	}
+
 	if Conf.MaxMessageSize > 0 {
 		MaxTransLength = Conf.MaxMessageSize * MB
 	}
