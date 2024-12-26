@@ -1,6 +1,6 @@
 // Copyright (c) 2023, donnie <donnie4w@gmail.com>
 // All rights reserved.
-// Use of t source code is governed by a BSD-style
+// Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
@@ -74,6 +74,7 @@ func (t *adminService) _serve(addr string, TLS bool, serverCrt, serverKey string
 	t.tlAdmin.Handle("/bootstrap.css", cssHandler)
 	t.tlAdmin.Handle("/bootstrap.min.js", jsHandler)
 	t.tlAdmin.HandleWithFilter("/sysvar", loginFilter(), sysVarHtml)
+
 	t.tlAdmin.HandleWithFilter("/timResetAuth", authFilter(), timResetAuthHandler)
 	t.tlAdmin.HandleWithFilter("/timToken", authFilter(), timTokenHandler)
 	t.tlAdmin.HandleWithFilter("/timOsMessage", authFilter(), timOsMessageHandler)
@@ -106,6 +107,8 @@ func (t *adminService) _serve(addr string, TLS bool, serverCrt, serverKey string
 	t.tlAdmin.HandleWebSocketBindConfig("/monitorData", mntHandler, mntConfig())
 	t.tlAdmin.HandleWithFilter("/data", loginFilter(), dataMonitorHtml)
 	t.tlAdmin.HandleWebSocketBindConfig("/ddmonitorData", ddmntHandler, ddmntConfig())
+
+	t.tlAdmin.HandleWebSocketBindConfig("/tim", wsAdmHandler, wsAdmConfig())
 
 	if TLS {
 		if IsFileExist(serverCrt) && IsFileExist(serverKey) {
