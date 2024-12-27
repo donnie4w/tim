@@ -69,14 +69,14 @@ func timTokenHandler(hc *tlnet.HttpContext) {
 func timOsMessageHandler(hc *tlnet.HttpContext) {
 	defer util.Recover()
 	type tk struct {
-		Nodes   *TimNodes   `json:"nodes"`
+		Nodes   []string    `json:"nodes"`
 		Message *TimMessage `json:"message"`
 	}
-	var nodes *TimNodes
+	var nodes []string
 	var message *TimMessage
 
 	if reqform(hc) {
-		nodes, _ = JsonDecode[*TimNodes]([]byte(hc.PostParam("nodes")))
+		nodes, _ = JsonDecode[[]string]([]byte(hc.PostParam("nodes")))
 		message, _ = JsonDecode[*TimMessage]([]byte(hc.PostParam("message")))
 	} else {
 		bs := hc.RequestBody()
@@ -283,16 +283,20 @@ func timModifyRoomInfoHandler(hc *tlnet.HttpContext) {
 	}
 }
 
+// list of block
 func timBlockListHandler(hc *tlnet.HttpContext) {
 	defer util.Recover()
 	hc.ResponseString(string(JsonEncode(sys.BlockList())))
 }
 
+// list of online users
 func timOnlineHandler(hc *tlnet.HttpContext) {
 	defer util.Recover()
-	hc.ResponseString(string(JsonEncode(sys.WssList())))
+	tidlist, _ := sys.WssList(0, 0)
+	hc.ResponseString(string(JsonEncode(tidlist)))
 }
 
+// vroom operation
 func timVroomHandler(hc *tlnet.HttpContext) {
 	defer util.Recover()
 	type tk struct {
@@ -322,6 +326,7 @@ func timVroomHandler(hc *tlnet.HttpContext) {
 	hc.ResponseString(string(JsonEncode(&TimAck{Ok: false})))
 }
 
+// modify user info
 func timModifyUserInfoHnadler(hc *tlnet.HttpContext) {
 	defer util.Recover()
 	type tk struct {
@@ -349,6 +354,7 @@ func timModifyUserInfoHnadler(hc *tlnet.HttpContext) {
 	}
 }
 
+// user online status detection
 func timDetectHandler(hc *tlnet.HttpContext) {
 	defer util.Recover()
 	type tk struct {
@@ -370,22 +376,25 @@ func timDetectHandler(hc *tlnet.HttpContext) {
 	}
 }
 
-func timAddrosterHandler(hc *tlnet.HttpContext) {
+// add roster
+func timAddrosterHandler(hc *tlnet.HttpContext) {}
 
-}
-
+// remove roster
 func timRmrosterHandler(hc *tlnet.HttpContext) {
 
 }
 
+// block roster
 func timBlockrosterHandler(hc *tlnet.HttpContext) {
 
 }
 
+// list of  block roster
 func timBlockRosterListHandler(hc *tlnet.HttpContext) {
 
 }
 
+// add to room
 func timAddRoomHandler(hc *tlnet.HttpContext) {
 
 }
