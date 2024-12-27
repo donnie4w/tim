@@ -43,6 +43,24 @@ const (
 )
 
 const (
+	ADMPING           TIMTYPE = 11
+	ADMRESETAUTH      TIMTYPE = 12
+	ADMAUTH           TIMTYPE = 13
+	ADMTOKEN          TIMTYPE = 14
+	ADMOSMESSAGE      TIMTYPE = 15
+	ADMPROXYMESSAGE   TIMTYPE = 16
+	ADMREGISTER       TIMTYPE = 17
+	ADMMODIFYUSERINFO TIMTYPE = 18
+	ADMMODIFYROOMINFO TIMTYPE = 19
+	ADMBLOCKUSER      TIMTYPE = 20
+	ADMBLOCKLIST      TIMTYPE = 21
+	ADMONLINEUSER     TIMTYPE = 22
+	ADMVROOM          TIMTYPE = 23
+	ADMTIMROOM        TIMTYPE = 24
+	ADMDETECT         TIMTYPE = 25
+)
+
+const (
 	GROUP_PRIVATE          int8 = 1
 	GROUP_OPEN             int8 = 2
 	GROUP_STATUS_ALIVE     int8 = 1
@@ -117,7 +135,8 @@ var (
 	TimMessageProcessor  func(*TimMessage, int8) ERROR
 	TimPresenceProcessor func(*TimPresence, int8) ERROR
 	TimSteamProcessor    func(*VBean) ERROR
-	OsMessage            func(*TimNodes, *TimMessage) (err ERROR)
+	OsMessage            func([]string, *TimMessage) (err ERROR)
+	PxMessage            func(int64, *TimMessage) ERROR
 	OsModify             func(string, string, *string) ERROR
 	OsVroomprocess       func(string, int8) string
 	CsMessage            func(*TimMessage, int8) bool
@@ -133,7 +152,7 @@ var (
 	SendWs               func(int64, thrift.TStruct, TIMTYPE) bool
 	BlockUser            func(string, int64)
 	BlockList            func() map[string]int64
-	WssList              func() []*Tid
+	WssList              func(int64, int64) ([]*Tid, int64)
 	WssInfo              func(string) []byte
 	CsWssInfo            func(string) []byte
 	WssLen               func() int64
