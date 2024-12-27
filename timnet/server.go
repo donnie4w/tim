@@ -1,6 +1,6 @@
 // Copyright (c) 2023, donnie <donnie4w@gmail.com>
 // All rights reserved.
-// Use of t source code is governed by a BSD-style
+// Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
@@ -88,7 +88,7 @@ func wsConfig() *tlnet.WebsocketConfig {
 		rmBigDataId(self.Id)
 	}
 	wc.OnOpen = func(hc *tlnet.HttpContext) {
-		if !d(hc) {
+		if !handle_connlimit(hc) {
 			expiredMap.Put(hc.WS, time.Now().Unix())
 		}
 	}
@@ -108,13 +108,13 @@ func httpHandler(hc *tlnet.HttpContext) {
 		return
 	}
 	if tasklimit() {
-		b(hc, bs)
+		handle_http(hc, bs)
 	} else {
 		hc.ResponseBytes(http.StatusInternalServerError, nil)
 	}
 }
 
-func b(hc *tlnet.HttpContext, bs []byte) {
+func handle_http(hc *tlnet.HttpContext, bs []byte) {
 	j := util.JTP(bs[0])
 	switch sys.TIMTYPE(bs[0] & 0x7f) {
 	case sys.TIMREGISTER:
@@ -194,16 +194,16 @@ func parseWsData(bs []byte, hc *tlnet.HttpContext) {
 	switch t {
 	case sys.TIMMESSAGE, sys.TIMREVOKEMESSAGE, sys.TIMBURNMESSAGE, sys.TIMPRESENCE, sys.TIMSTREAM, sys.TIMBIGSTRING, sys.TIMBIGBINARY, sys.TIMBIGBINARYSTREAM:
 		if tasklimit() {
-			go g(hc, bs, t)
+			go handle_core(hc, bs, t)
 		} else {
-			go e(hc, t)
+			go handle_err_overload(hc, t)
 		}
 	default:
-		go f(hc, bs, t)
+		go handle_business(hc, bs, t)
 	}
 }
 
-func g(hc *tlnet.HttpContext, bs []byte, t sys.TIMTYPE) {
+func handle_core(hc *tlnet.HttpContext, bs []byte, t sys.TIMTYPE) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -228,7 +228,7 @@ func g(hc *tlnet.HttpContext, bs []byte, t sys.TIMTYPE) {
 	}
 }
 
-func f(hc *tlnet.HttpContext, bs []byte, t sys.TIMTYPE) {
+func handle_business(hc *tlnet.HttpContext, bs []byte, t sys.TIMTYPE) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -269,7 +269,7 @@ func f(hc *tlnet.HttpContext, bs []byte, t sys.TIMTYPE) {
 	}
 }
 
-func e(hc *tlnet.HttpContext, t sys.TIMTYPE) {
+func handle_err_overload(hc *tlnet.HttpContext, t sys.TIMTYPE) {
 	defer util.Recover()
 	sys.SendWs(hc.WS.Id, &TimAck{Ok: false, TimType: int8(t), Error: sys.ERR_OVERLOAD.TimError()}, sys.TIMACK)
 }
@@ -279,7 +279,7 @@ func e(hc *tlnet.HttpContext, t sys.TIMTYPE) {
 // 	sys.SendWs(hc.WS.Id, &TimAck{Ok: false, TimType: int8(t), Error: sys.ERR_OVERHZ.TimError()}, sys.TIMACK)
 // }
 
-func d(hc *tlnet.HttpContext) (_r bool) {
+func handle_connlimit(hc *tlnet.HttpContext) (_r bool) {
 	defer util.Recover()
 	if _r = sys.WssLen() > sys.Conf.ConnectLimit; _r {
 		hc.WS.Close()
