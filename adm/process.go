@@ -12,6 +12,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/donnie4w/tim/log"
 	"github.com/donnie4w/tim/stub"
 	"os"
 	"strings"
@@ -25,11 +26,11 @@ import (
 )
 
 func init() {
-	sys.Service.Put(6, server)
+	sys.Service.Put(sys.INIT_ADM, server)
 }
 
-var _transportFactory = thrift.NewTBufferedTransportFactory(1 << 13)
-var _tcompactProtocolFactory = thrift.NewTCompactProtocolFactoryConf(&thrift.TConfiguration{})
+var transportFactory = thrift.NewTBufferedTransportFactory(1 << 13)
+var tcompactProtocolFactory = thrift.NewTCompactProtocolFactoryConf(&thrift.TConfiguration{})
 var socketTimeout = 10 * time.Second
 var server = &service{}
 
@@ -53,11 +54,11 @@ func (t *service) _server(_addr string, processor thrift.TProcessor, TLS bool, s
 	if err == nil && t.serverTransport != nil {
 		server := thrift.NewTSimpleServer4(processor, t.serverTransport, nil, nil)
 		if err = server.Listen(); err == nil {
-			s := fmt.Sprint("adm services start[", _addr, "]")
+			s := fmt.Sprint("tcp admin services start[", _addr, "]")
 			if TLS {
-				s = fmt.Sprint("adm services start tls[", _addr, "]")
+				s = fmt.Sprint("tcp admin services start tls[", _addr, "]")
 			}
-			sys.FmtLog(s)
+			log.FmtPrint(s)
 			for {
 				if _transport, err := server.ServerTransport().Accept(); err == nil {
 					go func() {
@@ -65,8 +66,8 @@ func (t *service) _server(_addr string, processor thrift.TProcessor, TLS bool, s
 						cc := newCliContext(_transport)
 						defer cc.close()
 						defaultCtx := context.WithValue(context.Background(), "CliContext", cc)
-						if inputTransport, err := _transportFactory.GetTransport(_transport); err == nil {
-							inputProtocol := _tcompactProtocolFactory.GetProtocol(inputTransport)
+						if inputTransport, err := transportFactory.GetTransport(_transport); err == nil {
+							inputProtocol := tcompactProtocolFactory.GetProtocol(inputTransport)
 							for {
 								ok, err := processor.Process(defaultCtx, inputProtocol, inputProtocol)
 								if errors.Is(err, thrift.ErrAbandonRequest) {
@@ -86,7 +87,7 @@ func (t *service) _server(_addr string, processor thrift.TProcessor, TLS bool, s
 		}
 	}
 	if !t.isClose && err != nil {
-		fmt.Println("adm services start failed:", err)
+		fmt.Println("tcp admin services start failed:", err)
 		os.Exit(1)
 	}
 	return
@@ -109,7 +110,7 @@ func (t *service) Serve() (err error) {
 		}
 		err = t._server(strings.TrimSpace(sys.ADMADDR), stub.NewAdmifaceProcessor(ifaceProcessor), tls, sys.Conf.Ssl_crt, sys.Conf.Ssl_crt_key)
 	} else {
-		sys.FmtLog("no adm services")
+		log.FmtPrint("no tcp admin services")
 	}
 	return
 }
@@ -123,14 +124,14 @@ type pcontext struct {
 }
 
 func newCliContext(tt thrift.TTransport) (cc *pcontext) {
-	cc = &pcontext{goutil.RandId(), false, tt, &sync.Mutex{}, false}
+	cc = &pcontext{goutil.UUID64(), false, tt, &sync.Mutex{}, false}
 	return
 }
 
 func (t *pcontext) close() {
 	defer util.Recover()
-	defer t.mux.Unlock()
 	t.mux.Lock()
+	defer t.mux.Unlock()
 	if !t._isClose {
 		t._isClose = true
 		t.tt.Close()
