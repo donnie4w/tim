@@ -5,8 +5,8 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2024-08-10 01:01:22
-// gdao version 1.1.0
+// datetime :2024-10-06 20:30:14
+// gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timgroup
 
 package dao
@@ -18,174 +18,119 @@ import (
 	
 )
 
-type timgroup_Id[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timgroup_Id[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timgroup_Id[T]) Value() any {
-	return t.fieldValue
-}
-
-type timgroup_Gtype[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timgroup_Gtype[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timgroup_Gtype[T]) Value() any {
-	return t.fieldValue
-}
-
-type timgroup_Uuid[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timgroup_Uuid[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timgroup_Uuid[T]) Value() any {
-	return t.fieldValue
-}
-
-type timgroup_Createtime[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timgroup_Createtime[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timgroup_Createtime[T]) Value() any {
-	return t.fieldValue
-}
-
-type timgroup_Status[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timgroup_Status[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timgroup_Status[T]) Value() any {
-	return t.fieldValue
-}
-
-type timgroup_Rbean[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue []byte
-}
-
-func (t *timgroup_Rbean[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timgroup_Rbean[T]) Value() any {
-	return t.fieldValue
-}
-
 type Timgroup struct {
 	gdao.Table[Timgroup]
 
-	Id		*timgroup_Id[Timgroup]
-	Gtype		*timgroup_Gtype[Timgroup]
-	Uuid		*timgroup_Uuid[Timgroup]
-	Createtime		*timgroup_Createtime[Timgroup]
-	Status		*timgroup_Status[Timgroup]
-	Rbean		*timgroup_Rbean[Timgroup]
+	ID      *base.Field[Timgroup]
+	GTYPE      *base.Field[Timgroup]
+	UUID      *base.Field[Timgroup]
+	CREATETIME      *base.Field[Timgroup]
+	STATUS      *base.Field[Timgroup]
+	RBEAN      *base.Field[Timgroup]
+	TIMESERIES      *base.Field[Timgroup]
+	_ID      *int64
+	_GTYPE      *int64
+	_UUID      *int64
+	_CREATETIME      *int64
+	_STATUS      *int64
+	_RBEAN      []byte
+	_TIMESERIES      *int64
 }
 
+var _Timgroup_ID = &base.Field[Timgroup]{"id"}
+var _Timgroup_GTYPE = &base.Field[Timgroup]{"gtype"}
+var _Timgroup_UUID = &base.Field[Timgroup]{"uuid"}
+var _Timgroup_CREATETIME = &base.Field[Timgroup]{"createtime"}
+var _Timgroup_STATUS = &base.Field[Timgroup]{"status"}
+var _Timgroup_RBEAN = &base.Field[Timgroup]{"rbean"}
+var _Timgroup_TIMESERIES = &base.Field[Timgroup]{"timeseries"}
+
 func (u *Timgroup) GetId() (_r int64){
-	if u.Id.fieldValue != nil {
-		_r = *u.Id.fieldValue
+	if u._ID != nil {
+		_r = *u._ID
 	}
 	return
 }
 
 func (u *Timgroup) SetId(arg int64) *Timgroup{
-	u.Put0(u.Id.fieldName, arg)
-	u.Id.fieldValue = &arg
+	u.Put0(u.ID.FieldName, arg)
+	u._ID = &arg
 	return u
 }
 
 func (u *Timgroup) GetGtype() (_r int64){
-	if u.Gtype.fieldValue != nil {
-		_r = *u.Gtype.fieldValue
+	if u._GTYPE != nil {
+		_r = *u._GTYPE
 	}
 	return
 }
 
 func (u *Timgroup) SetGtype(arg int64) *Timgroup{
-	u.Put0(u.Gtype.fieldName, arg)
-	u.Gtype.fieldValue = &arg
+	u.Put0(u.GTYPE.FieldName, arg)
+	u._GTYPE = &arg
 	return u
 }
 
 func (u *Timgroup) GetUuid() (_r int64){
-	if u.Uuid.fieldValue != nil {
-		_r = *u.Uuid.fieldValue
+	if u._UUID != nil {
+		_r = *u._UUID
 	}
 	return
 }
 
 func (u *Timgroup) SetUuid(arg int64) *Timgroup{
-	u.Put0(u.Uuid.fieldName, arg)
-	u.Uuid.fieldValue = &arg
+	u.Put0(u.UUID.FieldName, arg)
+	u._UUID = &arg
 	return u
 }
 
 func (u *Timgroup) GetCreatetime() (_r int64){
-	if u.Createtime.fieldValue != nil {
-		_r = *u.Createtime.fieldValue
+	if u._CREATETIME != nil {
+		_r = *u._CREATETIME
 	}
 	return
 }
 
 func (u *Timgroup) SetCreatetime(arg int64) *Timgroup{
-	u.Put0(u.Createtime.fieldName, arg)
-	u.Createtime.fieldValue = &arg
+	u.Put0(u.CREATETIME.FieldName, arg)
+	u._CREATETIME = &arg
 	return u
 }
 
 func (u *Timgroup) GetStatus() (_r int64){
-	if u.Status.fieldValue != nil {
-		_r = *u.Status.fieldValue
+	if u._STATUS != nil {
+		_r = *u._STATUS
 	}
 	return
 }
 
 func (u *Timgroup) SetStatus(arg int64) *Timgroup{
-	u.Put0(u.Status.fieldName, arg)
-	u.Status.fieldValue = &arg
+	u.Put0(u.STATUS.FieldName, arg)
+	u._STATUS = &arg
 	return u
 }
 
 func (u *Timgroup) GetRbean() (_r []byte){
-	_r = u.Rbean.fieldValue
+	_r = u._RBEAN
 	return
 }
 
 func (u *Timgroup) SetRbean(arg []byte) *Timgroup{
-	u.Put0(u.Rbean.fieldName, arg)
-	u.Rbean.fieldValue = arg
+	u.Put0(u.RBEAN.FieldName, arg)
+	u._RBEAN = arg
+	return u
+}
+
+func (u *Timgroup) GetTimeseries() (_r int64){
+	if u._TIMESERIES != nil {
+		_r = *u._TIMESERIES
+	}
+	return
+}
+
+func (u *Timgroup) SetTimeseries(arg int64) *Timgroup{
+	u.Put0(u.TIMESERIES.FieldName, arg)
+	u._TIMESERIES = &arg
 	return u
 }
 
@@ -204,12 +149,13 @@ func (u *Timgroup) Scan(fieldname string, value any) {
 		u.SetStatus(base.AsInt64(value))
 	case "rbean":
 		u.SetRbean(base.AsBytes(value))
+	case "timeseries":
+		u.SetTimeseries(base.AsInt64(value))
 	}
 }
 
 func (t *Timgroup) ToGdao() {
-	_t := NewTimgroup()
-	*t = *_t
+	t.init("timgroup")
 }
 
 func (t *Timgroup) Copy(h *Timgroup) *Timgroup{
@@ -219,39 +165,32 @@ func (t *Timgroup) Copy(h *Timgroup) *Timgroup{
 	t.SetCreatetime(h.GetCreatetime())
 	t.SetStatus(h.GetStatus())
 	t.SetRbean(h.GetRbean())
+	t.SetTimeseries(h.GetTimeseries())
 	return t
 }
 
 func (t *Timgroup) String() string {
-	return fmt.Sprint("Id:",t.GetId(), ",","Gtype:",t.GetGtype(), ",","Uuid:",t.GetUuid(), ",","Createtime:",t.GetCreatetime(), ",","Status:",t.GetStatus(), ",","Rbean:",t.GetRbean())
+	return fmt.Sprint("Id:",t.GetId(), ",","Gtype:",t.GetGtype(), ",","Uuid:",t.GetUuid(), ",","Createtime:",t.GetCreatetime(), ",","Status:",t.GetStatus(), ",","Rbean:",t.GetRbean(), ",","Timeseries:",t.GetTimeseries())
+}
+
+func (t *Timgroup)init(tablename string) {
+	t.ID = _Timgroup_ID
+	t.GTYPE = _Timgroup_GTYPE
+	t.UUID = _Timgroup_UUID
+	t.CREATETIME = _Timgroup_CREATETIME
+	t.STATUS = _Timgroup_STATUS
+	t.RBEAN = _Timgroup_RBEAN
+	t.TIMESERIES = _Timgroup_TIMESERIES
+	t.Init(tablename, []base.Column[Timgroup]{t.ID,t.GTYPE,t.UUID,t.CREATETIME,t.STATUS,t.RBEAN,t.TIMESERIES})
 }
 
 func NewTimgroup(tablename ...string) (_r *Timgroup) {
-
-	id := &timgroup_Id[Timgroup]{fieldName: "id"}
-	id.Field.FieldName = "id"
-
-	gtype := &timgroup_Gtype[Timgroup]{fieldName: "gtype"}
-	gtype.Field.FieldName = "gtype"
-
-	uuid := &timgroup_Uuid[Timgroup]{fieldName: "uuid"}
-	uuid.Field.FieldName = "uuid"
-
-	createtime := &timgroup_Createtime[Timgroup]{fieldName: "createtime"}
-	createtime.Field.FieldName = "createtime"
-
-	status := &timgroup_Status[Timgroup]{fieldName: "status"}
-	status.Field.FieldName = "status"
-
-	rbean := &timgroup_Rbean[Timgroup]{fieldName: "rbean"}
-	rbean.Field.FieldName = "rbean"
-
-	_r = &Timgroup{Id:id,Gtype:gtype,Uuid:uuid,Createtime:createtime,Status:status,Rbean:rbean}
+	_r = &Timgroup{}
 	s := "timgroup"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
 	}
-	_r.Init(s, []base.Column[Timgroup]{id,gtype,uuid,createtime,status,rbean})
+	_r.init(s)
 	return
 }
 
@@ -263,6 +202,7 @@ func (t *Timgroup) Encode() ([]byte, error) {
 	m["createtime"] = t.GetCreatetime()
 	m["status"] = t.GetStatus()
 	m["rbean"] = t.GetRbean()
+	m["timeseries"] = t.GetTimeseries()
 	return t.Table.Encode(m)
 }
 
