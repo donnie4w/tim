@@ -5,8 +5,8 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2024-08-10 01:01:22
-// gdao version 1.1.0
+// datetime :2024-10-06 20:30:14
+// gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timuser
 
 package dao
@@ -18,146 +18,103 @@ import (
 	
 )
 
-type timuser_Id[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timuser_Id[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timuser_Id[T]) Value() any {
-	return t.fieldValue
-}
-
-type timuser_Uuid[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timuser_Uuid[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timuser_Uuid[T]) Value() any {
-	return t.fieldValue
-}
-
-type timuser_Pwd[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timuser_Pwd[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timuser_Pwd[T]) Value() any {
-	return t.fieldValue
-}
-
-type timuser_Createtime[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timuser_Createtime[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timuser_Createtime[T]) Value() any {
-	return t.fieldValue
-}
-
-type timuser_Ubean[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue []byte
-}
-
-func (t *timuser_Ubean[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timuser_Ubean[T]) Value() any {
-	return t.fieldValue
-}
-
 type Timuser struct {
 	gdao.Table[Timuser]
 
-	Id		*timuser_Id[Timuser]
-	Uuid		*timuser_Uuid[Timuser]
-	Pwd		*timuser_Pwd[Timuser]
-	Createtime		*timuser_Createtime[Timuser]
-	Ubean		*timuser_Ubean[Timuser]
+	ID      *base.Field[Timuser]
+	UUID      *base.Field[Timuser]
+	PWD      *base.Field[Timuser]
+	CREATETIME      *base.Field[Timuser]
+	UBEAN      *base.Field[Timuser]
+	TIMESERIES      *base.Field[Timuser]
+	_ID      *int64
+	_UUID      *int64
+	_PWD      *int64
+	_CREATETIME      *int64
+	_UBEAN      []byte
+	_TIMESERIES      *int64
 }
 
+var _Timuser_ID = &base.Field[Timuser]{"id"}
+var _Timuser_UUID = &base.Field[Timuser]{"uuid"}
+var _Timuser_PWD = &base.Field[Timuser]{"pwd"}
+var _Timuser_CREATETIME = &base.Field[Timuser]{"createtime"}
+var _Timuser_UBEAN = &base.Field[Timuser]{"ubean"}
+var _Timuser_TIMESERIES = &base.Field[Timuser]{"timeseries"}
+
 func (u *Timuser) GetId() (_r int64){
-	if u.Id.fieldValue != nil {
-		_r = *u.Id.fieldValue
+	if u._ID != nil {
+		_r = *u._ID
 	}
 	return
 }
 
 func (u *Timuser) SetId(arg int64) *Timuser{
-	u.Put0(u.Id.fieldName, arg)
-	u.Id.fieldValue = &arg
+	u.Put0(u.ID.FieldName, arg)
+	u._ID = &arg
 	return u
 }
 
 func (u *Timuser) GetUuid() (_r int64){
-	if u.Uuid.fieldValue != nil {
-		_r = *u.Uuid.fieldValue
+	if u._UUID != nil {
+		_r = *u._UUID
 	}
 	return
 }
 
 func (u *Timuser) SetUuid(arg int64) *Timuser{
-	u.Put0(u.Uuid.fieldName, arg)
-	u.Uuid.fieldValue = &arg
+	u.Put0(u.UUID.FieldName, arg)
+	u._UUID = &arg
 	return u
 }
 
 func (u *Timuser) GetPwd() (_r int64){
-	if u.Pwd.fieldValue != nil {
-		_r = *u.Pwd.fieldValue
+	if u._PWD != nil {
+		_r = *u._PWD
 	}
 	return
 }
 
 func (u *Timuser) SetPwd(arg int64) *Timuser{
-	u.Put0(u.Pwd.fieldName, arg)
-	u.Pwd.fieldValue = &arg
+	u.Put0(u.PWD.FieldName, arg)
+	u._PWD = &arg
 	return u
 }
 
 func (u *Timuser) GetCreatetime() (_r int64){
-	if u.Createtime.fieldValue != nil {
-		_r = *u.Createtime.fieldValue
+	if u._CREATETIME != nil {
+		_r = *u._CREATETIME
 	}
 	return
 }
 
 func (u *Timuser) SetCreatetime(arg int64) *Timuser{
-	u.Put0(u.Createtime.fieldName, arg)
-	u.Createtime.fieldValue = &arg
+	u.Put0(u.CREATETIME.FieldName, arg)
+	u._CREATETIME = &arg
 	return u
 }
 
 func (u *Timuser) GetUbean() (_r []byte){
-	_r = u.Ubean.fieldValue
+	_r = u._UBEAN
 	return
 }
 
 func (u *Timuser) SetUbean(arg []byte) *Timuser{
-	u.Put0(u.Ubean.fieldName, arg)
-	u.Ubean.fieldValue = arg
+	u.Put0(u.UBEAN.FieldName, arg)
+	u._UBEAN = arg
+	return u
+}
+
+func (u *Timuser) GetTimeseries() (_r int64){
+	if u._TIMESERIES != nil {
+		_r = *u._TIMESERIES
+	}
+	return
+}
+
+func (u *Timuser) SetTimeseries(arg int64) *Timuser{
+	u.Put0(u.TIMESERIES.FieldName, arg)
+	u._TIMESERIES = &arg
 	return u
 }
 
@@ -174,12 +131,13 @@ func (u *Timuser) Scan(fieldname string, value any) {
 		u.SetCreatetime(base.AsInt64(value))
 	case "ubean":
 		u.SetUbean(base.AsBytes(value))
+	case "timeseries":
+		u.SetTimeseries(base.AsInt64(value))
 	}
 }
 
 func (t *Timuser) ToGdao() {
-	_t := NewTimuser()
-	*t = *_t
+	t.init("timuser")
 }
 
 func (t *Timuser) Copy(h *Timuser) *Timuser{
@@ -188,36 +146,31 @@ func (t *Timuser) Copy(h *Timuser) *Timuser{
 	t.SetPwd(h.GetPwd())
 	t.SetCreatetime(h.GetCreatetime())
 	t.SetUbean(h.GetUbean())
+	t.SetTimeseries(h.GetTimeseries())
 	return t
 }
 
 func (t *Timuser) String() string {
-	return fmt.Sprint("Id:",t.GetId(), ",","Uuid:",t.GetUuid(), ",","Pwd:",t.GetPwd(), ",","Createtime:",t.GetCreatetime(), ",","Ubean:",t.GetUbean())
+	return fmt.Sprint("Id:",t.GetId(), ",","Uuid:",t.GetUuid(), ",","Pwd:",t.GetPwd(), ",","Createtime:",t.GetCreatetime(), ",","Ubean:",t.GetUbean(), ",","Timeseries:",t.GetTimeseries())
+}
+
+func (t *Timuser)init(tablename string) {
+	t.ID = _Timuser_ID
+	t.UUID = _Timuser_UUID
+	t.PWD = _Timuser_PWD
+	t.CREATETIME = _Timuser_CREATETIME
+	t.UBEAN = _Timuser_UBEAN
+	t.TIMESERIES = _Timuser_TIMESERIES
+	t.Init(tablename, []base.Column[Timuser]{t.ID,t.UUID,t.PWD,t.CREATETIME,t.UBEAN,t.TIMESERIES})
 }
 
 func NewTimuser(tablename ...string) (_r *Timuser) {
-
-	id := &timuser_Id[Timuser]{fieldName: "id"}
-	id.Field.FieldName = "id"
-
-	uuid := &timuser_Uuid[Timuser]{fieldName: "uuid"}
-	uuid.Field.FieldName = "uuid"
-
-	pwd := &timuser_Pwd[Timuser]{fieldName: "pwd"}
-	pwd.Field.FieldName = "pwd"
-
-	createtime := &timuser_Createtime[Timuser]{fieldName: "createtime"}
-	createtime.Field.FieldName = "createtime"
-
-	ubean := &timuser_Ubean[Timuser]{fieldName: "ubean"}
-	ubean.Field.FieldName = "ubean"
-
-	_r = &Timuser{Id:id,Uuid:uuid,Pwd:pwd,Createtime:createtime,Ubean:ubean}
+	_r = &Timuser{}
 	s := "timuser"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
 	}
-	_r.Init(s, []base.Column[Timuser]{id,uuid,pwd,createtime,ubean})
+	_r.init(s)
 	return
 }
 
@@ -228,6 +181,7 @@ func (t *Timuser) Encode() ([]byte, error) {
 	m["pwd"] = t.GetPwd()
 	m["createtime"] = t.GetCreatetime()
 	m["ubean"] = t.GetUbean()
+	m["timeseries"] = t.GetTimeseries()
 	return t.Table.Encode(m)
 }
 
