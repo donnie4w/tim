@@ -5,8 +5,8 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2024-08-10 01:01:22
-// gdao version 1.1.0
+// datetime :2024-10-06 20:30:14
+// gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timblock
 
 package dao
@@ -18,120 +18,89 @@ import (
 	
 )
 
-type timblock_Id[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timblock_Id[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timblock_Id[T]) Value() any {
-	return t.fieldValue
-}
-
-type timblock_Unikid[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timblock_Unikid[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timblock_Unikid[T]) Value() any {
-	return t.fieldValue
-}
-
-type timblock_Uuid[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timblock_Uuid[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timblock_Uuid[T]) Value() any {
-	return t.fieldValue
-}
-
-type timblock_Tuuid[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timblock_Tuuid[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timblock_Tuuid[T]) Value() any {
-	return t.fieldValue
-}
-
 type Timblock struct {
 	gdao.Table[Timblock]
 
-	Id		*timblock_Id[Timblock]
-	Unikid		*timblock_Unikid[Timblock]
-	Uuid		*timblock_Uuid[Timblock]
-	Tuuid		*timblock_Tuuid[Timblock]
+	ID      *base.Field[Timblock]
+	UNIKID      *base.Field[Timblock]
+	UUID      *base.Field[Timblock]
+	TUUID      *base.Field[Timblock]
+	TIMESERIES      *base.Field[Timblock]
+	_ID      *int64
+	_UNIKID      *int64
+	_UUID      *int64
+	_TUUID      *int64
+	_TIMESERIES      *int64
 }
 
+var _Timblock_ID = &base.Field[Timblock]{"id"}
+var _Timblock_UNIKID = &base.Field[Timblock]{"unikid"}
+var _Timblock_UUID = &base.Field[Timblock]{"uuid"}
+var _Timblock_TUUID = &base.Field[Timblock]{"tuuid"}
+var _Timblock_TIMESERIES = &base.Field[Timblock]{"timeseries"}
+
 func (u *Timblock) GetId() (_r int64){
-	if u.Id.fieldValue != nil {
-		_r = *u.Id.fieldValue
+	if u._ID != nil {
+		_r = *u._ID
 	}
 	return
 }
 
 func (u *Timblock) SetId(arg int64) *Timblock{
-	u.Put0(u.Id.fieldName, arg)
-	u.Id.fieldValue = &arg
+	u.Put0(u.ID.FieldName, arg)
+	u._ID = &arg
 	return u
 }
 
 func (u *Timblock) GetUnikid() (_r int64){
-	if u.Unikid.fieldValue != nil {
-		_r = *u.Unikid.fieldValue
+	if u._UNIKID != nil {
+		_r = *u._UNIKID
 	}
 	return
 }
 
 func (u *Timblock) SetUnikid(arg int64) *Timblock{
-	u.Put0(u.Unikid.fieldName, arg)
-	u.Unikid.fieldValue = &arg
+	u.Put0(u.UNIKID.FieldName, arg)
+	u._UNIKID = &arg
 	return u
 }
 
 func (u *Timblock) GetUuid() (_r int64){
-	if u.Uuid.fieldValue != nil {
-		_r = *u.Uuid.fieldValue
+	if u._UUID != nil {
+		_r = *u._UUID
 	}
 	return
 }
 
 func (u *Timblock) SetUuid(arg int64) *Timblock{
-	u.Put0(u.Uuid.fieldName, arg)
-	u.Uuid.fieldValue = &arg
+	u.Put0(u.UUID.FieldName, arg)
+	u._UUID = &arg
 	return u
 }
 
 func (u *Timblock) GetTuuid() (_r int64){
-	if u.Tuuid.fieldValue != nil {
-		_r = *u.Tuuid.fieldValue
+	if u._TUUID != nil {
+		_r = *u._TUUID
 	}
 	return
 }
 
 func (u *Timblock) SetTuuid(arg int64) *Timblock{
-	u.Put0(u.Tuuid.fieldName, arg)
-	u.Tuuid.fieldValue = &arg
+	u.Put0(u.TUUID.FieldName, arg)
+	u._TUUID = &arg
+	return u
+}
+
+func (u *Timblock) GetTimeseries() (_r int64){
+	if u._TIMESERIES != nil {
+		_r = *u._TIMESERIES
+	}
+	return
+}
+
+func (u *Timblock) SetTimeseries(arg int64) *Timblock{
+	u.Put0(u.TIMESERIES.FieldName, arg)
+	u._TIMESERIES = &arg
 	return u
 }
 
@@ -146,12 +115,13 @@ func (u *Timblock) Scan(fieldname string, value any) {
 		u.SetUuid(base.AsInt64(value))
 	case "tuuid":
 		u.SetTuuid(base.AsInt64(value))
+	case "timeseries":
+		u.SetTimeseries(base.AsInt64(value))
 	}
 }
 
 func (t *Timblock) ToGdao() {
-	_t := NewTimblock()
-	*t = *_t
+	t.init("timblock")
 }
 
 func (t *Timblock) Copy(h *Timblock) *Timblock{
@@ -159,33 +129,30 @@ func (t *Timblock) Copy(h *Timblock) *Timblock{
 	t.SetUnikid(h.GetUnikid())
 	t.SetUuid(h.GetUuid())
 	t.SetTuuid(h.GetTuuid())
+	t.SetTimeseries(h.GetTimeseries())
 	return t
 }
 
 func (t *Timblock) String() string {
-	return fmt.Sprint("Id:",t.GetId(), ",","Unikid:",t.GetUnikid(), ",","Uuid:",t.GetUuid(), ",","Tuuid:",t.GetTuuid())
+	return fmt.Sprint("Id:",t.GetId(), ",","Unikid:",t.GetUnikid(), ",","Uuid:",t.GetUuid(), ",","Tuuid:",t.GetTuuid(), ",","Timeseries:",t.GetTimeseries())
+}
+
+func (t *Timblock)init(tablename string) {
+	t.ID = _Timblock_ID
+	t.UNIKID = _Timblock_UNIKID
+	t.UUID = _Timblock_UUID
+	t.TUUID = _Timblock_TUUID
+	t.TIMESERIES = _Timblock_TIMESERIES
+	t.Init(tablename, []base.Column[Timblock]{t.ID,t.UNIKID,t.UUID,t.TUUID,t.TIMESERIES})
 }
 
 func NewTimblock(tablename ...string) (_r *Timblock) {
-
-	id := &timblock_Id[Timblock]{fieldName: "id"}
-	id.Field.FieldName = "id"
-
-	unikid := &timblock_Unikid[Timblock]{fieldName: "unikid"}
-	unikid.Field.FieldName = "unikid"
-
-	uuid := &timblock_Uuid[Timblock]{fieldName: "uuid"}
-	uuid.Field.FieldName = "uuid"
-
-	tuuid := &timblock_Tuuid[Timblock]{fieldName: "tuuid"}
-	tuuid.Field.FieldName = "tuuid"
-
-	_r = &Timblock{Id:id,Unikid:unikid,Uuid:uuid,Tuuid:tuuid}
+	_r = &Timblock{}
 	s := "timblock"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
 	}
-	_r.Init(s, []base.Column[Timblock]{id,unikid,uuid,tuuid})
+	_r.init(s)
 	return
 }
 
@@ -195,6 +162,7 @@ func (t *Timblock) Encode() ([]byte, error) {
 	m["unikid"] = t.GetUnikid()
 	m["uuid"] = t.GetUuid()
 	m["tuuid"] = t.GetTuuid()
+	m["timeseries"] = t.GetTimeseries()
 	return t.Table.Encode(m)
 }
 
