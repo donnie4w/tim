@@ -4,7 +4,6 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package level1
 
@@ -35,7 +34,7 @@ func (this *tnetServer) Serve(_addr string) (err error) {
 	if _addr, err = util.ParseAddr(_addr); err != nil {
 		return
 	}
-	err = tsfclientserver.server( _addr, this.servermux.processor, this.servermux.handler, this.servermux.cliError, this.ok)
+	err = tsfclientserver.server(_addr, this.servermux.processor, this.servermux.handler, this.servermux.cliError, this.ok)
 	return
 }
 
@@ -67,7 +66,7 @@ func myClient2ServerHandler(tc *tlContext) {
 		ab := newchapBean()
 		ab.IDcard = tc.id
 		if bs, err := encodeChapBean(ab); err == nil {
-			if err := tc.iface.Chap(context.Background(), bs); err != nil {
+			if err := tc.csnet.Chap(context.Background(), bs); err != nil {
 				logging.Error(err)
 			}
 		}
@@ -95,7 +94,7 @@ func reconn(tc *tlContext) {
 		i := 0
 		for !nodeWare.hasUUID(tc.remoteUuid) {
 			if clientLinkCache.Has(tc.remoteAddr) {
-				<-time.After(time.Duration(Rand(6)) * time.Second)
+				<-time.After(time.Duration(RandUint(6)) * time.Second)
 			} else {
 				if err1, err2 := tnetservice.Connect(tc.remoteAddr, false); err1 != nil {
 					break
@@ -105,7 +104,7 @@ func reconn(tc *tlContext) {
 					} else if i > 1<<13 {
 						break
 					}
-					<-time.After(time.Duration(Rand(6+i)) * time.Second)
+					<-time.After(time.Duration(RandUint(uint(6+i))) * time.Second)
 				}
 			}
 		}
@@ -117,7 +116,7 @@ func heardbeat() {
 	for {
 		select {
 		case <-ticker.C:
-			<-time.After(time.Duration(Rand(5)) * time.Second)
+			<-time.After(time.Duration(RandUint(5)) * time.Second)
 			_heardbeat(nodeWare.GetAllTlContext())
 		}
 	}
@@ -128,7 +127,7 @@ func _heardbeat(tcs []*tlContext) {
 	for _, tc := range tcs {
 		func(tc *tlContext) {
 			defer util.Recover()
-			tc.iface.Ping(context.TODO(), piBs(tc))
+			tc.csnet.Ping(context.TODO(), piBs(tc))
 			if atomic.AddInt64(&tc.pingNum, 1) > 8 {
 				logging.Error("ping failed:[", tc.remoteUuid, "][", tc.remoteAddr, "] ping number:", tc.pingNum)
 				go reconn(tc)
