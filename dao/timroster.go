@@ -5,8 +5,8 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2024-08-10 01:01:22
-// gdao version 1.1.0
+// datetime :2024-10-06 20:30:14
+// gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timroster
 
 package dao
@@ -18,120 +18,89 @@ import (
 	
 )
 
-type timroster_Id[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timroster_Id[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timroster_Id[T]) Value() any {
-	return t.fieldValue
-}
-
-type timroster_Relate[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timroster_Relate[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timroster_Relate[T]) Value() any {
-	return t.fieldValue
-}
-
-type timroster_Uuid[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timroster_Uuid[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timroster_Uuid[T]) Value() any {
-	return t.fieldValue
-}
-
-type timroster_Tuuid[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timroster_Tuuid[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timroster_Tuuid[T]) Value() any {
-	return t.fieldValue
-}
-
 type Timroster struct {
 	gdao.Table[Timroster]
 
-	Id		*timroster_Id[Timroster]
-	Relate		*timroster_Relate[Timroster]
-	Uuid		*timroster_Uuid[Timroster]
-	Tuuid		*timroster_Tuuid[Timroster]
+	ID      *base.Field[Timroster]
+	UNIKID      *base.Field[Timroster]
+	UUID      *base.Field[Timroster]
+	TUUID      *base.Field[Timroster]
+	TIMESERIES      *base.Field[Timroster]
+	_ID      *int64
+	_UNIKID      *int64
+	_UUID      *int64
+	_TUUID      *int64
+	_TIMESERIES      *int64
 }
 
+var _Timroster_ID = &base.Field[Timroster]{"id"}
+var _Timroster_UNIKID = &base.Field[Timroster]{"unikid"}
+var _Timroster_UUID = &base.Field[Timroster]{"uuid"}
+var _Timroster_TUUID = &base.Field[Timroster]{"tuuid"}
+var _Timroster_TIMESERIES = &base.Field[Timroster]{"timeseries"}
+
 func (u *Timroster) GetId() (_r int64){
-	if u.Id.fieldValue != nil {
-		_r = *u.Id.fieldValue
+	if u._ID != nil {
+		_r = *u._ID
 	}
 	return
 }
 
 func (u *Timroster) SetId(arg int64) *Timroster{
-	u.Put0(u.Id.fieldName, arg)
-	u.Id.fieldValue = &arg
+	u.Put0(u.ID.FieldName, arg)
+	u._ID = &arg
 	return u
 }
 
-func (u *Timroster) GetRelate() (_r int64){
-	if u.Relate.fieldValue != nil {
-		_r = *u.Relate.fieldValue
+func (u *Timroster) GetUnikid() (_r int64){
+	if u._UNIKID != nil {
+		_r = *u._UNIKID
 	}
 	return
 }
 
-func (u *Timroster) SetRelate(arg int64) *Timroster{
-	u.Put0(u.Relate.fieldName, arg)
-	u.Relate.fieldValue = &arg
+func (u *Timroster) SetUnikid(arg int64) *Timroster{
+	u.Put0(u.UNIKID.FieldName, arg)
+	u._UNIKID = &arg
 	return u
 }
 
 func (u *Timroster) GetUuid() (_r int64){
-	if u.Uuid.fieldValue != nil {
-		_r = *u.Uuid.fieldValue
+	if u._UUID != nil {
+		_r = *u._UUID
 	}
 	return
 }
 
 func (u *Timroster) SetUuid(arg int64) *Timroster{
-	u.Put0(u.Uuid.fieldName, arg)
-	u.Uuid.fieldValue = &arg
+	u.Put0(u.UUID.FieldName, arg)
+	u._UUID = &arg
 	return u
 }
 
 func (u *Timroster) GetTuuid() (_r int64){
-	if u.Tuuid.fieldValue != nil {
-		_r = *u.Tuuid.fieldValue
+	if u._TUUID != nil {
+		_r = *u._TUUID
 	}
 	return
 }
 
 func (u *Timroster) SetTuuid(arg int64) *Timroster{
-	u.Put0(u.Tuuid.fieldName, arg)
-	u.Tuuid.fieldValue = &arg
+	u.Put0(u.TUUID.FieldName, arg)
+	u._TUUID = &arg
+	return u
+}
+
+func (u *Timroster) GetTimeseries() (_r int64){
+	if u._TIMESERIES != nil {
+		_r = *u._TIMESERIES
+	}
+	return
+}
+
+func (u *Timroster) SetTimeseries(arg int64) *Timroster{
+	u.Put0(u.TIMESERIES.FieldName, arg)
+	u._TIMESERIES = &arg
 	return u
 }
 
@@ -140,61 +109,60 @@ func (u *Timroster) Scan(fieldname string, value any) {
 	switch fieldname {
 	case "id":
 		u.SetId(base.AsInt64(value))
-	case "relate":
-		u.SetRelate(base.AsInt64(value))
+	case "unikid":
+		u.SetUnikid(base.AsInt64(value))
 	case "uuid":
 		u.SetUuid(base.AsInt64(value))
 	case "tuuid":
 		u.SetTuuid(base.AsInt64(value))
+	case "timeseries":
+		u.SetTimeseries(base.AsInt64(value))
 	}
 }
 
 func (t *Timroster) ToGdao() {
-	_t := NewTimroster()
-	*t = *_t
+	t.init("timroster")
 }
 
 func (t *Timroster) Copy(h *Timroster) *Timroster{
 	t.SetId(h.GetId())
-	t.SetRelate(h.GetRelate())
+	t.SetUnikid(h.GetUnikid())
 	t.SetUuid(h.GetUuid())
 	t.SetTuuid(h.GetTuuid())
+	t.SetTimeseries(h.GetTimeseries())
 	return t
 }
 
 func (t *Timroster) String() string {
-	return fmt.Sprint("Id:",t.GetId(), ",","Relate:",t.GetRelate(), ",","Uuid:",t.GetUuid(), ",","Tuuid:",t.GetTuuid())
+	return fmt.Sprint("Id:",t.GetId(), ",","Unikid:",t.GetUnikid(), ",","Uuid:",t.GetUuid(), ",","Tuuid:",t.GetTuuid(), ",","Timeseries:",t.GetTimeseries())
+}
+
+func (t *Timroster)init(tablename string) {
+	t.ID = _Timroster_ID
+	t.UNIKID = _Timroster_UNIKID
+	t.UUID = _Timroster_UUID
+	t.TUUID = _Timroster_TUUID
+	t.TIMESERIES = _Timroster_TIMESERIES
+	t.Init(tablename, []base.Column[Timroster]{t.ID,t.UNIKID,t.UUID,t.TUUID,t.TIMESERIES})
 }
 
 func NewTimroster(tablename ...string) (_r *Timroster) {
-
-	id := &timroster_Id[Timroster]{fieldName: "id"}
-	id.Field.FieldName = "id"
-
-	relate := &timroster_Relate[Timroster]{fieldName: "relate"}
-	relate.Field.FieldName = "relate"
-
-	uuid := &timroster_Uuid[Timroster]{fieldName: "uuid"}
-	uuid.Field.FieldName = "uuid"
-
-	tuuid := &timroster_Tuuid[Timroster]{fieldName: "tuuid"}
-	tuuid.Field.FieldName = "tuuid"
-
-	_r = &Timroster{Id:id,Relate:relate,Uuid:uuid,Tuuid:tuuid}
+	_r = &Timroster{}
 	s := "timroster"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
 	}
-	_r.Init(s, []base.Column[Timroster]{id,relate,uuid,tuuid})
+	_r.init(s)
 	return
 }
 
 func (t *Timroster) Encode() ([]byte, error) {
 	m := make(map[string]any, 0)
 	m["id"] = t.GetId()
-	m["relate"] = t.GetRelate()
+	m["unikid"] = t.GetUnikid()
 	m["uuid"] = t.GetUuid()
 	m["tuuid"] = t.GetTuuid()
+	m["timeseries"] = t.GetTimeseries()
 	return t.Table.Encode(m)
 }
 
