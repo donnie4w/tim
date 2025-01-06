@@ -4,12 +4,12 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package level1
 
 import (
 	"context"
+	. "github.com/donnie4w/tsf"
 	"strings"
 	"sync"
 	"time"
@@ -20,14 +20,13 @@ import (
 	. "github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
-	. "github.com/donnie4w/tsf/server"
 )
 
 const tlContextCtx = "tlContext"
 
 type tlContext struct {
 	id          int64
-	iface       Itnet
+	csnet       Itnet
 	remoteAddr  string
 	remoteUuid  int64
 	remoteIP    string
@@ -36,14 +35,13 @@ type tlContext struct {
 	verifycode  int64
 	selfPing    int64
 	selfPong    uint32
-
-	transport  thrift.TTransport
-	mux        *sync.Mutex
-	defaultCtx context.Context
-	cancleChan chan byte
-	mergeChan  chan *syncBean
-	mergeCount int64
-	mergemux   *sync.Mutex
+	tsfSocket   TsfSocket
+	mux         *sync.Mutex
+	defaultCtx  context.Context
+	cancleChan  chan byte
+	mergeChan   chan *syncBean
+	mergeCount  int64
+	mergemux    *sync.Mutex
 
 	isServer   bool
 	isClose    bool
@@ -70,7 +68,7 @@ func (this *tlContext) Close() {
 	if !this.isClose {
 		this.isClose = true
 		nodeWare.del(this)
-		this.transport.Close()
+		this.tsfSocket.Close()
 		close(this.cancleChan)
 	}
 }
@@ -81,10 +79,10 @@ func (this *tlContext) CloseAndEnd() (err error) {
 	return
 }
 
-func newTlContext2(socket *TSocket) (tc *tlContext) {
-	tc = &tlContext{id: RandId(), mux: new(sync.Mutex), mergeChan: make(chan *syncBean, 1<<17), mergemux: &sync.Mutex{}}
-	tc.transport = socket
-	tc.iface = &ItnetImpl{socket}
+func newTlContext2(socket TsfSocket) (tc *tlContext) {
+	tc = &tlContext{id: UUID64(), mux: new(sync.Mutex), mergeChan: make(chan *syncBean, 1<<17), mergemux: &sync.Mutex{}}
+	tc.tsfSocket = socket
+	tc.csnet = &ItnetImpl{socket}
 	go func() {
 		availMap.Put(tc, time.Now().Unix())
 		if availmux.TryLock() {
@@ -104,7 +102,7 @@ func remoteHost(transport thrift.TTransport) (_r string) {
 	return
 }
 
-func remoteHost2(tsocket *TSocket) (string, string) {
+func remoteHost2(tsocket TsfSocket) (string, string) {
 	defer util.Recover()
 	if addr := tsocket.Conn().RemoteAddr(); addr != nil {
 		if ss := strings.Split(addr.String(), ":"); len(ss) == 2 {
@@ -149,6 +147,6 @@ type chapBean struct {
 }
 
 func newchapBean() (a *chapBean) {
-	a = &chapBean{Stat: 1, Code: 0, Key: sys.Conf.Pwd, TcId: 0, UUID: sys.UUID, Time: time.Now().UnixNano(), TxId: RandId()}
+	a = &chapBean{Stat: 1, Code: 0, Key: sys.Conf.Pwd, TcId: 0, UUID: sys.UUID, Time: time.Now().UnixNano(), TxId: UUID64()}
 	return
 }
