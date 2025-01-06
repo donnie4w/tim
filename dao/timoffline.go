@@ -5,8 +5,8 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2024-08-10 01:01:22
-// gdao version 1.1.0
+// datetime :2024-10-06 20:30:14
+// gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timoffline
 
 package dao
@@ -18,146 +18,103 @@ import (
 	
 )
 
-type timoffline_Id[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timoffline_Id[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timoffline_Id[T]) Value() any {
-	return t.fieldValue
-}
-
-type timoffline_Uuid[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timoffline_Uuid[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timoffline_Uuid[T]) Value() any {
-	return t.fieldValue
-}
-
-type timoffline_Chatid[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timoffline_Chatid[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timoffline_Chatid[T]) Value() any {
-	return t.fieldValue
-}
-
-type timoffline_Stanza[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue []byte
-}
-
-func (t *timoffline_Stanza[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timoffline_Stanza[T]) Value() any {
-	return t.fieldValue
-}
-
-type timoffline_Mid[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timoffline_Mid[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timoffline_Mid[T]) Value() any {
-	return t.fieldValue
-}
-
 type Timoffline struct {
 	gdao.Table[Timoffline]
 
-	Id		*timoffline_Id[Timoffline]
-	Uuid		*timoffline_Uuid[Timoffline]
-	Chatid		*timoffline_Chatid[Timoffline]
-	Stanza		*timoffline_Stanza[Timoffline]
-	Mid		*timoffline_Mid[Timoffline]
+	ID      *base.Field[Timoffline]
+	UUID      *base.Field[Timoffline]
+	CHATID      *base.Field[Timoffline]
+	STANZA      *base.Field[Timoffline]
+	MID      *base.Field[Timoffline]
+	TIMESERIES      *base.Field[Timoffline]
+	_ID      *int64
+	_UUID      *int64
+	_CHATID      *int64
+	_STANZA      []byte
+	_MID      *int64
+	_TIMESERIES      *int64
 }
 
+var _Timoffline_ID = &base.Field[Timoffline]{"id"}
+var _Timoffline_UUID = &base.Field[Timoffline]{"uuid"}
+var _Timoffline_CHATID = &base.Field[Timoffline]{"chatid"}
+var _Timoffline_STANZA = &base.Field[Timoffline]{"stanza"}
+var _Timoffline_MID = &base.Field[Timoffline]{"mid"}
+var _Timoffline_TIMESERIES = &base.Field[Timoffline]{"timeseries"}
+
 func (u *Timoffline) GetId() (_r int64){
-	if u.Id.fieldValue != nil {
-		_r = *u.Id.fieldValue
+	if u._ID != nil {
+		_r = *u._ID
 	}
 	return
 }
 
 func (u *Timoffline) SetId(arg int64) *Timoffline{
-	u.Put0(u.Id.fieldName, arg)
-	u.Id.fieldValue = &arg
+	u.Put0(u.ID.FieldName, arg)
+	u._ID = &arg
 	return u
 }
 
 func (u *Timoffline) GetUuid() (_r int64){
-	if u.Uuid.fieldValue != nil {
-		_r = *u.Uuid.fieldValue
+	if u._UUID != nil {
+		_r = *u._UUID
 	}
 	return
 }
 
 func (u *Timoffline) SetUuid(arg int64) *Timoffline{
-	u.Put0(u.Uuid.fieldName, arg)
-	u.Uuid.fieldValue = &arg
+	u.Put0(u.UUID.FieldName, arg)
+	u._UUID = &arg
 	return u
 }
 
 func (u *Timoffline) GetChatid() (_r int64){
-	if u.Chatid.fieldValue != nil {
-		_r = *u.Chatid.fieldValue
+	if u._CHATID != nil {
+		_r = *u._CHATID
 	}
 	return
 }
 
 func (u *Timoffline) SetChatid(arg int64) *Timoffline{
-	u.Put0(u.Chatid.fieldName, arg)
-	u.Chatid.fieldValue = &arg
+	u.Put0(u.CHATID.FieldName, arg)
+	u._CHATID = &arg
 	return u
 }
 
 func (u *Timoffline) GetStanza() (_r []byte){
-	_r = u.Stanza.fieldValue
+	_r = u._STANZA
 	return
 }
 
 func (u *Timoffline) SetStanza(arg []byte) *Timoffline{
-	u.Put0(u.Stanza.fieldName, arg)
-	u.Stanza.fieldValue = arg
+	u.Put0(u.STANZA.FieldName, arg)
+	u._STANZA = arg
 	return u
 }
 
 func (u *Timoffline) GetMid() (_r int64){
-	if u.Mid.fieldValue != nil {
-		_r = *u.Mid.fieldValue
+	if u._MID != nil {
+		_r = *u._MID
 	}
 	return
 }
 
 func (u *Timoffline) SetMid(arg int64) *Timoffline{
-	u.Put0(u.Mid.fieldName, arg)
-	u.Mid.fieldValue = &arg
+	u.Put0(u.MID.FieldName, arg)
+	u._MID = &arg
+	return u
+}
+
+func (u *Timoffline) GetTimeseries() (_r int64){
+	if u._TIMESERIES != nil {
+		_r = *u._TIMESERIES
+	}
+	return
+}
+
+func (u *Timoffline) SetTimeseries(arg int64) *Timoffline{
+	u.Put0(u.TIMESERIES.FieldName, arg)
+	u._TIMESERIES = &arg
 	return u
 }
 
@@ -174,12 +131,13 @@ func (u *Timoffline) Scan(fieldname string, value any) {
 		u.SetStanza(base.AsBytes(value))
 	case "mid":
 		u.SetMid(base.AsInt64(value))
+	case "timeseries":
+		u.SetTimeseries(base.AsInt64(value))
 	}
 }
 
 func (t *Timoffline) ToGdao() {
-	_t := NewTimoffline()
-	*t = *_t
+	t.init("timoffline")
 }
 
 func (t *Timoffline) Copy(h *Timoffline) *Timoffline{
@@ -188,36 +146,31 @@ func (t *Timoffline) Copy(h *Timoffline) *Timoffline{
 	t.SetChatid(h.GetChatid())
 	t.SetStanza(h.GetStanza())
 	t.SetMid(h.GetMid())
+	t.SetTimeseries(h.GetTimeseries())
 	return t
 }
 
 func (t *Timoffline) String() string {
-	return fmt.Sprint("Id:",t.GetId(), ",","Uuid:",t.GetUuid(), ",","Chatid:",t.GetChatid(), ",","Stanza:",t.GetStanza(), ",","Mid:",t.GetMid())
+	return fmt.Sprint("Id:",t.GetId(), ",","Uuid:",t.GetUuid(), ",","Chatid:",t.GetChatid(), ",","Stanza:",t.GetStanza(), ",","Mid:",t.GetMid(), ",","Timeseries:",t.GetTimeseries())
+}
+
+func (t *Timoffline)init(tablename string) {
+	t.ID = _Timoffline_ID
+	t.UUID = _Timoffline_UUID
+	t.CHATID = _Timoffline_CHATID
+	t.STANZA = _Timoffline_STANZA
+	t.MID = _Timoffline_MID
+	t.TIMESERIES = _Timoffline_TIMESERIES
+	t.Init(tablename, []base.Column[Timoffline]{t.ID,t.UUID,t.CHATID,t.STANZA,t.MID,t.TIMESERIES})
 }
 
 func NewTimoffline(tablename ...string) (_r *Timoffline) {
-
-	id := &timoffline_Id[Timoffline]{fieldName: "id"}
-	id.Field.FieldName = "id"
-
-	uuid := &timoffline_Uuid[Timoffline]{fieldName: "uuid"}
-	uuid.Field.FieldName = "uuid"
-
-	chatid := &timoffline_Chatid[Timoffline]{fieldName: "chatid"}
-	chatid.Field.FieldName = "chatid"
-
-	stanza := &timoffline_Stanza[Timoffline]{fieldName: "stanza"}
-	stanza.Field.FieldName = "stanza"
-
-	mid := &timoffline_Mid[Timoffline]{fieldName: "mid"}
-	mid.Field.FieldName = "mid"
-
-	_r = &Timoffline{Id:id,Uuid:uuid,Chatid:chatid,Stanza:stanza,Mid:mid}
+	_r = &Timoffline{}
 	s := "timoffline"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
 	}
-	_r.Init(s, []base.Column[Timoffline]{id,uuid,chatid,stanza,mid})
+	_r.init(s)
 	return
 }
 
@@ -228,6 +181,7 @@ func (t *Timoffline) Encode() ([]byte, error) {
 	m["chatid"] = t.GetChatid()
 	m["stanza"] = t.GetStanza()
 	m["mid"] = t.GetMid()
+	m["timeseries"] = t.GetTimeseries()
 	return t.Table.Encode(m)
 }
 
