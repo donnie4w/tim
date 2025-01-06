@@ -4,7 +4,6 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package level1
 
@@ -41,7 +40,7 @@ func syncTxMerge(syncList map[int64]int8, uuid int64) (err error) {
 	for i > 0 {
 		i--
 		if tc := nodeWare.GetTlContext(uuid); tc != nil {
-			if err = tc.iface.SyncTxMerge(context.Background(), syncList); err == nil {
+			if err = tc.csnet.SyncTxMerge(context.Background(), syncList); err == nil {
 				break
 			}
 		} else {
