@@ -4,20 +4,19 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package level1
 
 import (
 	"context"
+	"github.com/donnie4w/tim/log"
 
 	. "github.com/donnie4w/gofer/buffer"
 	. "github.com/donnie4w/gofer/util"
 	. "github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
-	. "github.com/donnie4w/tsf/packet"
-	. "github.com/donnie4w/tsf/server"
+	. "github.com/donnie4w/tsf"
 )
 
 type tsfClientServer struct {
@@ -27,15 +26,15 @@ type tsfClientServer struct {
 
 var tsfclientserver = &tsfClientServer{}
 
-func (this *tsfClientServer) server( _addr string, processor Itnet, handler func(tc *tlContext), cliErrorHandler func(tc *tlContext), ok []byte) (err error) {
-	if this.serverTransport, err = NewTServerSocketTimeout(_addr, sys.ConnectTimeout); err == nil {
-		if err = this.serverTransport.Listen(); err == nil {
+func (tcs *tsfClientServer) server(_addr string, processor Itnet, handler func(tc *tlContext), cliErrorHandler func(tc *tlContext), ok []byte) (err error) {
+	if tcs.serverTransport, err = NewTServerSocketTimeout(_addr, sys.ConnectTimeout); err == nil {
+		if err = tcs.serverTransport.Listen(); err == nil {
 			sys.CSADDR, ok[0] = _addr, 1
 			nodeWare.addCsMapNode(sys.UUID)
-			sys.FmtLog("cluster listen [", sys.CSADDR, "]")
+			log.FmtPrint("cluster listen [", sys.CSADDR, "]")
 			for {
-				if transport, err := this.serverTransport.Accept(); err == nil {
-					transport.SetTConfiguration(&TConfiguration{MaxMessageSize: int32(sys.MaxTransLength), SnappyMergeData: true})
+				if transport, err := tcs.serverTransport.Accept(); err == nil {
+					transport.SetTConfiguration(&TConfiguration{MaxMessageSize: int32(sys.MaxTransLength), Snappy: true})
 					go func() {
 						defer util.Recover()
 						twork := &sockWork{transport: transport, processor: processor, handler: handler, cliError: cliErrorHandler, isServer: true}
@@ -47,21 +46,21 @@ func (this *tsfClientServer) server( _addr string, processor Itnet, handler func
 			}
 		}
 	}
-	if !this.isClose && err != nil {
+	if !tcs.isClose && err != nil {
 		ok[0] = 0
-		sys.FmtLog("cluster start failed:", err)
+		log.FmtPrint("cluster start failed:", err)
 	}
 	return
 }
 
-func (this *tsfClientServer) close() {
-	defer recover()
-	this.isClose = true
-	this.serverTransport.Close()
+func (tcs *tsfClientServer) close() {
+	defer util.Recover()
+	tcs.isClose = true
+	tcs.serverTransport.Close()
 }
 
 type sockWork struct {
-	transport *TSocket
+	transport TsfSocket
 	processor Itnet
 	handler   func(tc *tlContext)
 	cliError  func(tc *tlContext)
@@ -69,63 +68,63 @@ type sockWork struct {
 	tlcontext *tlContext
 }
 
-func (this *sockWork) work(addr string) (err error) {
-	defer util.Recover()
-	tlcontext := newTlContext2(this.transport)
+func (sw *sockWork) work(addr string) (err error) {
+	defer util.Recover2(&err)
+	tlcontext := newTlContext2(sw.transport)
 	tlcontext.remoteAddr = addr
-	tlcontext.isServer = this.isServer
-	tlcontext.remoteIP, tlcontext.remoteHost2 = remoteHost2(this.transport)
-	go this.handler(tlcontext)
+	tlcontext.isServer = sw.isServer
+	tlcontext.remoteIP, tlcontext.remoteHost2 = remoteHost2(sw.transport)
+	go sw.handler(tlcontext)
 	tlcontext.defaultCtx = context.WithValue(context.Background(), tlContextCtx, tlcontext)
 	tlcontext.cancleChan = make(chan byte)
-	this.tlcontext = tlcontext
+	sw.tlcontext = tlcontext
 	return
 }
 
-func (this *sockWork) final() {
-	this.tlcontext.Close()
-	this.cliError(this.tlcontext)
+func (sw *sockWork) final() {
+	sw.tlcontext.Close()
+	sw.cliError(sw.tlcontext)
 }
 
-func (this *sockWork) processRequests(packet *Packet, processor Itnet) (err error) {
-	defer util.Recover()
+func (sw *sockWork) processRequests(packet *Packet, processor Itnet) (err error) {
+	defer util.Recover2(&err)
 	bs := packet.ToBytes()
 	sys.Stat.Ib(int64(packet.Len))
 	t := bs[0]
-	if !this.tlcontext.isAuth {
-		if t != _Chap && t != _Ping && t != _Pong {
-			return this.tlcontext.CloseAndEnd()
+	if !sw.tlcontext.isAuth {
+		if t != CHAP && t != PING && t != PONG {
+			return sw.tlcontext.CloseAndEnd()
 		}
 	}
-	ctx := this.tlcontext.defaultCtx
+	ctx := sw.tlcontext.defaultCtx
 	bs = bs[1:]
 	switch t {
-	case _Ping:
+	case PING:
 		err = processor.Ping(ctx, util.Mask(bs))
-	case _Pong:
+	case PONG:
 		err = processor.Pong(ctx, util.Mask(bs))
-	case _Chap:
+	case CHAP:
 		err = processor.Chap(ctx, util.Mask(bs))
-	case _Auth2:
+	case AUTH2:
 		err = processor.Auth2(ctx, util.Mask(bs))
-	case _SyncNode:
+	case SYNCNODE:
 		if node, err := Decode[Node](util.Mask(bs[1:])); err == nil {
 			err = processor.SyncNode(ctx, node, byteToBool(bs[0]))
 		}
-	case _SyncAddr:
+	case SYNCADDR:
 		err = processor.SyncAddr(ctx, string(util.Mask(bs[1:])), byteToBool(bs[0]))
-	case _SyncTxMerge:
+	case SYNCTXMERGE:
 		err = processor.SyncTxMerge(ctx, bytesToMap(bs))
-	case _CsUser:
+	case CSUSER:
 		cu, _ := TDecode(bs[8:], &CsUser{})
 		err = processor.CsUser(ctx, BytesToInt64(bs[:8]), cu)
-	case _CsBs:
+	case CSBS:
 		cb, _ := TDecode(bs[8:], &CsBs{})
 		err = processor.CsBs(ctx, BytesToInt64(bs[:8]), cb)
-	case _CsReq:
+	case CSREQ:
 		csbean, _ := TDecode(bs[9:], &CsBean{})
 		err = processor.CsReq(ctx, BytesToInt64(bs[:8]), byteToBool(bs[8]), csbean)
-	case _CsVr:
+	case CSVR:
 		vcr, _ := TDecode(bs[8:], &VBean{})
 		err = processor.CsVr(ctx, BytesToInt64(bs[:8]), vcr)
 	}
@@ -134,138 +133,138 @@ func (this *sockWork) processRequests(packet *Packet, processor Itnet) (err erro
 }
 
 type tsfServerClient struct {
-	transport *TSocket
+	transport TsfSocket
 }
 
 var tsfserverclient = &tsfServerClient{}
 
-func (this *tsfServerClient) server(addr string, processor Itnet, handler func(tc *tlContext), cliErrorHandler func(tc *tlContext), async bool) (err error) {
+func (tsc *tsfServerClient) server(addr string, processor Itnet, handler func(tc *tlContext), cliErrorHandler func(tc *tlContext), async bool) (err error) {
 	defer util.Recover()
 	clientLinkCache.Put(addr, 0)
 	defer clientLinkCache.Del(addr)
-	this.transport = NewTSocketConf(addr, &TConfiguration{ConnectTimeout: sys.ConnectTimeout, MaxMessageSize: int32(sys.MaxTransLength), SnappyMergeData: true})
-	if err = this.transport.Open(); err == nil {
-		twork := &sockWork{transport: this.transport, processor: processor, handler: handler, cliError: cliErrorHandler, isServer: false}
+	tsc.transport = NewTSocketConf(addr, &TConfiguration{ConnectTimeout: sys.ConnectTimeout, MaxMessageSize: int32(sys.MaxTransLength), Snappy: true})
+	if err = tsc.transport.Open(); err == nil {
+		twork := &sockWork{transport: tsc.transport, processor: processor, handler: handler, cliError: cliErrorHandler, isServer: false}
 		twork.work(addr)
 		if async {
 			go func() {
 				defer twork.final()
-				this.transport.ProcessMerge(func(pkt *Packet) error { return twork.processRequests(pkt, processor) })
+				tsc.transport.ProcessMerge(func(pkt *Packet) error { return twork.processRequests(pkt, processor) })
 			}()
 		} else {
 			defer twork.final()
-			this.transport.ProcessMerge(func(pkt *Packet) error { return twork.processRequests(pkt, processor) })
+			tsc.transport.ProcessMerge(func(pkt *Packet) error { return twork.processRequests(pkt, processor) })
 		}
-	} 
+	}
 	return
 }
 
-func (this *tsfServerClient) Close() (err error) {
-	defer util.Recover()
-	return this.transport.Close()
+func (tsc *tsfServerClient) Close() (err error) {
+	defer util.Recover2(&err)
+	return tsc.transport.Close()
 }
 
-func process(packet *Packet) {
-	packet.ToBytes()
-}
+//func process(packet *Packet) {
+//	packet.ToBytes()
+//}
 
 type ItnetImpl struct {
-	ts *TSocket
+	ts TsfSocket
 }
 
-func method(name byte) (buf *Buffer) {
-	buf = NewBuffer()
+func method(name byte) *Buffer {
+	buf := NewBuffer()
 	buf.WriteByte(name)
-	return
+	return buf
 }
 
-func (this *ItnetImpl) Ping(ctx context.Context, pingBs []byte) (_err error) {
-	buf := method(_Ping)
+func (tl *ItnetImpl) Ping(ctx context.Context, pingBs []byte) (_err error) {
+	buf := method(PING)
 	if pingBs != nil && len(pingBs) > 0 {
 		buf.Write(util.Mask(pingBs))
 	}
-	return this.write(buf)
+	return tl.write(buf)
 }
 
-func (this *ItnetImpl) Pong(ctx context.Context, pongBs []byte) (_err error) {
-	buf := method(_Pong)
+func (tl *ItnetImpl) Pong(ctx context.Context, pongBs []byte) (_err error) {
+	buf := method(PONG)
 	if pongBs != nil && len(pongBs) > 0 {
 		buf.Write(util.Mask(pongBs))
 	}
-	return this.write(buf)
+	return tl.write(buf)
 }
 
-func (this *ItnetImpl) Chap(ctx context.Context, bss []byte) (_err error) {
-	buf := method(_Chap)
+func (tl *ItnetImpl) Chap(ctx context.Context, bss []byte) (_err error) {
+	buf := method(CHAP)
 	buf.Write(util.Mask(bss))
-	return this.write(buf)
+	return tl.write(buf)
 }
 
-func (this *ItnetImpl) Auth2(ctx context.Context, authKey []byte) (_err error) {
-	buf := method(_Auth2)
+func (tl *ItnetImpl) Auth2(ctx context.Context, authKey []byte) (_err error) {
+	buf := method(AUTH2)
 	buf.Write(util.Mask(authKey))
-	return this.write(buf)
+	return tl.write(buf)
 }
 
-func (this *ItnetImpl) SyncNode(ctx context.Context, node *Node, ir bool) (_err error) {
-	buf := method(_SyncNode)
+func (tl *ItnetImpl) SyncNode(ctx context.Context, node *Node, ir bool) (_err error) {
+	buf := method(SYNCNODE)
 	buf.WriteByte(boolToByte(ir))
 	nodebs, _ := Encode(node)
 	buf.Write(util.Mask(nodebs))
-	return this.write(buf)
+	return tl.write(buf)
 }
 
-func (this *ItnetImpl) SyncAddr(ctx context.Context, node string, ir bool) (_err error) {
-	buf := method(_SyncAddr)
+func (tl *ItnetImpl) SyncAddr(ctx context.Context, node string, ir bool) (_err error) {
+	buf := method(SYNCADDR)
 	buf.WriteByte(boolToByte(ir))
 	buf.Write(util.Mask([]byte(node)))
-	return this.write(buf)
+	return tl.write(buf)
 }
 
-func (this *ItnetImpl) SyncTxMerge(ctx context.Context, syncList map[int64]int8) (_err error) {
-	buf := method(_SyncTxMerge)
+func (tl *ItnetImpl) SyncTxMerge(ctx context.Context, syncList map[int64]int8) (_err error) {
+	buf := method(SYNCTXMERGE)
 	syncListBuf := mapTobytes(syncList)
 	buf.Write(syncListBuf.Bytes())
-	return this.write(buf)
+	return tl.write(buf)
 }
 
-func (this *ItnetImpl) CsUser(ctx context.Context, sendId int64, cu *CsUser) (_err error) {
-	buf := method(_CsUser)
+func (tl *ItnetImpl) CsUser(ctx context.Context, sendId int64, cu *CsUser) (_err error) {
+	buf := method(CSUSER)
 	buf.Write(Int64ToBytes(sendId))
 	buf.Write(TEncode(cu))
-	return this.write(buf)
+	return tl.write(buf)
 }
 
-func (this *ItnetImpl) CsBs(ctx context.Context, sendId int64, cb *CsBs) (_err error) {
-	buf := method(_CsBs)
+func (tl *ItnetImpl) CsBs(ctx context.Context, sendId int64, cb *CsBs) (_err error) {
+	buf := method(CSBS)
 	buf.Write(Int64ToBytes(sendId))
 	buf.Write(TEncode(cb))
-	return this.write(buf)
+	return tl.write(buf)
 }
 
-func (this *ItnetImpl) CsReq(ctx context.Context, sendId int64, ack bool, cb *CsBean) (_err error) {
-	buf := method(_CsReq)
+func (tl *ItnetImpl) CsReq(ctx context.Context, sendId int64, ack bool, cb *CsBean) (_err error) {
+	buf := method(CSREQ)
 	buf.Write(Int64ToBytes(sendId))
 	buf.WriteByte(boolToByte(ack))
 	buf.Write(TEncode(cb))
-	return this.write(buf)
+	return tl.write(buf)
 }
 
-func (this *ItnetImpl) CsVr(ctx context.Context, sendId int64, vrb *VBean) (_err error) {
-	buf := method(_CsVr)
+func (tl *ItnetImpl) CsVr(ctx context.Context, sendId int64, vrb *VBean) (_err error) {
+	buf := method(CSVR)
 	buf.Write(Int64ToBytes(sendId))
 	buf.Write(TEncode(vrb))
-	return this.write(buf)
+	return tl.write(buf)
 }
 
-func (this *ItnetImpl) write(buf *Buffer) (err error) {
+func (tl *ItnetImpl) write(buf *Buffer) (err error) {
 	sys.Stat.Ob(int64(buf.Len()))
-	_, err = this.ts.WriteWithMerge(buf.Bytes())
+	_, err = tl.ts.WriteWithMerge(buf.Bytes())
 	return
 }
 
 func mapTobytes(syncList map[int64]int8) (buf *Buffer) {
-	buf = NewBuffer()
+	buf = NewBufferWithCapacity(9 * len(syncList))
 	for k, v := range syncList {
 		buf.Write(Int64ToBytes(k))
 		buf.WriteByte(byte(v))
@@ -296,15 +295,15 @@ func byteToBool(b byte) (_r bool) {
 }
 
 const (
-	_Ping        byte = 1
-	_Pong        byte = 2
-	_Chap        byte = 3
-	_Auth2       byte = 4
-	_SyncNode    byte = 5
-	_SyncAddr    byte = 6
-	_SyncTxMerge byte = 7
-	_CsUser      byte = 8
-	_CsBs        byte = 9
-	_CsReq       byte = 10
-	_CsVr        byte = 11
+	PING        byte = 1
+	PONG        byte = 2
+	CHAP        byte = 3
+	AUTH2       byte = 4
+	SYNCNODE    byte = 5
+	SYNCADDR    byte = 6
+	SYNCTXMERGE byte = 7
+	CSUSER      byte = 8
+	CSBS        byte = 9
+	CSREQ       byte = 10
+	CSVR        byte = 11
 )
