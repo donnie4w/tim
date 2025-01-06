@@ -4,15 +4,16 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
+
 package level1
 
 import (
+	"github.com/donnie4w/tim/errs"
 	"sync/atomic"
 
 	. "github.com/donnie4w/gofer/buffer"
 	. "github.com/donnie4w/gofer/hashmap"
 	. "github.com/donnie4w/gofer/util"
-	"github.com/donnie4w/simplelog/logging"
 	. "github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/vgate"
@@ -60,11 +61,11 @@ func processVBean(vrb *VBean, srcuuid int64) {
 		vgate.VGate.Remove(*vrb.FoundNode, vrb.Vnode)
 		bkCsVr(vrb, srcuuid)
 	case 3:
-		vgate.VGate.AddAuth(vrb.Vnode, *vrb.FoundNode, *vrb.Rnode)
-		bkCsVr(vrb, srcuuid)
+		//vgate.VGate.AddAuth(vrb.Vnode, *vrb.FoundNode, *vrb.Rnode)
+		//bkCsVr(vrb, srcuuid)
 	case 4:
-		vgate.VGate.DelAuth(vrb.Vnode, *vrb.FoundNode, *vrb.Rnode)
-		bkCsVr(vrb, srcuuid)
+		//vgate.VGate.DelAuth(vrb.Vnode, *vrb.FoundNode, *vrb.Rnode)
+		//bkCsVr(vrb, srcuuid)
 	case 5:
 		if _, b := vgate.VGate.GetVroom(vrb.Vnode); b {
 			vgate.VGate.Sub(vrb.Vnode, srcuuid, 0)
@@ -72,18 +73,18 @@ func processVBean(vrb *VBean, srcuuid int64) {
 			nodeWare.csVrHandle(srcuuid, 0, &VBean{Rtype: 10, Vnode: vrb.Vnode, Rnode: vrb.Rnode})
 		}
 	case 6:
-		vgate.VGate.DelUuid(vrb.Vnode, srcuuid)
+		vgate.VGate.UnSubWithUUID(vrb.Vnode, srcuuid)
 	case 7:
-		go sys.TimSteamProcessor(vrb)
+		go sys.TimSteamProcessor(vrb, sys.TRANS_SOURCE)
 		if vr, ok := vgate.VGate.GetVroom(vrb.Vnode); ok {
-			if !vr.Auth(*vrb.Rnode) {
+			if !vr.AuthStream(*vrb.Rnode) {
 				nodeWare.csVrHandle(srcuuid, 0, &VBean{Rtype: 9, Vnode: vrb.Vnode, Rnode: vrb.Rnode})
 				return
 			}
 			vr.Updatetime()
 			vrb.Rtype = 50 + vrb.Rtype
 			m := map[int64]int8{}
-			vgate.VGate.GetUUID(vrb.Vnode).Range(func(k int64, _ int8) bool {
+			vgate.VGate.GetSubUUID(vrb.Vnode).Range(func(k int64, _ int8) bool {
 				if k != srcuuid {
 					m[k] = 0
 					nodeWare.csVrHandle(k, 0, vrb)
@@ -106,33 +107,33 @@ func processVBean(vrb *VBean, srcuuid int64) {
 		if vr, ok := vgate.VGate.GetVroom(vrb.Vnode); ok {
 			if vr.FoundNode != "" {
 				nodeWare.csVrHandle(srcuuid, 0, &VBean{Rtype: 1, Vnode: vrb.Vnode, FoundNode: &vr.FoundNode})
-				vr.AuthMap().Range(func(k string, _ int8) bool {
-					nodeWare.csVrHandle(srcuuid, 0, &VBean{Rtype: 3, Vnode: vrb.Vnode, FoundNode: &vr.FoundNode, Rnode: &k})
-					return true
-				})
+				//vr.AuthMap().Range(func(k string, _ int8) bool {
+				//	nodeWare.csVrHandle(srcuuid, 0, &VBean{Rtype: 3, Vnode: vrb.Vnode, FoundNode: &vr.FoundNode, Rnode: &k})
+				//	return true
+				//})
 				f = true
 			}
 		}
 		if !f {
-			sys.SendNode(*vrb.Rnode, &TimAck{Ok: false, TimType: int8(sys.TIMSTREAM), Error: sys.ERR_NOEXIST.TimError()}, sys.TIMACK)
+			sys.SendNode(*vrb.Rnode, &TimAck{Ok: false, TimType: int8(sys.TIMSTREAM), Error: errs.ERR_NOEXIST.TimError()}, sys.TIMACK)
 		}
 	case 9:
-		sys.SendNode(*vrb.Rnode, &TimAck{Ok: false, TimType: int8(sys.TIMSTREAM), Error: sys.ERR_AUTH.TimError(), N: &vrb.Vnode}, sys.TIMACK)
+		sys.SendNode(*vrb.Rnode, &TimAck{Ok: false, TimType: int8(sys.TIMSTREAM), Error: errs.ERR_PERM_DENIED.TimError(), N: &vrb.Vnode}, sys.TIMACK)
 	case 10:
-		sys.SendNode(*vrb.Rnode, &TimAck{Ok: false, TimType: int8(sys.TIMVROOM), Error: sys.ERR_NOEXIST.TimError(), N: &vrb.Vnode}, sys.TIMACK)
+		sys.SendNode(*vrb.Rnode, &TimAck{Ok: false, TimType: int8(sys.TIMVROOM), Error: errs.ERR_NOEXIST.TimError(), N: &vrb.Vnode}, sys.TIMACK)
 	case 51:
 		vgate.VGate.Register(*vrb.FoundNode, vrb.Vnode)
 	case 52:
 		vgate.VGate.Remove(*vrb.FoundNode, vrb.Vnode)
 	case 53:
-		vgate.VGate.AddAuth(vrb.Vnode, *vrb.FoundNode, *vrb.Rnode)
+		//vgate.VGate.AddAuth(vrb.Vnode, *vrb.FoundNode, *vrb.Rnode)
 	case 54:
-		vgate.VGate.DelAuth(vrb.Vnode, *vrb.FoundNode, *vrb.Rnode)
+		//vgate.VGate.DelAuth(vrb.Vnode, *vrb.FoundNode, *vrb.Rnode)
 	case 57:
-		logging.Debug(">>>", vrb.Body)
-		if !reStream.Has(*vrb.StreamId) {
+		//problem->send repeatedly
+		if !reStream.Contains(*vrb.StreamId) {
 			reStream.Put(*vrb.StreamId, 0)
-			sys.TimSteamProcessor(vrb)
+			sys.TimSteamProcessor(vrb, sys.TRANS_GOAL)
 		} else {
 			buf := NewBufferByPool()
 			defer buf.Free()
@@ -155,8 +156,8 @@ func processVBean(vrb *VBean, srcuuid int64) {
 	}
 }
 
-func (this *nodeware) wsstt() (_r int64) {
-	tcc := this.GetAllTlContext()
+func (nd *nodeware) wsstt() (_r int64) {
+	tcc := nd.GetAllTlContext()
 	for _, tc := range tcc {
 		_r += tc.onNum
 	}
@@ -166,7 +167,7 @@ func (this *nodeware) wsstt() (_r int64) {
 
 var _unaccess = NewMap[int64, int8]()
 
-func (this *nodeware) unaccess() (_r []int64) {
+func (nd *nodeware) unaccess() (_r []int64) {
 	_r = make([]int64, 0)
 	_unaccess.Range(func(k int64, _ int8) bool {
 		_r = append(_r, k)
