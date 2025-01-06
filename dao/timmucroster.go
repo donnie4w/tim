@@ -5,8 +5,8 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2024-08-10 01:01:22
-// gdao version 1.1.0
+// datetime :2024-10-06 20:30:14
+// gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timmucroster
 
 package dao
@@ -18,120 +18,89 @@ import (
 	
 )
 
-type timmucroster_Id[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timmucroster_Id[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timmucroster_Id[T]) Value() any {
-	return t.fieldValue
-}
-
-type timmucroster_Relate[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timmucroster_Relate[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timmucroster_Relate[T]) Value() any {
-	return t.fieldValue
-}
-
-type timmucroster_Uuid[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timmucroster_Uuid[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timmucroster_Uuid[T]) Value() any {
-	return t.fieldValue
-}
-
-type timmucroster_Tuuid[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue *int64
-}
-
-func (t *timmucroster_Tuuid[T]) Name() string {
-	return t.fieldName
-}
-
-func (t *timmucroster_Tuuid[T]) Value() any {
-	return t.fieldValue
-}
-
 type Timmucroster struct {
 	gdao.Table[Timmucroster]
 
-	Id		*timmucroster_Id[Timmucroster]
-	Relate		*timmucroster_Relate[Timmucroster]
-	Uuid		*timmucroster_Uuid[Timmucroster]
-	Tuuid		*timmucroster_Tuuid[Timmucroster]
+	ID      *base.Field[Timmucroster]
+	UNIKID      *base.Field[Timmucroster]
+	UUID      *base.Field[Timmucroster]
+	TUUID      *base.Field[Timmucroster]
+	TIMESERIES      *base.Field[Timmucroster]
+	_ID      *int64
+	_UNIKID      *int64
+	_UUID      *int64
+	_TUUID      *int64
+	_TIMESERIES      *int64
 }
 
+var _Timmucroster_ID = &base.Field[Timmucroster]{"id"}
+var _Timmucroster_UNIKID = &base.Field[Timmucroster]{"unikid"}
+var _Timmucroster_UUID = &base.Field[Timmucroster]{"uuid"}
+var _Timmucroster_TUUID = &base.Field[Timmucroster]{"tuuid"}
+var _Timmucroster_TIMESERIES = &base.Field[Timmucroster]{"timeseries"}
+
 func (u *Timmucroster) GetId() (_r int64){
-	if u.Id.fieldValue != nil {
-		_r = *u.Id.fieldValue
+	if u._ID != nil {
+		_r = *u._ID
 	}
 	return
 }
 
 func (u *Timmucroster) SetId(arg int64) *Timmucroster{
-	u.Put0(u.Id.fieldName, arg)
-	u.Id.fieldValue = &arg
+	u.Put0(u.ID.FieldName, arg)
+	u._ID = &arg
 	return u
 }
 
-func (u *Timmucroster) GetRelate() (_r int64){
-	if u.Relate.fieldValue != nil {
-		_r = *u.Relate.fieldValue
+func (u *Timmucroster) GetUnikid() (_r int64){
+	if u._UNIKID != nil {
+		_r = *u._UNIKID
 	}
 	return
 }
 
-func (u *Timmucroster) SetRelate(arg int64) *Timmucroster{
-	u.Put0(u.Relate.fieldName, arg)
-	u.Relate.fieldValue = &arg
+func (u *Timmucroster) SetUnikid(arg int64) *Timmucroster{
+	u.Put0(u.UNIKID.FieldName, arg)
+	u._UNIKID = &arg
 	return u
 }
 
 func (u *Timmucroster) GetUuid() (_r int64){
-	if u.Uuid.fieldValue != nil {
-		_r = *u.Uuid.fieldValue
+	if u._UUID != nil {
+		_r = *u._UUID
 	}
 	return
 }
 
 func (u *Timmucroster) SetUuid(arg int64) *Timmucroster{
-	u.Put0(u.Uuid.fieldName, arg)
-	u.Uuid.fieldValue = &arg
+	u.Put0(u.UUID.FieldName, arg)
+	u._UUID = &arg
 	return u
 }
 
 func (u *Timmucroster) GetTuuid() (_r int64){
-	if u.Tuuid.fieldValue != nil {
-		_r = *u.Tuuid.fieldValue
+	if u._TUUID != nil {
+		_r = *u._TUUID
 	}
 	return
 }
 
 func (u *Timmucroster) SetTuuid(arg int64) *Timmucroster{
-	u.Put0(u.Tuuid.fieldName, arg)
-	u.Tuuid.fieldValue = &arg
+	u.Put0(u.TUUID.FieldName, arg)
+	u._TUUID = &arg
+	return u
+}
+
+func (u *Timmucroster) GetTimeseries() (_r int64){
+	if u._TIMESERIES != nil {
+		_r = *u._TIMESERIES
+	}
+	return
+}
+
+func (u *Timmucroster) SetTimeseries(arg int64) *Timmucroster{
+	u.Put0(u.TIMESERIES.FieldName, arg)
+	u._TIMESERIES = &arg
 	return u
 }
 
@@ -140,61 +109,60 @@ func (u *Timmucroster) Scan(fieldname string, value any) {
 	switch fieldname {
 	case "id":
 		u.SetId(base.AsInt64(value))
-	case "relate":
-		u.SetRelate(base.AsInt64(value))
+	case "unikid":
+		u.SetUnikid(base.AsInt64(value))
 	case "uuid":
 		u.SetUuid(base.AsInt64(value))
 	case "tuuid":
 		u.SetTuuid(base.AsInt64(value))
+	case "timeseries":
+		u.SetTimeseries(base.AsInt64(value))
 	}
 }
 
 func (t *Timmucroster) ToGdao() {
-	_t := NewTimmucroster()
-	*t = *_t
+	t.init("timmucroster")
 }
 
 func (t *Timmucroster) Copy(h *Timmucroster) *Timmucroster{
 	t.SetId(h.GetId())
-	t.SetRelate(h.GetRelate())
+	t.SetUnikid(h.GetUnikid())
 	t.SetUuid(h.GetUuid())
 	t.SetTuuid(h.GetTuuid())
+	t.SetTimeseries(h.GetTimeseries())
 	return t
 }
 
 func (t *Timmucroster) String() string {
-	return fmt.Sprint("Id:",t.GetId(), ",","Relate:",t.GetRelate(), ",","Uuid:",t.GetUuid(), ",","Tuuid:",t.GetTuuid())
+	return fmt.Sprint("Id:",t.GetId(), ",","Unikid:",t.GetUnikid(), ",","Uuid:",t.GetUuid(), ",","Tuuid:",t.GetTuuid(), ",","Timeseries:",t.GetTimeseries())
+}
+
+func (t *Timmucroster)init(tablename string) {
+	t.ID = _Timmucroster_ID
+	t.UNIKID = _Timmucroster_UNIKID
+	t.UUID = _Timmucroster_UUID
+	t.TUUID = _Timmucroster_TUUID
+	t.TIMESERIES = _Timmucroster_TIMESERIES
+	t.Init(tablename, []base.Column[Timmucroster]{t.ID,t.UNIKID,t.UUID,t.TUUID,t.TIMESERIES})
 }
 
 func NewTimmucroster(tablename ...string) (_r *Timmucroster) {
-
-	id := &timmucroster_Id[Timmucroster]{fieldName: "id"}
-	id.Field.FieldName = "id"
-
-	relate := &timmucroster_Relate[Timmucroster]{fieldName: "relate"}
-	relate.Field.FieldName = "relate"
-
-	uuid := &timmucroster_Uuid[Timmucroster]{fieldName: "uuid"}
-	uuid.Field.FieldName = "uuid"
-
-	tuuid := &timmucroster_Tuuid[Timmucroster]{fieldName: "tuuid"}
-	tuuid.Field.FieldName = "tuuid"
-
-	_r = &Timmucroster{Id:id,Relate:relate,Uuid:uuid,Tuuid:tuuid}
+	_r = &Timmucroster{}
 	s := "timmucroster"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
 	}
-	_r.Init(s, []base.Column[Timmucroster]{id,relate,uuid,tuuid})
+	_r.init(s)
 	return
 }
 
 func (t *Timmucroster) Encode() ([]byte, error) {
 	m := make(map[string]any, 0)
 	m["id"] = t.GetId()
-	m["relate"] = t.GetRelate()
+	m["unikid"] = t.GetUnikid()
 	m["uuid"] = t.GetUuid()
 	m["tuuid"] = t.GetTuuid()
+	m["timeseries"] = t.GetTimeseries()
 	return t.Table.Encode(m)
 }
 
