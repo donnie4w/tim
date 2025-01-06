@@ -4,6 +4,7 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
+
 package level1
 
 import (
@@ -42,11 +43,11 @@ func (this *itnetServ) Ping(ctx context.Context, pingBs []byte) (_err error) {
 			return
 		}
 		if tc.isAuth {
-			tc.iface.Pong(context.TODO(), poBs(tc))
+			tc.csnet.Pong(context.TODO(), poBs(tc))
 			if pingBs != nil && len(pingBs) > 0 {
 				pn := BytesToInt64(pingBs)
 				if pn != pingnum() {
-					tc.iface.SyncNode(context.TODO(), nodeWare.GetUUIDNode(), true)
+					tc.csnet.SyncNode(context.TODO(), nodeWare.GetUUIDNode(), true)
 				}
 			}
 		}
@@ -69,7 +70,7 @@ func (this *itnetServ) Pong(ctx context.Context, pongBs []byte) (_err error) {
 						tc.onNum = *d.OnNum
 					}
 					if d.SyncNum != nil && *d.SyncNum != syncNum() {
-						tc.iface.Pong(context.TODO(), cslistBytes())
+						tc.csnet.Pong(context.TODO(), cslistBytes())
 					}
 					if d.CsNum != nil {
 						tc.remoteCsNum = *d.CsNum
@@ -96,24 +97,24 @@ func (this *itnetServ) Chap(ctx context.Context, abs []byte) (_err error) {
 		tc := ctx2TlContext(ctx)
 		pass := false
 		if ab, err := decodeChapBean(abs); err == nil {
-			if !chapTxTemp.Has(ab.TxId) && ab.Time+24*int64(time.Hour) > time.Now().UnixNano() {
+			if !chapTxTemp.Contains(ab.TxId) && ab.Time+24*int64(time.Hour) > time.Now().UnixNano() {
 				chapTxTemp.Put(ab.TcId, 0)
 				switch ab.Stat {
 				case 1:
 					if ab.Key == sys.Conf.Pwd {
-						tc.remoteUuid, tc.verifycode = ab.UUID, RandId()
-						ab.Code, ab.TcId, ab.TxId, ab.Stat = tc.verifycode, tc.id, RandId(), ab.Stat+1
+						tc.remoteUuid, tc.verifycode = ab.UUID, UUID64()
+						ab.Code, ab.TcId, ab.TxId, ab.Stat = tc.verifycode, tc.id, UUID64(), ab.Stat+1
 						if bs, err := encodeChapBean(ab); err == nil {
-							if err = tc.iface.Chap(context.TODO(), bs); err == nil {
+							if err = tc.csnet.Chap(context.TODO(), bs); err == nil {
 								pass = true
 							}
 						}
 					}
 				case 2:
 					if ab.IDcard == tc.id && ab.UUID == sys.UUID {
-						ab.TxId, ab.Code, ab.Stat, ab.IDcard = RandId(), ab.Code+1, ab.Stat+1, ab.IDcard+1
+						ab.TxId, ab.Code, ab.Stat, ab.IDcard = UUID64(), ab.Code+1, ab.Stat+1, ab.IDcard+1
 						if bs, err := encodeChapBean(ab); err == nil {
-							tc.iface.Chap(context.TODO(), bs)
+							tc.csnet.Chap(context.TODO(), bs)
 							pass = true
 						}
 					}
@@ -122,7 +123,7 @@ func (this *itnetServ) Chap(ctx context.Context, abs []byte) (_err error) {
 						tc.isAuth, ab.Stat, ab.TcId = true, ab.Stat+1, sys.UUID
 						availMap.Del(tc)
 						if bs, err := encodeChapBean(ab); err == nil {
-							tc.iface.Chap(context.TODO(), bs)
+							tc.csnet.Chap(context.TODO(), bs)
 							pass = true
 						}
 					}
@@ -131,9 +132,9 @@ func (this *itnetServ) Chap(ctx context.Context, abs []byte) (_err error) {
 						tc.isAuth, pass, tc.remoteUuid = true, true, ab.TcId
 						availMap.Del(tc)
 						if !sys.LA {
-							tc.iface.SyncNode(context.TODO(), nodeWare.GetUUIDNode(), true)
+							tc.csnet.SyncNode(context.TODO(), nodeWare.GetUUIDNode(), true)
 						} else {
-							tc.iface.SyncAddr(context.TODO(), "", true)
+							tc.csnet.SyncAddr(context.TODO(), "", true)
 						}
 					}
 				}
@@ -150,7 +151,7 @@ func (this *itnetServ) Auth2(ctx context.Context, authKey []byte) (_err error) {
 	defer util.Recover()
 	tc := ctx2TlContext(ctx)
 	if authTc(tc, authKey) {
-		tc.iface.SyncNode(context.TODO(), nodeWare.GetUUIDNode(), true)
+		tc.csnet.SyncNode(context.TODO(), nodeWare.GetUUIDNode(), true)
 	}
 	return
 }
@@ -166,12 +167,12 @@ func (this *itnetServ) SyncNode(ctx context.Context, node *Node, ir bool) (_err 
 			tc.remoteUuid, tc.remoteAddr = node.UUID, node.Addr
 			nodeWare.add(tc)
 			if ir {
-				tc.iface.SyncNode(context.TODO(), nodeWare.GetUUIDNode(), !ir)
+				tc.csnet.SyncNode(context.TODO(), nodeWare.GetUUIDNode(), !ir)
 			}
 
 			for k, v := range node.Nodekv {
 				if k != sys.UUID && !nodeWare.hasUUID(k) && !clientLinkCache.Has(v) {
-					<-time.After(time.Duration(Rand(6)) * time.Second)
+					<-time.After(time.Duration(RandUint(6)) * time.Second)
 					if !nodeWare.hasUUID(k) {
 						go func(k int64, v string) {
 							if _, err2 := tnetservice.connectLoop(v, true, 10); err2 != nil {
@@ -194,7 +195,7 @@ func (this *itnetServ) SyncAddr(ctx context.Context, node string, ir bool) (_err
 		tc := ctx2TlContext(ctx)
 		if tc.isAuth {
 			if ir {
-				tc.iface.SyncAddr(context.TODO(), fmt.Sprint(tc.remoteHost2), !ir)
+				tc.csnet.SyncAddr(context.TODO(), fmt.Sprint(tc.remoteHost2), !ir)
 			} else {
 				tc.CloseAndEnd()
 				lnetservice._server(node)
@@ -278,7 +279,7 @@ func (this *itnetServ) CsBs(ctx context.Context, sendId int64, cb *CsBs) (_err e
 			switch cb.BsType {
 			case sys.CB_MESSAGE:
 				if tm, err := TDecode(cb.Bs, &TimMessage{}); err == nil {
-					if reTx.Has(*tm.ID) {
+					if reTx.Contains(*tm.ID) {
 						logging.Warn("reTx>>>", tm)
 						return
 					}
@@ -314,7 +315,7 @@ func (this *itnetServ) CsReq(ctx context.Context, sendId int64, ack bool, cb *Cs
 		tc := ctx2TlContext(ctx)
 		if tc.isAuth {
 			if ack {
-				awaitCsBean.DelAndPut(sendId, cb)
+				awaitCsBean.CloseAndPut(sendId, cb)
 			} else {
 				switch cb.RType {
 				case 1:
@@ -353,109 +354,6 @@ func (this *itnetServ) CsVr(ctx context.Context, sendId int64, vrb *VBean) (_err
 		tc := ctx2TlContext(ctx)
 		if tc.isAuth {
 			processVBean(vrb, tc.remoteUuid)
-			// switch vrb.Rtype {
-			// case 1:
-			// 	vgate.VGate.Register(*vrb.FoundNode, vrb.Vnode)
-			// 	bkCsVr(vrb, tc.remoteUuid)
-			// case 2:
-			// 	vgate.VGate.Remove(*vrb.FoundNode, vrb.Vnode)
-			// 	bkCsVr(vrb, tc.remoteUuid)
-			// case 3:
-			// 	vgate.VGate.AddAuth(vrb.Vnode, *vrb.FoundNode, *vrb.Rnode)
-			// 	bkCsVr(vrb, tc.remoteUuid)
-			// case 4:
-			// 	vgate.VGate.DelAuth(vrb.Vnode, *vrb.FoundNode, *vrb.Rnode)
-			// 	bkCsVr(vrb, tc.remoteUuid)
-			// case 5:
-			// 	if _, b := vgate.VGate.GetVroom(vrb.Vnode); b {
-			// 		logging.Debug(">>>", tc.remoteUuid)
-			// 		vgate.VGate.Sub(vrb.Vnode, tc.remoteUuid, 0)
-			// 	} else {
-			// 		nodeWare.csVrHandle(tc.remoteUuid, 0, &VBean{Rtype: 10, Vnode: vrb.Vnode, Rnode: vrb.Rnode})
-			// 	}
-			// case 6:
-			// 	vgate.VGate.DelUuid(vrb.Vnode, tc.remoteUuid)
-			// case 7:
-			// 	if vr, ok := vgate.VGate.GetVroom(vrb.Vnode); ok {
-			// 		if !vr.Auth(*vrb.Rnode) {
-			// 			nodeWare.csVrHandle(tc.remoteUuid, 0, &VBean{Rtype: 9, Vnode: vrb.Vnode, Rnode: vrb.Rnode})
-			// 			return
-			// 		}
-			// 		vr.Updatetime()
-			// 		vrb.Rtype = 50 + vrb.Rtype
-			// 		m := map[int64]int8{}
-			// 		vgate.VGate.GetUUID(vrb.Vnode).Range(func(k int64, _ int8) bool {
-			// 			logging.Debug(">>>>", k, "  =====>", tc.remoteUuid)
-			// 			if k != tc.remoteUuid {
-			// 				m[k] = 0
-			// 				nodeWare.csVrHandle(k, 0, vrb)
-			// 			}
-			// 			return true
-			// 		})
-			// 		go sys.TimSteamProcessor(vrb)
-			// 		if li, ok := nodeWare.bkuuid(vrb.Vnode); ok && len(li) > 0 {
-			// 			for _, u := range li {
-			// 				if _, ok := m[u]; !ok && u != tc.remoteUuid {
-			// 					m[u] = 0
-			// 					nodeWare.csVrHandle(u, 0, vrb)
-			// 				}
-			// 			}
-			// 		}
-			// 	} else {
-			// 		nodeWare.csVrHandle(tc.remoteUuid, 0, &VBean{Rtype: 8, Vnode: vrb.Vnode, Rnode: vrb.Rnode})
-			// 	}
-			// case 8:
-			// 	f := false
-			// 	if vr, ok := vgate.VGate.GetVroom(vrb.Vnode); ok {
-			// 		if vr.FoundNode != "" {
-			// 			nodeWare.csVrHandle(tc.remoteUuid, 0, &VBean{Rtype: 1, Vnode: vrb.Vnode, FoundNode: &vr.FoundNode})
-			// 			vr.AuthMap().Range(func(k string, _ int8) bool {
-			// 				nodeWare.csVrHandle(tc.remoteUuid, 0, &VBean{Rtype: 3, Vnode: vrb.Vnode, FoundNode: &vr.FoundNode, Rnode: &k})
-			// 				return true
-			// 			})
-			// 			f = true
-			// 		}
-			// 	}
-			// 	if !f {
-			// 		sys.SendNode(*vrb.Rnode, &TimAck{Ok: false, TimType: int8(sys.TIMSTREAM), Error: sys.ERR_NOEXIST.TimError()}, sys.TIMACK)
-			// 	}
-			// case 9:
-			// 	sys.SendNode(*vrb.Rnode, &TimAck{Ok: false, TimType: int8(sys.TIMSTREAM), Error: sys.ERR_AUTH.TimError(), N: &vrb.Vnode}, sys.TIMACK)
-			// case 10:
-			// 	sys.SendNode(*vrb.Rnode, &TimAck{Ok: false, TimType: int8(sys.TIMVROOM), Error: sys.ERR_NOEXIST.TimError(), N: &vrb.Vnode}, sys.TIMACK)
-			// case 51:
-			// 	vgate.VGate.Register(*vrb.FoundNode, vrb.Vnode)
-			// case 52:
-			// 	vgate.VGate.Remove(*vrb.FoundNode, vrb.Vnode)
-			// case 53:
-			// 	vgate.VGate.AddAuth(vrb.Vnode, *vrb.FoundNode, *vrb.Rnode)
-			// case 54:
-			// 	vgate.VGate.DelAuth(vrb.Vnode, *vrb.FoundNode, *vrb.Rnode)
-			// case 57:
-			// 	logging.Debug(">>>", vrb.Body)
-			// 	if !reStream.Has(*vrb.StreamId) {
-			// 		reStream.Put(*vrb.StreamId, 0)
-			// 		sys.TimSteamProcessor(vrb)
-			// 	} else {
-			// 		buf := NewBufferByPool()
-			// 		defer buf.Free()
-			// 		buf.WriteString(vrb.Vnode)
-			// 		buf.WriteString(sys.Conf.Salt)
-			// 		buf.Write(Int64ToBytes(tc.remoteUuid))
-			// 		f := CRC64(buf.Bytes())
-			// 		if i, ok := reStreamUUID.Get(f); ok {
-			// 			if i > 5 {
-			// 				vb := &VBean{Rtype: 6, Vnode: vrb.Vnode}
-			// 				nodeWare.csVrHandle(tc.remoteUuid, 0, vb)
-			// 			} else {
-			// 				reStreamUUID.Put(f, atomic.AddInt32(&i, 1))
-			// 			}
-			// 		} else {
-			// 			reStreamUUID.Put(f, 1)
-			// 		}
-			// 	}
-			// default:
-			// }
 		}
 	}()
 	return
@@ -464,9 +362,9 @@ func (this *itnetServ) CsVr(ctx context.Context, sendId int64, vrb *VBean) (_err
 func (this *itnetServ) _SyncTx(syncId int64, result int8) {
 	defer util.Recover()
 	if result == 0 {
-		await.DelAndClose(syncId)
+		await.Close(syncId)
 	} else {
-		await.DelAndPut(syncId, result)
+		await.CloseAndPut(syncId, result)
 	}
 }
 
