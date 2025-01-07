@@ -4,7 +4,6 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package keystore
 
