@@ -4,16 +4,13 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package util
 
 import (
-	"bytes"
-	"crypto/tls"
 	"errors"
-	"io"
-	"net/http"
+	"fmt"
+	"github.com/donnie4w/gofer/base58"
 	"runtime"
 	"runtime/debug"
 	"sort"
@@ -36,10 +33,10 @@ func CreateUUIDByTid(tid *Tid) uint64 {
 	return CreateUUID(tid.Node, tid.Domain)
 }
 
-func CreateUUID(node string, domain *string) uint64 {
+func CreateUUID(name string, domain *string) uint64 {
 	buf := buffer.NewBufferByPool()
 	defer buf.Free()
-	buf.WriteString(node)
+	buf.WriteString(name)
 	buf.WriteString(sys.Conf.Salt)
 	if domain != nil && *domain != "" {
 		buf.WriteString(*domain)
@@ -53,9 +50,9 @@ func CreateUUID(node string, domain *string) uint64 {
 }
 
 func NewTimUUID() uint64 {
-	buf := buffer.NewBuffer()
+	buf := buffer.NewBufferWithCapacity(len(sys.Conf.Salt) + 8)
 	buf.WriteString(sys.Conf.Salt)
-	buf.Write(Int64ToBytes(RandId()))
+	buf.Write(Int64ToBytes(UUID64()))
 	return CreateUUID(string(buf.Bytes()), nil)
 }
 
@@ -64,12 +61,12 @@ func NameToNode(name string, domain *string) string {
 }
 
 func NodeToUUID(node string) (_r uint64) {
-	_r, _ = Base58DecodeForInt64([]byte(node))
+	_r, _ = base58.DecodeForInt64([]byte(node))
 	return
 }
 
 func UUIDToNode(uuid uint64) string {
-	return string(Base58EncodeForInt64(uuid))
+	return string(base58.EncodeForInt64(uuid))
 }
 
 func CheckUUID(uuid uint64) bool {
@@ -86,6 +83,18 @@ func CheckNode(node string) bool {
 		}
 	}
 	return false
+}
+
+func CheckNodes(nodes ...string) bool {
+	if len(nodes) == 0 {
+		return false
+	}
+	for _, node := range nodes {
+		if !CheckNode(node) {
+			return false
+		}
+	}
+	return true
 }
 
 func ChatIdByRoom(node string, domain *string) uint64 {
@@ -125,6 +134,16 @@ func UnikId(f, t uint64) uint64 {
 	defer buf.Free()
 	buf.Write(Int64ToBytes(int64(f)))
 	buf.WriteString(sys.Conf.Salt)
+	buf.Write(Int64ToBytes(int64(t)))
+	buf.WriteString(sys.Conf.Salt)
+	return CRC64(buf.Bytes())
+}
+
+func UnikIdByNode(fromNode, toNode string, domain *string) uint64 {
+	buf := buffer.NewBufferByPool()
+	defer buf.Free()
+	f, t := CreateUUID(fromNode, domain), CreateUUID(toNode, domain)
+	buf.Write(Int64ToBytes(int64(f)))
 	buf.Write(Int64ToBytes(int64(t)))
 	buf.WriteString(sys.Conf.Salt)
 	return CRC64(buf.Bytes())
@@ -218,6 +237,14 @@ func Recover() {
 	}
 }
 
+func Recover2(err *error) {
+	if e := recover(); e != nil {
+		if err != nil {
+			*err = errors.New(fmt.Sprint(e))
+		}
+	}
+}
+
 func AesEncode(bs []byte) ([]byte, error) {
 	return keystore.AesEncrypter(bs, sys.Conf.EncryptKey)
 }
@@ -246,31 +273,6 @@ func ContainInt[T int64 | uint64 | int | uint | uint32 | int32](li []T, v T) (b 
 	idx := sort.Search(len(li), func(i int) bool { return li[i] >= v })
 	if idx < len(li) {
 		b = li[idx] == v
-	}
-	return
-}
-
-func HttpPost(bs []byte, close bool, httpurl string) (_r []byte, err error) {
-	tr := &http.Transport{DisableKeepAlives: true}
-	if strings.HasPrefix(httpurl, "https:") {
-		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
-	client := http.Client{Transport: tr}
-	var req *http.Request
-	if req, err = http.NewRequest(http.MethodPost, httpurl, bytes.NewReader(bs)); err == nil {
-		if close {
-			req.Close = true
-		}
-		var resp *http.Response
-		if resp, err = client.Do(req); err == nil {
-			if close {
-				defer resp.Body.Close()
-			}
-			var body []byte
-			if body, err = io.ReadAll(resp.Body); err == nil {
-				_r = body
-			}
-		}
 	}
 	return
 }
