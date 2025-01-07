@@ -4,13 +4,12 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package keystore
 
 import (
-	"bytes"
 	"fmt"
+	"github.com/donnie4w/tim/log"
 	"os"
 	"strconv"
 	"time"
@@ -21,7 +20,18 @@ import (
 )
 
 func init() {
-	sys.KeyStoreInit = Init
+	sys.Service.Put(sys.INIT_KEYSTORE, (serv(1)))
+}
+
+type serv byte
+
+func (serv) Serve() error {
+	Init(sys.KEYSTORE)
+	return nil
+}
+
+func (serv) Close() error {
+	return nil
 }
 
 func Init(dir string) {
@@ -29,7 +39,7 @@ func Init(dir string) {
 		dir, _ = os.Getwd()
 	}
 	if err := InitAdmin(dir); err != nil {
-		sys.FmtLog("keystore init failed")
+		log.FmtPrint("keystore init failed")
 		os.Exit(0)
 	}
 	if sys.OpenSSL.PublicPath != "" || sys.OpenSSL.PrivatePath != "" {
@@ -63,13 +73,5 @@ func InitAdmin(dir string) (err error) {
 }
 
 func uuid() uint32 {
-	buf := bytes.NewBuffer([]byte{})
-	buf.Write(Int64ToBytes(int64(os.Getpid())))
-	for i := 0; i < 100; i++ {
-		buf.Write(Int64ToBytes(RandId()))
-	}
-	if _r, err := RandStrict(1 << 31); err == nil && _r > 0 {
-		buf.Write(Int64ToBytes(_r))
-	}
-	return CRC32(buf.Bytes())
+	return UUID32()
 }
