@@ -4,17 +4,17 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package data
 
 type timmessage struct {
-	Id     int64
-	ChatId uint64 `idx:"1"`
-	Stanza []byte
+	Id         int64
+	ChatId     uint64 `idx:"1"`
+	Stanza     []byte
+	Timeseries int64 `idx:"1"`
 }
 
-func (this timmessage) tid() uint64 { return this.ChatId }
+func (this timmessage) Tid() uint64 { return this.ChatId }
 
 type timuser struct {
 	Id         int64
@@ -22,9 +22,10 @@ type timuser struct {
 	Pwd        uint64
 	Createtime int64
 	UBean      []byte
+	Timeseries int64 `idx:"1"`
 }
 
-func (this timuser) tid() uint64 { return this.UUID }
+func (this timuser) Tid() uint64 { return this.UUID }
 
 type timgroup struct {
 	Id         int64
@@ -33,70 +34,78 @@ type timgroup struct {
 	Createtime int64
 	Status     int8
 	RBean      []byte
+	Timeseries int64 `idx:"1"`
 }
 
-func (this timgroup) tid() uint64 { return this.UUID }
+func (this timgroup) Tid() uint64 { return this.UUID }
 
 type timoffline struct {
-	Id     int64
-	UUID   uint64 `idx:"1"`
-	ChatId uint64
-	Stanza []byte
-	Mid    int64
+	Id         int64
+	UUID       uint64 `idx:"1"`
+	ChatId     uint64
+	Stanza     []byte
+	Mid        int64
+	Timeseries int64 `idx:"1"`
 }
 
-func (this timoffline) tid() uint64 { return this.UUID }
+func (this timoffline) Tid() uint64 { return this.UUID }
 
 type timrelate struct {
-	Id     int64
-	UUID   uint64 `idx:"1"`
-	Status uint8
+	Id         int64
+	UUID       uint64 `idx:"1"`
+	Status     uint8
+	Timeseries int64 `idx:"1"`
 }
 
-func (this timrelate) tid() uint64 { return this.UUID }
+func (this timrelate) Tid() uint64 { return this.UUID }
 
 type timroster struct {
-	Id     int64
-	Relate uint64 `idx:"1"`
-	UUID   uint64 `idx:"1"`
-	TUUID  uint64
+	Id         int64
+	Unikid     uint64 `idx:"1"`
+	UUID       uint64 `idx:"1"`
+	TUUID      uint64
+	Timeseries int64 `idx:"1"`
 }
 
-func (this timroster) tid() uint64 { return this.UUID }
+func (this timroster) Tid() uint64 { return this.UUID }
 
 type timmucroster struct {
-	Id     int64
-	Relate uint64 `idx:"1"`
-	UUID   uint64 `idx:"1"`
-	TUUID  uint64
+	Id         int64
+	Unikid     uint64 `idx:"1"`
+	UUID       uint64 `idx:"1"`
+	TUUID      uint64
+	Timeseries int64 `idx:"1"`
 }
 
-func (this timmucroster) tid() uint64 { return this.UUID }
+func (this timmucroster) Tid() uint64 { return this.UUID }
 
 type timblock struct {
-	Id     int64
-	UnikId uint64 `idx:"1"`
-	UUID   uint64 `idx:"1"`
-	TUUID  uint64
+	Id         int64
+	UnikId     uint64 `idx:"1"`
+	UUID       uint64 `idx:"1"`
+	TUUID      uint64
+	Timeseries int64 `idx:"1"`
 }
 
-func (this timblock) tid() uint64 { return this.UUID }
+func (this timblock) Tid() uint64 { return this.UUID }
 
 type timblockroom struct {
-	Id     int64
-	UnikId uint64 `idx:"1"`
-	UUID   uint64 `idx:"1"`
-	TUUID  uint64
+	Id         int64
+	UnikId     uint64 `idx:"1"`
+	UUID       uint64 `idx:"1"`
+	TUUID      uint64
+	Timeseries int64 `idx:"1"`
 }
 
-func (this timblockroom) tid() uint64 { return this.UUID }
+func (this timblockroom) Tid() uint64 { return this.UUID }
 
 type timstruct interface {
-	tid() uint64
+	Tid() uint64
 }
 
 type OfflineBean struct {
-	Id     int64
-	Mid    int64
-	Stanze []byte
+	Id         int64
+	Mid        int64
+	Stanze     []byte
+	Timeseries int64 `idx:"1"`
 }
