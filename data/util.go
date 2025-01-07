@@ -4,53 +4,56 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package data
 
 import (
+	"github.com/donnie4w/gdao/base"
+	"github.com/donnie4w/tim/log"
 	"os"
 	"strconv"
+	"time"
 
 	. "github.com/donnie4w/gofer/lock"
 	"github.com/donnie4w/tim/sys"
 )
 
-var Handler engine
+var Service service
 var numlock = NewNumLock(1 << 8)
 
-func newEngine() engine {
-	if sys.UseDefaultDB() {
-		sys.DBtype = 1
-		return &tldbhandler{}
-	} else if sqlHandle.IsAvail() {
-		sys.DBtype = 2
-		return &sqlhandler{}
+func getService() service {
+	switch sys.GetDBMOD() {
+	case sys.INLINEDB:
+		return new(inlineHandle).init()
+	case sys.TLDB:
+		return new(tldbhandle).init()
+	case sys.EXTERNALDB:
+		return new(externalhandle).init()
+	case sys.NODB:
+		return new(nodbhandle)
 	}
-	sys.DBtype = 0
-	return &nilprocess{}
+	panic("No supported service found")
 }
 
 func init() {
-	sys.DataInit = Init
+	sys.Service.Put(sys.INIT_DATA, (serv(1)))
 }
 
-func Init() (err error) {
+type serv byte
+
+func (serv) Serve() error {
 	defer func() {
-		if err != nil {
-			sys.FmtLog(err)
+		if err := recover(); err != nil {
+			log.FmtPrint(err)
 			os.Exit(0)
 		}
 	}()
-	if sys.UseDefaultDB() {
-		err = tlormInit()
-	} else if sys.Conf.Property != nil {
-		err = sqlInit()
-	} else {
-		sys.FmtLog("no data source provided")
-	}
-	Handler = newEngine()
-	return
+	Service = getService()
+	return nil
+}
+
+func (serv) Close() error {
+	return nil
 }
 
 func _getString(a any) (_r string) {
@@ -84,7 +87,7 @@ func _getInt64(a any) (_r int64) {
 	case int32:
 		_r = int64(a.(int32))
 	case int64:
-		_r = int64(a.(int64))
+		_r = a.(int64)
 	case int:
 		_r = int64(a.(int))
 	case uint:
@@ -99,4 +102,37 @@ func _getInt64(a any) (_r int64) {
 		_r = int64(a.(uint64))
 	}
 	return
+}
+
+const (
+	Driver_Sqlite    = "sqlite3"
+	Driver_Postgres  = "postgres"
+	Driver_Mysql     = "mysql"
+	Driver_Sqlserver = "sqlserver"
+	Driver_Oracle    = "godror"
+)
+
+const localDB = "tim.db"
+
+func initLocalDB(dbhandle base.DBhandle, driverName string) {
+	var ss []string
+	switch driverName {
+	case Driver_Sqlite:
+		ss = sys.Sqlite("").CreateSql()
+	case Driver_Postgres:
+		ss = sys.PostgreSql("").CreateSql()
+	case Driver_Mysql:
+		ss = sys.Mysql("").CreateSql()
+	case Driver_Sqlserver:
+		ss = sys.SqlServer("").CreateSql()
+	}
+	if len(ss) > 0 {
+		for _, s := range ss {
+			dbhandle.ExecuteUpdate(s)
+		}
+	}
+}
+
+func TimeNano() int64 {
+	return time.Now().UnixNano()
 }
