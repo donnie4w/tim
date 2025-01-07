@@ -4,6 +4,7 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
+
 package data
 
 import (
@@ -20,89 +21,91 @@ func Create[T any]() (err error) {
 }
 
 func Insert(a timstruct) (seq int64, err error) {
-	return orm.Table[byte](cli(a.tid())).Insert(a)
+	return orm.Table[byte](tldbCli(a.Tid())).Insert(a)
 }
 
 // update data for non nil
 // func Update(a timstruct) (err error) {
-// 	return orm.Table[byte](cli(a.tid())).Update(a)
+// 	return orm.Table[byte](tldbCli(a.Tid())).Update(a)
 // }
 
-// update data for non nil
+// Delete data for non nil
 func Delete[T any](tid uint64, id int64) (err error) {
-	return orm.Table[T](cli(tid)).Delete(id)
+	return orm.Table[T](tldbCli(tid)).Delete(id)
 }
 
-// update data for non zero
+// UpdateNonzero data for non zero
 func UpdateNonzero(a timstruct) (err error) {
-	return orm.Table[byte](cli(a.tid())).UpdateNonzero(a)
+	return orm.Table[byte](tldbCli(a.Tid())).UpdateNonzero(a)
 }
 
 func SelectIdByIdx[T timstruct](columnName string, columnValue uint64) (id int64, err error) {
-	return orm.Table[T](cli(columnValue)).SelectIdByIdx(columnName, columnValue)
+	return orm.Table[T](tldbCli(columnValue)).SelectIdByIdx(columnName, columnValue)
 }
 
 func SelectById[T timstruct](tid uint64, id int64) (a *T, err error) {
-	return orm.Table[T](cli(tid)).SelectById(id)
+	return orm.Table[T](tldbCli(tid)).SelectById(id)
 }
 
 func SelectByIdx[T any](columnName string, columnValue uint64) (a *T, err error) {
-	return orm.Table[T](cli(columnValue)).SelectByIdx(columnName, columnValue)
+	return orm.Table[T](tldbCli(columnValue)).SelectByIdx(columnName, columnValue)
 }
 
 func SelectByIdxWithTid[T any](tid uint64, columnName string, columnValue uint64) (a *T, err error) {
-	return orm.Table[T](cli(tid)).SelectByIdx(columnName, columnValue)
+	return orm.Table[T](tldbCli(tid)).SelectByIdx(columnName, columnValue)
 }
 
 func SelectAllByIdx[T any](columnName string, columnValue uint64) (as []*T, err error) {
-	return orm.Table[T](cli(columnValue)).SelectAllByIdx(columnName, columnValue)
+	return orm.Table[T](tldbCli(columnValue)).SelectAllByIdx(columnName, columnValue)
 }
 
 func SelectAllByIdxWithTid[T any](tid uint64, columnName string, columnValue uint64) (as []*T, err error) {
-	return orm.Table[T](cli(tid)).SelectAllByIdx(columnName, columnValue)
+	return orm.Table[T](tldbCli(tid)).SelectAllByIdx(columnName, columnValue)
 }
 
 func SelectByIdxLimit[T any](startId, limit int64, columnName string, columnValue uint64) (as []*T, err error) {
-	return orm.Table[T](cli(columnValue)).SelectByIdxLimit(startId, limit, columnName, columnValue)
+	return orm.Table[T](tldbCli(columnValue)).SelectByIdxLimit(startId, limit, columnName, columnValue)
 }
 
 func SelectByIdxDescLimit[T any](id, limit int64, columnName string, columnValue uint64) (as []*T, err error) {
-	return orm.Table[T](cli(columnValue)).SelectByIdxDescLimit(columnName, columnValue, id, limit)
+	return orm.Table[T](tldbCli(columnValue)).SelectByIdxDescLimit(columnName, columnValue, id, limit)
 }
 
 func SelectIdByIdxSeq[T any](columnName string, columnValue uint64, id int64) (_r int64, err error) {
-	return orm.Table[T](cli(columnValue)).SelectIdByIdxSeq(columnName, columnValue, id)
+	return orm.Table[T](tldbCli(columnValue)).SelectIdByIdxSeq(columnName, columnValue, id)
 }
 
-var dbsources = make([]*dbsource, 0)
+var tldbsources = make([]*tldbsource, 0)
 
-type dbsource struct {
+type tldbsource struct {
 	extent int
 	client *tlcli.Client
 }
 
-func tlormInit() error {
-	if sys.UseTldbExtent() {
+func tldbInit() error {
+	if len(sys.Conf.TldbExtent) > 0 {
 		for _, te := range sys.Conf.TldbExtent {
 			if cli, e := orm.NewConn(te.Tls, te.Addr, te.Auth); e == nil {
 				extent := sys.MB
 				if te.ExtentMax > 0 && te.ExtentMax < extent {
 					extent = te.ExtentMax
 				}
-				dbsources = append(dbsources, &dbsource{extent: extent, client: cli})
+				tldbsources = append(tldbsources, &tldbsource{extent: extent, client: cli})
 				initTable(cli)
 			} else {
 				return fmt.Errorf("%s", "tldb init error:"+e.Error())
 			}
 		}
-		sort.Slice(dbsources, func(i, j int) bool { return dbsources[i].extent < dbsources[j].extent })
-	} else {
+		sort.Slice(tldbsources, func(i, j int) bool { return tldbsources[i].extent < tldbsources[j].extent })
+	} else if sys.Conf.Tldb != nil {
 		if cli, e := orm.NewConn(sys.Conf.Tldb.Tls, sys.Conf.Tldb.Addr, sys.Conf.Tldb.Auth); e == nil {
-			dbsources = append(dbsources, &dbsource{extent: sys.MB, client: cli})
+			tldbsources = append(tldbsources, &tldbsource{extent: sys.MB, client: cli})
 			initTable(cli)
 		} else {
 			return fmt.Errorf("%s", "tldb init error:"+e.Error())
 		}
+	} else {
+		panic("tldb init error")
 	}
 	return nil
 }
@@ -119,10 +122,10 @@ func initTable(cli *tlcli.Client) {
 	orm.Table[timblockroom](cli).Create()
 }
 
-func cli(tid uint64) *tlcli.Client {
+func tldbCli(tid uint64) *tlcli.Client {
 	idx := 0
-	if idx = sort.Search(len(dbsources), func(i int) bool { return dbsources[i].extent >= int(tid%sys.MB) }); idx >= len(dbsources) {
+	if idx = sort.Search(len(tldbsources), func(i int) bool { return tldbsources[i].extent >= int(tid%sys.MB) }); idx >= len(tldbsources) {
 		idx = 0
 	}
-	return dbsources[idx].client
+	return tldbsources[idx].client
 }
