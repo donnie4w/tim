@@ -4,11 +4,12 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package data
 
 import (
+	"github.com/donnie4w/gofer/uuid"
+	"github.com/donnie4w/tim/errs"
 	"time"
 
 	"github.com/donnie4w/gofer/buffer"
@@ -18,64 +19,72 @@ import (
 	"github.com/donnie4w/tim/util"
 )
 
-type tldbhandler struct{}
+type tldbhandle struct{}
 
-func (this *tldbhandler) Register(username, pwd string, domain *string) (node string, e sys.ERROR) {
+func (th *tldbhandle) init() *tldbhandle {
+	tldbInit()
+	return th
+}
+
+func (th *tldbhandle) Register(username, pwd string, domain *string) (node string, e errs.ERROR) {
 	uuid := util.CreateUUID(username, domain)
 	if a, _ := SelectByIdx[timuser]("UUID", uuid); a != nil {
-		e = sys.ERR_HASEXIST
+		e = errs.ERR_HASEXIST
 		return
 	}
-	tu := &timuser{UUID: uuid, Pwd: this._pwd(uuid, pwd, domain), Createtime: time.Now().UnixNano()}
+	tu := &timuser{UUID: uuid, Pwd: th._pwd(uuid, pwd, domain), Createtime: time.Now().UnixNano()}
 	if _, err := Insert(tu); err == nil {
 		node = util.UUIDToNode(uuid)
 	} else {
-		e = sys.ERR_DATABASE
+		e = errs.ERR_DATABASE
 	}
 	return
 }
 
-func (this *tldbhandler) Login(username, pwd string, domain *string) (_r string, e sys.ERROR) {
+func (th *tldbhandle) Login(username, pwd string, domain *string) (_r string, e errs.ERROR) {
 	uuid := util.CreateUUID(username, domain)
 	if a, err := SelectByIdx[timuser]("UUID", uuid); err == nil && a != nil {
-		if a.Pwd == this._pwd(uuid, pwd, domain) {
+		if a.Pwd == th._pwd(uuid, pwd, domain) {
 			_r = util.UUIDToNode(uuid)
 			return
 		}
 	}
-	e = sys.ERR_NOPASS
+	e = errs.ERR_NOPASS
 	return
 }
 
-func (this *tldbhandler) Modify(uuid uint64, pwd *string, pwdLast string, domain *string) (e sys.ERROR) {
+func (th *tldbhandle) Modify(uuid uint64, pwd *string, pwdLast string, domain *string) (e errs.ERROR) {
+	if uuid == 0 {
+		return errs.ERR_ACCOUNT
+	}
 	if a, err := SelectByIdx[timuser]("UUID", uuid); err == nil && a != nil {
 		if pwd != nil {
-			if this._pwd(uuid, *pwd, domain) != a.Pwd {
-				return sys.ERR_AUTH
+			if th._pwd(uuid, *pwd, domain) != a.Pwd {
+				return errs.ERR_PERM_DENIED
 			}
 		} else if pwdLast == "" {
-			return sys.ERR_PARAMS
+			return errs.ERR_PARAMS
 		}
-		UpdateNonzero(&timuser{UUID: uuid, Id: a.Id, Pwd: this._pwd(uuid, pwdLast, domain)})
+		UpdateNonzero(&timuser{UUID: uuid, Id: a.Id, Pwd: th._pwd(uuid, pwdLast, domain)})
 	} else {
-		e = sys.ERR_NOEXIST
+		e = errs.ERR_NOEXIST
 	}
 	return
 }
 
-func (this *tldbhandler) Token(username, pwd string, domain *string) (_r string, err sys.ERROR) {
+func (th *tldbhandle) AuthNode(username, pwd string, domain *string) (_r string, err errs.ERROR) {
 	uuid := util.CreateUUID(username, domain)
 	if a, _ := SelectByIdx[timuser]("UUID", uuid); a != nil {
-		if a.Pwd == this._pwd(uuid, pwd, domain) {
+		if a.Pwd == th._pwd(uuid, pwd, domain) {
 			_r = util.UUIDToNode(uuid)
 			return
 		}
 	}
-	err = sys.ERR_NOPASS
+	err = errs.ERR_NOPASS
 	return
 }
 
-func (this *tldbhandler) _pwd(uuid uint64, pwd string, domain *string) uint64 {
+func (th *tldbhandle) _pwd(uuid uint64, pwd string, domain *string) uint64 {
 	buf := buffer.NewBufferByPool()
 	defer buf.Free()
 	buf.Write(Int64ToBytes(int64(uuid)))
@@ -84,7 +93,7 @@ func (this *tldbhandler) _pwd(uuid uint64, pwd string, domain *string) uint64 {
 	return CRC64(MD5(buf.Bytes()))
 }
 
-func (this *tldbhandler) SaveMessage(tm *TimMessage) (err error) {
+func (th *tldbhandle) SaveMessage(tm *TimMessage) (err error) {
 	id := *tm.ID
 	tm.ID = nil
 	var chatId uint64
@@ -100,19 +109,19 @@ func (this *tldbhandler) SaveMessage(tm *TimMessage) (err error) {
 	mid, err = Insert(&timmessage{ChatId: chatId, Stanza: stanze})
 	tm.Mid = &mid
 	if id == 0 {
-		id = RandId()
+		id = uuid.NewUUID().Int64()
 	}
 	tm.ID = &id
 	tm.FromTid = fid
 	return
 }
 
-func (this *tldbhandler) GetMessage(fromTid *Tid, rtype int8, to string, mid, limit int64) (tmList []*TimMessage, err error) {
+func (th *tldbhandle) GetMessage(fromNode string, domain *string, rtype int8, to string, mid, limit int64) (tmList []*TimMessage, err error) {
 	chatId := uint64(0)
 	if rtype == 1 {
-		chatId = util.ChatIdByNode(fromTid.Node, to, fromTid.Domain)
+		chatId = util.ChatIdByNode(fromNode, to, domain)
 	} else {
-		chatId = util.ChatIdByRoom(to, fromTid.Domain)
+		chatId = util.ChatIdByRoom(to, domain)
 	}
 	if mid == 0 {
 		mxid, _ := SelectIdByIdx[timmessage]("ChatId", chatId)
@@ -130,9 +139,9 @@ func (this *tldbhandler) GetMessage(fromTid *Tid, rtype int8, to string, mid, li
 	return
 }
 
-func (this *tldbhandler) GetMessageByMid(tid uint64, mid int64) (tm *TimMessage, err error) {
+func (th *tldbhandle) GetMessageByMid(tid uint64, mid int64) (tm *TimMessage, err error) {
 	if mid <= 0 {
-		err = sys.ERR_PARAMS.Error()
+		err = errs.ERR_PARAMS.Error()
 		return
 	}
 	if a, e := SelectById[timmessage](tid, mid); e == nil && a != nil {
@@ -143,11 +152,11 @@ func (this *tldbhandler) GetMessageByMid(tid uint64, mid int64) (tm *TimMessage,
 	return
 }
 
-func (this *tldbhandler) DelMessageByMid(tid uint64, mid int64) (err error) {
+func (th *tldbhandle) DelMessageByMid(tid uint64, mid int64) (err error) {
 	return Delete[timmessage](tid, mid)
 }
 
-// func (this *tldbhandler) ExistOfflineMessage(tm *TimMessage) (exsit bool) {
+// func (th *tldbhandle) ExistOfflineMessage(tm *TimMessage) (exsit bool) {
 // 	uuid := util.NodeToUUID(tm.ToTid.Node)
 // 	if a, _ := SelectByIdx[timoffline]("Unik", *tm.ID); a != nil {
 // 		exsit = true
@@ -155,7 +164,7 @@ func (this *tldbhandler) DelMessageByMid(tid uint64, mid int64) (err error) {
 // 	return
 // }
 
-func (this *tldbhandler) SaveOfflineMessage(tm *TimMessage) (err error) {
+func (th *tldbhandle) SaveOfflineMessage(tm *TimMessage) (err error) {
 	node := tm.ToTid.Node
 	fid := tm.FromTid
 	if tm.Timestamp != nil {
@@ -173,8 +182,8 @@ func (this *tldbhandler) SaveOfflineMessage(tm *TimMessage) (err error) {
 	return
 }
 
-func (this *tldbhandler) GetOfflineMessage(tid *Tid, limit int) (oblist []*OfflineBean, err error) {
-	uuid := util.NodeToUUID(tid.Node)
+func (th *tldbhandle) GetOfflineMessage(node string, limit int) (oblist []*OfflineBean, err error) {
+	uuid := util.NodeToUUID(node)
 	if tfs, _ := SelectByIdxLimit[timoffline](0, int64(limit), "UUID", uuid); tfs != nil {
 		oblist = make([]*OfflineBean, 0)
 		for _, tf := range tfs {
@@ -194,7 +203,7 @@ func (this *tldbhandler) GetOfflineMessage(tid *Tid, limit int) (oblist []*Offli
 	return
 }
 
-func (this *tldbhandler) DelOfflineMessage(tid uint64, ids ...int64) (_r int64, err error) {
+func (th *tldbhandle) DelOfflineMessage(tid uint64, ids ...int64) (_r int64, err error) {
 	for _, id := range ids {
 		if id > 0 {
 			_r, err = 1, Delete[timoffline](tid, id)
@@ -203,7 +212,7 @@ func (this *tldbhandler) DelOfflineMessage(tid uint64, ids ...int64) (_r int64, 
 	return
 }
 
-func (this *tldbhandler) AuthGroupAndUser(groupnode, usernode string, domain *string) (ok bool, err error) {
+func (th *tldbhandle) AuthGroupAndUser(groupnode, usernode string, domain *string) (ok bool, err error) {
 	if util.CheckNode(groupnode) && util.CheckNode(usernode) {
 		if a, _ := SelectByIdx[timgroup]("UUID", util.NodeToUUID(groupnode)); a != nil && a.Status == 1 {
 			relateid := util.RelateIdForGroup(groupnode, usernode, domain)
@@ -215,7 +224,7 @@ func (this *tldbhandler) AuthGroupAndUser(groupnode, usernode string, domain *st
 	return
 }
 
-func (this *tldbhandler) AuthUserAndUser(fnode, tnode string, domain *string) (_r bool) {
+func (th *tldbhandle) AuthUserAndUser(fnode, tnode string, domain *string) (_r bool) {
 	if util.CheckNode(fnode) && util.CheckNode(tnode) {
 		cid := util.ChatIdByNode(fnode, tnode, domain)
 		if a, _ := SelectByIdx[timrelate]("UUID", cid); a != nil {
@@ -227,14 +236,14 @@ func (this *tldbhandler) AuthUserAndUser(fnode, tnode string, domain *string) (_
 	return
 }
 
-func (this *tldbhandler) ExistUser(node string) (_r bool) {
+func (th *tldbhandle) ExistUser(node string) (_r bool) {
 	if a, _ := SelectByIdx[timuser]("UUID", util.NodeToUUID(node)); a != nil {
 		_r = true
 	}
 	return
 }
 
-func (this *tldbhandler) ExistGroup(node string) (_r bool) {
+func (th *tldbhandle) ExistGroup(node string) (_r bool) {
 	if a, _ := SelectByIdx[timgroup]("UUID", util.NodeToUUID(node)); a != nil {
 		_r = true
 	}
