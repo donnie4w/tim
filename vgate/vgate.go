@@ -4,195 +4,204 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package vgate
 
 import (
+	"github.com/donnie4w/tim/amr"
 	"sync"
 	"time"
 
-	. "github.com/donnie4w/gofer/hashmap"
-	. "github.com/donnie4w/gofer/lock"
+	"github.com/donnie4w/gofer/hashmap"
+	"github.com/donnie4w/gofer/lock"
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
 )
 
-var VGate = &vgate{vmap: NewMap[string, *VRoom](), mux: &sync.Mutex{}, umap: NewMap[int64, *Map[string, int8]](), strLock: NewStrlock(1 << 7), numLock: NewNumLock(1 << 7)}
+var VGate = &vgate{vmap: hashmap.NewMap[string, *VRoom](), mux: &sync.Mutex{}, umap: hashmap.NewMap[int64, *hashmap.Map[string, int8]](), strLock: lock.NewStrlock(1 << 7), numLock: lock.NewNumLock(1 << 7)}
 
 func init() {
 	go VGate.clearTk()
 }
 
 type vgate struct {
-	vmap    *Map[string, *VRoom]
-	umap    *Map[int64, *Map[string, int8]]
+	vmap    *hashmap.Map[string, *VRoom]
+	umap    *hashmap.Map[int64, *hashmap.Map[string, int8]]
 	mux     *sync.Mutex
-	strLock *Strlock
-	numLock *Numlock
+	strLock *lock.Strlock
+	numLock *lock.Numlock
 }
 
-func (this *vgate) NewVRoom(fnode string) string {
-	// v := &VRoom{vnode: util.UUIDToNode(util.NewTimUUID()), subuuid: NewMap[int64, int8](), subnode: NewMapL[string, int8](), pushAuth: NewMap[string, int8](), FoundNode: fnode}
-	// if fnode != "" {
-	// 	v.pushAuth.Put(fnode, 0)
-	// }
-	// this.vmap.Put(v.vnode, v)
-	// // go this.umapSub(fnode, v.vnode)
+func (vg *vgate) NewVRoom(fnode string) string {
 	vnode := util.UUIDToNode(util.NewTimUUID())
-	this.Register(fnode, vnode)
+	vg.Register(fnode, vnode)
 	return vnode
 }
 
-func (this *vgate) umapSub(wsId int64, vnode string) {
-	if m, ok := this.umap.Get(wsId); ok {
+func (vg *vgate) umapSub(wsId int64, vnode string) {
+	if m, ok := vg.umap.Get(wsId); ok {
 		m.Put(vnode, 0)
 	} else {
-		this.numLock.Lock(wsId)
-		defer this.numLock.Unlock(wsId)
-		if !this.umap.Has(wsId) {
-			this.umap.Put(wsId, NewMap[string, int8]())
+		vg.numLock.Lock(wsId)
+		defer vg.numLock.Unlock(wsId)
+		if !vg.umap.Has(wsId) {
+			vg.umap.Put(wsId, hashmap.NewMap[string, int8]())
 		}
-		go this.umapSub(wsId, vnode)
+		go vg.umapSub(wsId, vnode)
 	}
 }
 
-func (this *vgate) Register(fnode, vnode string) (_r bool) {
-	this.mux.Lock()
-	defer this.mux.Unlock()
+func (vg *vgate) Register(fnode, vnode string) (_r bool) {
+	vg.mux.Lock()
+	defer vg.mux.Unlock()
 	if !util.CheckNode(vnode) {
 		return
 	}
-	if !this.vmap.Has(vnode) {
-		v := &VRoom{vnode: vnode, subuuid: NewMap[int64, int8](), subnode: NewMapL[int64, int8](), pushAuth: NewMap[string, int8](), FoundNode: fnode, lastupdatetime: time.Now().UnixNano()}
-		if fnode != "" {
-			v.pushAuth.Put(fnode, 0)
-		}
-		this.vmap.Put(vnode, v)
+	if !vg.vmap.Has(vnode) {
+		v := &VRoom{vnode: vnode, subuuid: hashmap.NewMap[int64, int8](), subnode: hashmap.NewMapL[int64, int8](), FoundNode: fnode, lastupdatetime: time.Now().UnixNano()}
+		//if fnode != "" {
+		//	v.pushAuth.Put(fnode, 0)
+		//}
+		vg.vmap.Put(vnode, v)
 		_r = true
+		vg.putAmr(vnode)
 	}
 	return
 }
 
-func (this *vgate) Sub(vnode string, uuid int64, wsId int64) {
-	// if vr, ok := this.vmap.Get(vnode); ok {
-	// 	vr.sub(uuid, wsId)
-	// 	if wsId > 0 {
-	// 		this.umapSub(wsId, vnode)
-	// 	}
-	// } else {
-	// 	this.strLock.Lock(vnode)
-	// 	defer this.strLock.Unlock(vnode)
-	// 	if !this.vmap.Has(vnode) {
-	// 		v := &VRoom{vnode: vnode, subuuid: NewMap[int64, int8](), subnode: NewMapL[int64, int8](), pushAuth: NewMap[string, int8](), lastupdatetime: time.Now().UnixNano()}
-	// 		this.vmap.Put(vnode, v)
-	// 		go this.Sub(vnode, uuid, wsId)
-	// 	}
-	// }
-	this._sub(vnode, uuid, wsId, false)
+func (vg *vgate) rmVnode(vnode string) {
+	if vg.vmap.Del(vnode) {
+		vg.delAmr(vnode)
+	}
 }
 
-func (this *vgate) SubBinary(vnode string, uuid int64, wsId int64) {
-	this._sub(vnode, uuid, wsId, true)
+func (vg *vgate) putAmr(vnode string) {
+	amr.PutVnode(vnode, sys.UUID)
 }
 
-func (this *vgate) _sub(vnode string, uuid int64, wsId int64, isBinary bool) {
-	if vr, ok := this.vmap.Get(vnode); ok {
-		vr.sub(uuid, wsId, isBinary)
+func (vg *vgate) delAmr(vnode string) {
+	amr.DelVnode(vnode)
+}
+
+func (vg *vgate) Sub(vnode string, uuid int64, wsId int64) bool {
+	if amr.GetVnode(vnode) == 0 {
+		return false
+	}
+	vg._sub(vnode, uuid, wsId, false)
+	return true
+}
+
+func (vg *vgate) SubBinary(vnode string, uuid int64, wsId int64) bool {
+	if amr.GetVnode(vnode) == 0 {
+		return false
+	}
+	vg._sub(vnode, uuid, wsId, true)
+	return true
+}
+
+func (vg *vgate) _sub(vnode string, srcUuid int64, wsId int64, isBinary bool) {
+	if vr, ok := vg.vmap.Get(vnode); ok {
+		vr.sub(srcUuid, wsId, isBinary)
 		if wsId > 0 {
-			this.umapSub(wsId, vnode)
+			vg.umapSub(wsId, vnode)
 		}
 	} else {
-		this.strLock.Lock(vnode)
-		defer this.strLock.Unlock(vnode)
-		if !this.vmap.Has(vnode) {
-			v := &VRoom{vnode: vnode, subuuid: NewMap[int64, int8](), subnode: NewMapL[int64, int8](), pushAuth: NewMap[string, int8](), lastupdatetime: time.Now().UnixNano()}
-			this.vmap.Put(vnode, v)
-			go this._sub(vnode, uuid, wsId, isBinary)
+		vg.strLock.Lock(vnode)
+		defer vg.strLock.Unlock(vnode)
+		if !vg.vmap.Has(vnode) {
+			v := &VRoom{vnode: vnode, subuuid: hashmap.NewMap[int64, int8](), subnode: hashmap.NewMapL[int64, int8](), lastupdatetime: time.Now().UnixNano()}
+			vg.vmap.Put(vnode, v)
+			go vg._sub(vnode, srcUuid, wsId, isBinary)
 		}
 	}
 }
 
-func (this *vgate) DelNode(vnode string, wsId int64) (_r int64) {
+func (vg *vgate) UnSub(vnode string, wsId int64) (r int64, ok bool) {
+	if amr.GetVnode(vnode) == 0 {
+		return 0, false
+	}
 	if vnode != "" {
-		if vr, ok := this.vmap.Get(vnode); ok {
+		if vr, ok := vg.vmap.Get(vnode); ok {
 			vr.delnode(wsId)
-			_r = vr.subnode.Len()
+			r = vr.subnode.Len()
 		}
-		this.umap.Del(wsId)
-	} else {
-		if vm, ok := this.umap.Get(wsId); ok {
-			vm.Range(func(k string, _ int8) bool {
-				this.DelNode(k, wsId)
-				return true
-			})
-			this.umap.Del(wsId)
-		}
+		vg.umap.Del(wsId)
+		ok = true
 	}
 	return
 }
 
-func (this *vgate) DelUuid(vnode string, uuid int64) {
-	if vr, ok := this.vmap.Get(vnode); ok {
+func (vg *vgate) UnSubWithWsId(wsId int64) {
+	if vm, ok := vg.umap.Get(wsId); ok {
+		vm.Range(func(k string, _ int8) bool {
+			vg.UnSub(k, wsId)
+			return true
+		})
+		vg.umap.Del(wsId)
+	}
+}
+
+func (vg *vgate) UnSubWithUUID(vnode string, uuid int64) {
+	if vr, ok := vg.vmap.Get(vnode); ok {
 		vr.deluuid(uuid)
 	}
 }
 
-func (this *vgate) GetUUID(vnode string) (m *Map[int64, int8]) {
-	if vr, ok := this.vmap.Get(vnode); ok {
+func (vg *vgate) GetSubUUID(vnode string) (m *hashmap.Map[int64, int8]) {
+	if vr, ok := vg.vmap.Get(vnode); ok {
 		return vr.subuuid
 	}
 	return
 }
 
-func (this *vgate) GetNodes(vnode string) (m *MapL[int64, int8]) {
-	if vr, ok := this.vmap.Get(vnode); ok {
+func (vg *vgate) GetNodes(vnode string) (m *hashmap.MapL[int64, int8]) {
+	if vr, ok := vg.vmap.Get(vnode); ok {
 		return vr.subnode
 	}
 	return
 }
 
-func (this *vgate) Remove(fnode, vnode string) bool {
-	if vr, ok := this.vmap.Get(vnode); ok {
+func (vg *vgate) Remove(fnode, vnode string) bool {
+	if vr, ok := vg.vmap.Get(vnode); ok {
 		if vr.FoundNode == fnode {
-			this.vmap.Del(vnode)
+			vg.rmVnode(vnode)
 			return true
 		}
 	}
 	return false
 }
 
-func (this *vgate) GetVroom(vnode string) (*VRoom, bool) {
-	return this.vmap.Get(vnode)
+func (vg *vgate) GetVroom(vnode string) (*VRoom, bool) {
+	return vg.vmap.Get(vnode)
 }
 
-func (this *vgate) AddAuth(vnode, fnode, tnode string) bool {
-	if vr, ok := this.vmap.Get(vnode); ok {
-		return vr.addauth(fnode, tnode)
-	}
-	return false
+//func (vg *vgate) AddAuth(vnode, fnode, tnode string) bool {
+//	if vr, ok := vg.vmap.Get(vnode); ok {
+//		return vr.addauth(fnode, tnode)
+//	}
+//	return false
+//}
+
+//func (vg *vgate) DelAuth(vnode, fnode, tnode string) {
+//	if vr, ok := vg.vmap.Get(vnode); ok {
+//		vr.delauth(fnode, tnode)
+//	}
+//}
+
+func (vg *vgate) Nodes() *hashmap.Map[string, *VRoom] {
+	return vg.vmap
 }
 
-func (this *vgate) DelAuth(vnode, fnode, tnode string) {
-	if vr, ok := this.vmap.Get(vnode); ok {
-		vr.delauth(fnode, tnode)
-	}
-}
-
-func (this *vgate) Nodes() *Map[string, *VRoom] {
-	return this.vmap
-}
-
-func (this *vgate) clearTk() {
-	tk := time.NewTicker(10 * time.Minute)
+func (vg *vgate) clearTk() {
+	tk := time.NewTicker(10 * time.Second)
 	for {
 		select {
 		case <-tk.C:
 			func() {
 				defer util.Recover()
-				this.vmap.Range(func(k string, v *VRoom) bool {
+				vg.vmap.Range(func(k string, v *VRoom) bool {
 					if v.Expires() {
-						this.vmap.Del(k)
+						vg.rmVnode(k)
 					}
 					return true
 				})
@@ -202,70 +211,67 @@ func (this *vgate) clearTk() {
 }
 
 type VRoom struct {
-	vnode          string
-	subuuid        *Map[int64, int8]
-	subnode        *MapL[int64, int8]
-	pushAuth       *Map[string, int8]
+	vnode   string
+	subuuid *hashmap.Map[int64, int8]
+	subnode *hashmap.MapL[int64, int8]
+	//pushAuth       *hashmap.Map[string, int8]
 	FoundNode      string
 	lastupdatetime int64
 }
 
-func (this *VRoom) sub(uuid int64, wsId int64, isBinary bool) {
+func (vr *VRoom) sub(uuid int64, wsId int64, isBinary bool) {
 	if uuid != sys.UUID {
-		this.subuuid.Put(uuid, 0)
+		vr.subuuid.Put(uuid, 0)
 	} else {
 		if isBinary {
-			this.subnode.Put(wsId, 1)
+			vr.subnode.Put(wsId, 1)
 		} else {
-			this.subnode.Put(wsId, 0)
+			vr.subnode.Put(wsId, 0)
 		}
 	}
 }
 
-func (this *VRoom) deluuid(uuid int64) {
-	this.subuuid.Del(uuid)
+func (vr *VRoom) deluuid(uuid int64) {
+	vr.subuuid.Del(uuid)
 }
 
-func (this *VRoom) delnode(wsId int64) {
-	this.subnode.Del(wsId)
+func (vr *VRoom) delnode(wsId int64) {
+	vr.subnode.Del(wsId)
 }
 
-func (this *VRoom) addauth(fnode, node string) bool {
-	if fnode == this.FoundNode {
-		this.pushAuth.Put(node, 0)
-		return true
-	}
-	return false
+//func (vr *VRoom) addauth(fnode, node string) bool {
+//	if fnode == vr.FoundNode {
+//		vr.pushAuth.Put(node, 0)
+//		return true
+//	}
+//	return false
+//}
+
+//func (vr *VRoom) delauth(fnode, node string) {
+//	if fnode == vr.FoundNode {
+//		vr.pushAuth.Del(node)
+//	}
+//}
+
+//func (vr *VRoom) AuthMap() *hashmap.Map[string, int8] {
+//	return vr.pushAuth
+//}
+
+func (vr *VRoom) Expires() bool {
+	return vr.lastupdatetime+int64(time.Minute) < time.Now().UnixNano()
 }
 
-func (this *VRoom) delauth(fnode, node string) {
-	if fnode == this.FoundNode {
-		this.pushAuth.Del(node)
-	}
+func (vr *VRoom) Updatetime() {
+	vr.lastupdatetime = time.Now().UnixNano()
 }
 
-func (this *VRoom) AuthMap() *Map[string, int8] {
-	return this.pushAuth
+func (vr *VRoom) SubMap() *hashmap.MapL[int64, int8] {
+	return vr.subnode
 }
 
-func (this *VRoom) Expires() (_r bool) {
-	if (this.lastupdatetime + int64(10*time.Minute)) < time.Now().UnixNano() {
-		_r = true
-	}
-	return
-}
-
-func (this *VRoom) Updatetime() {
-	this.lastupdatetime = time.Now().UnixNano()
-}
-
-func (this *VRoom) Nodes() *MapL[int64, int8] {
-	return this.subnode
-}
-
-func (this *VRoom) Auth(node string) bool {
-	if this.pushAuth.Has(node) || this.FoundNode == node {
-		return true
-	}
-	return false
+func (vr *VRoom) AuthStream(node string) bool {
+	//if vr.pushAuth.Has(node) || vr.FoundNode == node {
+	//	return true
+	//}
+	return vr.FoundNode == node
 }
