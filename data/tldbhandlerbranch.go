@@ -4,11 +4,11 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package data
 
 import (
+	"github.com/donnie4w/tim/errs"
 	"time"
 
 	. "github.com/donnie4w/gofer/util"
@@ -17,7 +17,7 @@ import (
 	"github.com/donnie4w/tim/util"
 )
 
-func (this *tldbhandler) Roster(node string) (_r []string) {
+func (th *tldbhandle) Roster(node string) (_r []string) {
 	_r = make([]string, 0)
 	if tr, err := SelectAllByIdx[timroster]("UUID", util.NodeToUUID(node)); err == nil {
 		for _, a := range tr {
@@ -27,7 +27,7 @@ func (this *tldbhandler) Roster(node string) (_r []string) {
 	return
 }
 
-func (this *tldbhandler) Blockrosterlist(node string) (_r []string) {
+func (th *tldbhandle) Blockrosterlist(node string) (_r []string) {
 	_r = make([]string, 0)
 	if tr, err := SelectAllByIdx[timblock]("UUID", util.NodeToUUID(node)); err == nil {
 		for _, a := range tr {
@@ -37,7 +37,7 @@ func (this *tldbhandler) Blockrosterlist(node string) (_r []string) {
 	return
 }
 
-func (this *tldbhandler) Blockroomlist(node string) (_r []string) {
+func (th *tldbhandle) Blockroomlist(node string) (_r []string) {
 	_r = make([]string, 0)
 	if tr, err := SelectAllByIdx[timblockroom]("UUID", util.NodeToUUID(node)); err == nil {
 		for _, a := range tr {
@@ -47,8 +47,8 @@ func (this *tldbhandler) Blockroomlist(node string) (_r []string) {
 	return
 }
 
-func (this *tldbhandler) Blockroommemberlist(node string, fnode string) (_r []string) {
-	if checkAdmin(node, fnode, "") != nil {
+func (th *tldbhandle) Blockroommemberlist(node string, fnode string) (_r []string) {
+	if th.checkAdmin(node, fnode, "") != nil {
 		return
 	}
 	_r = make([]string, 0)
@@ -60,7 +60,7 @@ func (this *tldbhandler) Blockroommemberlist(node string, fnode string) (_r []st
 	return
 }
 
-func (this *tldbhandler) UserGroup(node string, domain *string) (_r []string) {
+func (th *tldbhandle) UserGroup(node string, domain *string) (_r []string) {
 	if tr, _ := SelectAllByIdx[timmucroster]("UUID", util.NodeToUUID(node)); tr != nil && len(tr) > 0 {
 		_r = make([]string, 0)
 		for _, a := range tr {
@@ -70,7 +70,7 @@ func (this *tldbhandler) UserGroup(node string, domain *string) (_r []string) {
 	return
 }
 
-func (this *tldbhandler) GroupRoster(groupnode string) (_r []string) {
+func (th *tldbhandle) GroupRoster(groupnode string) (_r []string) {
 	if tr, _ := SelectAllByIdx[timmucroster]("UUID", util.NodeToUUID(groupnode)); tr != nil && len(tr) > 0 {
 		_r = make([]string, 0)
 		for _, a := range tr {
@@ -80,22 +80,26 @@ func (this *tldbhandler) GroupRoster(groupnode string) (_r []string) {
 	return
 }
 
-func (this *tldbhandler) Addroster(fnode, tnode string, domain *string) (status int8, err sys.ERROR) {
+func (th *tldbhandle) Addroster(fnode, tnode string, domain *string) (status int8, err errs.ERROR) {
 	cid := util.ChatIdByNode(fnode, tnode, domain)
 	uuid1, uuid2 := util.NodeToUUID(fnode), util.NodeToUUID(tnode)
 	numlock.Lock(int64(cid))
 	defer numlock.Unlock(int64(cid))
 	if a, _ := SelectByIdx[timrelate]("UUID", cid); a != nil {
+		if a.Status == 0x11 {
+			return 0x11, errs.ERR_REPEAT
+		}
+
 		stat := a.Status
 		if uuid1 > uuid2 {
 			if a.Status&0x0f == 0x02 {
-				err = sys.ERR_BLOCK
+				err = errs.ERR_BLOCK
 				return
 			}
 			a.Status = 0x10 | (a.Status & 0x0f)
 		} else {
 			if a.Status&0xf0 == 0x20 {
-				err = sys.ERR_BLOCK
+				err = errs.ERR_BLOCK
 				return
 			}
 			a.Status = (a.Status & 0xf0) | 0x01
@@ -105,8 +109,8 @@ func (this *tldbhandler) Addroster(fnode, tnode string, domain *string) (status 
 		}
 		status = int8(a.Status)
 		if stat != 0x11 && status == 0x11 {
-			Insert(&timroster{Relate: cid, UUID: uuid1, TUUID: uuid2})
-			Insert(&timroster{Relate: cid, UUID: uuid2, TUUID: uuid1})
+			Insert(&timroster{Unikid: util.UnikIdByNode(fnode, tnode, domain), UUID: uuid1, TUUID: uuid2})
+			Insert(&timroster{Unikid: util.UnikIdByNode(tnode, fnode, domain), UUID: uuid2, TUUID: uuid1})
 		}
 	} else {
 		status = 0x10
@@ -114,23 +118,23 @@ func (this *tldbhandler) Addroster(fnode, tnode string, domain *string) (status 
 			status = 0x01
 		}
 		if id, _ := Insert(&timrelate{UUID: cid, Status: uint8(status)}); id == 0 {
-			err = sys.ERR_DATABASE
+			err = errs.ERR_DATABASE
 		}
 	}
 	return
 }
 
-func (this *tldbhandler) Rmroster(fnode, tnode string, domain *string) (mstell bool, ok bool) {
+func (th *tldbhandle) Rmroster(fnode, tnode string, domain *string) (mstell bool, ok bool) {
 	cid := util.ChatIdByNode(fnode, tnode, domain)
 	uuid1, uuid2 := util.NodeToUUID(fnode), util.NodeToUUID(tnode)
 	numlock.Lock(int64(cid))
 	defer numlock.Unlock(int64(cid))
-	if as, _ := SelectAllByIdxWithTid[timroster](uuid1, "Relate", cid); as != nil {
+	if as, _ := SelectAllByIdxWithTid[timroster](uuid1, "Unikid", util.UnikIdByNode(fnode, tnode, domain)); as != nil {
 		for _, a := range as {
 			Delete[timroster](uuid1, a.Id)
 		}
 	}
-	if as, _ := SelectAllByIdxWithTid[timroster](uuid2, "Relate", cid); as != nil {
+	if as, _ := SelectAllByIdxWithTid[timroster](uuid2, "Unikid", util.UnikIdByNode(tnode, fnode, domain)); as != nil {
 		for _, a := range as {
 			Delete[timroster](uuid2, a.Id)
 		}
@@ -149,14 +153,14 @@ func (this *tldbhandler) Rmroster(fnode, tnode string, domain *string) (mstell b
 				UpdateNonzero(a)
 			} else {
 				mstell = true
-				Delete[timrelate](a.tid(), a.Id)
+				Delete[timrelate](a.Tid(), a.Id)
 			}
 		} else {
 			if a.Status = a.Status & 0xf0; a.Status == 0x20 {
 				UpdateNonzero(a)
 			} else {
 				mstell = true
-				Delete[timrelate](a.tid(), a.Id)
+				Delete[timrelate](a.Tid(), a.Id)
 			}
 		}
 		ok = true
@@ -164,18 +168,18 @@ func (this *tldbhandler) Rmroster(fnode, tnode string, domain *string) (mstell b
 	return
 }
 
-func (this *tldbhandler) Blockroster(fnode, tnode string, domain *string) (mstell bool, ok bool) {
+func (th *tldbhandle) Blockroster(fnode, tnode string, domain *string) (mstell bool, ok bool) {
 	cid := util.ChatIdByNode(fnode, tnode, domain)
 	uuid1, uuid2 := util.NodeToUUID(fnode), util.NodeToUUID(tnode)
 	numlock.Lock(int64(cid))
 	defer numlock.Unlock(int64(cid))
 
-	if as, _ := SelectAllByIdxWithTid[timroster](uuid1, "Relate", cid); as != nil {
+	if as, _ := SelectAllByIdxWithTid[timroster](uuid1, "Unikid", util.UnikIdByNode(fnode, tnode, domain)); as != nil {
 		for _, a := range as {
 			Delete[timroster](uuid1, a.Id)
 		}
 	}
-	if as, _ := SelectAllByIdxWithTid[timroster](uuid2, "Relate", cid); as != nil {
+	if as, _ := SelectAllByIdxWithTid[timroster](uuid2, "Unikid", util.UnikIdByNode(tnode, fnode, domain)); as != nil {
 		for _, a := range as {
 			Delete[timroster](uuid2, a.Id)
 		}
@@ -211,27 +215,27 @@ func (this *tldbhandler) Blockroster(fnode, tnode string, domain *string) (mstel
 	return
 }
 
-func (this *tldbhandler) GroupGtype(groupnode string, domain *string) (gtype int8, err sys.ERROR) {
+func (th *tldbhandle) GroupGtype(groupnode string, domain *string) (gtype int8, err errs.ERROR) {
 	if guuid := util.NodeToUUID(groupnode); guuid > 0 {
 		if g, _ := SelectByIdx[timgroup]("UUID", guuid); g != nil {
-			if g.Status == sys.GROUP_STATUS_CANCELLED {
-				return 0, sys.ERR_CANCEL
+			if sys.TIMTYPE(g.Status) == sys.GROUP_STATUS_CANCELLED {
+				return 0, errs.ERR_CANCEL
 			}
 			gtype = g.Gtype
 		} else {
-			return 0, sys.ERR_PARAMS
+			return 0, errs.ERR_PARAMS
 		}
 	} else {
-		err = sys.ERR_NOEXIST
+		err = errs.ERR_NOEXIST
 	}
 	return
 }
 
-func (this *tldbhandler) GroupManagers(groupnode string, domain *string) (s []string, err sys.ERROR) {
+func (th *tldbhandle) GroupManagers(groupnode string, domain *string) (s []string, err errs.ERROR) {
 	if guuid := util.NodeToUUID(groupnode); guuid > 0 {
 		if g, _ := SelectByIdx[timgroup]("UUID", guuid); g != nil {
-			if g.Status == sys.GROUP_STATUS_CANCELLED {
-				return nil, sys.ERR_CANCEL
+			if sys.TIMTYPE(g.Status) == sys.GROUP_STATUS_CANCELLED {
+				return nil, errs.ERR_CANCEL
 			}
 			if tr, _ := TDecode(util.Mask(g.RBean), &TimRoomBean{}); tr != nil {
 				s = tr.Managers
@@ -243,95 +247,106 @@ func (this *tldbhandler) GroupManagers(groupnode string, domain *string) (s []st
 				}
 			}
 		} else {
-			return nil, sys.ERR_PARAMS
+			return nil, errs.ERR_PARAMS
 		}
 	} else {
-		err = sys.ERR_NOEXIST
+		err = errs.ERR_NOEXIST
 	}
 	return
 }
 
-func (this *tldbhandler) Newgroup(fnode, groupname string, gtype int8, domain *string) (gnode string, err sys.ERROR) {
-	UUID := util.CreateUUID(string(Int64ToBytes(RandId())), domain)
-	tg := &timgroup{Gtype: gtype, UUID: UUID, Createtime: time.Now().UnixNano(), Status: sys.GROUP_STATUS_ALIVE}
-	ubean := &TimRoomBean{Founder: &fnode, Topic: &groupname, Createtime: &tg.Createtime, Gtype: &gtype}
+func (th *tldbhandle) Newgroup(fnode, groupname string, gtype sys.TIMTYPE, domain *string) (gnode string, err errs.ERROR) {
+	fuuid := util.NodeToUUID(fnode)
+	if fuuid == 0 || !checkuseruuid(fuuid) {
+		err = errs.ERR_ACCOUNT
+		return
+	}
+
+	UUID := util.CreateUUID(string(Int64ToBytes(UUID64())), domain)
+	tg := &timgroup{Gtype: int8(gtype), UUID: UUID, Createtime: time.Now().UnixNano(), Status: int8(sys.GROUP_STATUS_ALIVE)}
+	if gtype != sys.GROUP_PRIVATE {
+		gtype = sys.GROUP_OPEN
+	}
+	gt := int8(gtype)
+	ubean := &TimRoomBean{Founder: &fnode, Topic: &groupname, Createtime: &tg.Createtime, Gtype: &gt}
 	tg.RBean = util.Mask(TEncode(ubean))
 	if id, _ := Insert(tg); id == 0 {
-		return "", sys.ERR_DATABASE
+		return "", errs.ERR_DATABASE
 	}
 	gnode = util.UUIDToNode(UUID)
 	rid := util.RelateIdForGroup(gnode, fnode, domain)
-	tuuid := util.NodeToUUID(fnode)
+
 	if id, _ := Insert(&timrelate{UUID: rid, Status: 0x11}); id == 0 {
-		return "", sys.ERR_DATABASE
+		return "", errs.ERR_DATABASE
 	}
-	if id, _ := Insert(&timmucroster{Relate: rid, UUID: UUID, TUUID: tuuid}); id == 0 {
-		return "", sys.ERR_DATABASE
+
+	if id, _ := Insert(&timmucroster{Unikid: util.UnikIdByNode(gnode, fnode, domain), UUID: UUID, TUUID: fuuid}); id == 0 {
+		return "", errs.ERR_DATABASE
 	}
-	if id, _ := Insert(&timmucroster{Relate: rid, UUID: tuuid, TUUID: UUID}); id == 0 {
-		return "", sys.ERR_DATABASE
+	if id, _ := Insert(&timmucroster{Unikid: util.UnikIdByNode(fnode, gnode, domain), UUID: fuuid, TUUID: UUID}); id == 0 {
+		return "", errs.ERR_DATABASE
 	}
 	return
 }
 
-func (this *tldbhandler) Addgroup(groupnode, fromnode string, domain *string) (err sys.ERROR) {
+func (th *tldbhandle) Addgroup(groupnode, fromnode string, domain *string) (err errs.ERROR) {
 	if guuid := util.NodeToUUID(groupnode); guuid > 0 {
 		rid := util.RelateIdForGroup(groupnode, fromnode, domain)
 		if g, _ := SelectByIdx[timgroup]("UUID", guuid); g != nil {
-			if g.Status == sys.GROUP_STATUS_CANCELLED {
-				return sys.ERR_CANCEL
+			if sys.TIMTYPE(g.Status) == sys.GROUP_STATUS_CANCELLED {
+				return errs.ERR_CANCEL
 			}
 			numlock.Lock(int64(rid))
 			defer numlock.Unlock(int64(rid))
 			if a, _ := SelectByIdx[timrelate]("UUID", rid); a != nil {
 				if a.Status&0xf0 == 0x20 {
-					return sys.ERR_BLOCK
+					return errs.ERR_BLOCK
 				}
 				if a.Status == 0x11 {
-					return sys.ERR_HASEXIST
+					return errs.ERR_HASEXIST
 				}
-				if g.Gtype == sys.GROUP_OPEN && a.Status != 0x11 {
+				if sys.TIMTYPE(g.Gtype) == sys.GROUP_OPEN && a.Status != 0x11 {
 					a.Status = 0x11
 					UpdateNonzero(a)
-					Insert(&timmucroster{Relate: rid, UUID: guuid, TUUID: util.NodeToUUID(fromnode)})
-					Insert(&timmucroster{Relate: rid, UUID: util.NodeToUUID(fromnode), TUUID: guuid})
-				} else if g.Gtype == sys.GROUP_PRIVATE && a.Status != 0x01 {
+					Insert(&timmucroster{Unikid: util.UnikIdByNode(groupnode, fromnode, domain), UUID: guuid, TUUID: util.NodeToUUID(fromnode)})
+					Insert(&timmucroster{Unikid: util.UnikIdByNode(fromnode, groupnode, domain), UUID: util.NodeToUUID(fromnode), TUUID: guuid})
+				} else if sys.TIMTYPE(g.Gtype) == sys.GROUP_PRIVATE && a.Status != 0x01 {
 					a.Status = 0x01
 					UpdateNonzero(a)
 				}
 				return
 			} else {
-				if g.Gtype == sys.GROUP_PRIVATE {
+				if sys.TIMTYPE(g.Gtype) == sys.GROUP_PRIVATE {
 					if id, _ := Insert(&timrelate{UUID: rid, Status: 0x01}); id == 0 {
-						return sys.ERR_DATABASE
+						return errs.ERR_DATABASE
 					}
-				} else if g.Gtype == sys.GROUP_OPEN {
+				} else if sys.TIMTYPE(g.Gtype) == sys.GROUP_OPEN {
 					if id, _ := Insert(&timrelate{UUID: rid, Status: 0x11}); id == 0 {
-						return sys.ERR_DATABASE
+						return errs.ERR_DATABASE
 					}
-					Insert(&timmucroster{Relate: rid, UUID: guuid, TUUID: util.NodeToUUID(fromnode)})
-					Insert(&timmucroster{Relate: rid, UUID: util.NodeToUUID(fromnode), TUUID: guuid})
+					Insert(&timmucroster{Unikid: util.UnikIdByNode(groupnode, fromnode, domain), UUID: guuid, TUUID: util.NodeToUUID(fromnode)})
+					Insert(&timmucroster{Unikid: util.UnikIdByNode(fromnode, groupnode, domain), UUID: util.NodeToUUID(fromnode), TUUID: guuid})
 				} else {
-					return sys.ERR_AUTH
+					return errs.ERR_PERM_DENIED
 				}
 			}
 		}
 	} else {
-		err = sys.ERR_NOEXIST
+		err = errs.ERR_NOEXIST
 	}
 	return
 }
 
-func (this *tldbhandler) Pullgroup(groupnode, fromnode, tonode string, domain *string) (isReq bool, err sys.ERROR) {
+func (th *tldbhandle) Pullgroup(groupnode, fromnode, tonode string, domain *string) (isReq bool, err errs.ERROR) {
 	if guuid := util.NodeToUUID(groupnode); guuid > 0 {
 		if g, _ := SelectByIdx[timgroup]("UUID", guuid); g != nil {
-			if g.Status == sys.GROUP_STATUS_CANCELLED {
-				return isReq, sys.ERR_CANCEL
+			if sys.TIMTYPE(g.Status) == sys.GROUP_STATUS_CANCELLED {
+				return isReq, errs.ERR_CANCEL
 			}
-			if g.Gtype == sys.GROUP_PRIVATE {
+			if sys.TIMTYPE(g.Gtype) == sys.GROUP_PRIVATE {
 				if tr, _ := TDecode(util.Mask(g.RBean), &TimRoomBean{}); tr != nil {
 					if *tr.Founder != fromnode && !util.ContainStrings(tr.Managers, fromnode) {
-						err = sys.ERR_AUTH
+						err = errs.ERR_PERM_DENIED
 						return
 					}
 				}
@@ -341,10 +356,10 @@ func (this *tldbhandler) Pullgroup(groupnode, fromnode, tonode string, domain *s
 			defer numlock.Unlock(int64(rid))
 			if a, _ := SelectByIdx[timrelate]("UUID", rid); a != nil {
 				if a.Status&0x0f == 0x02 {
-					return isReq, sys.ERR_BLOCK
+					return isReq, errs.ERR_BLOCK
 				}
 				if a.Status == 0x11 {
-					return isReq, sys.ERR_HASEXIST
+					return isReq, errs.ERR_HASEXIST
 				}
 				isReq = a.Status == 0x01
 				if a.Status != 0x11 {
@@ -352,24 +367,24 @@ func (this *tldbhandler) Pullgroup(groupnode, fromnode, tonode string, domain *s
 					UpdateNonzero(a)
 				}
 			} else if id, _ := Insert(&timrelate{UUID: rid, Status: 0x11}); id == 0 {
-				return isReq, sys.ERR_DATABASE
+				return isReq, errs.ERR_DATABASE
 			}
-			Insert(&timmucroster{Relate: rid, UUID: guuid, TUUID: util.NodeToUUID(tonode)})
-			Insert(&timmucroster{Relate: rid, UUID: util.NodeToUUID(tonode), TUUID: guuid})
+			Insert(&timmucroster{Unikid: util.UnikIdByNode(groupnode, tonode, domain), UUID: guuid, TUUID: util.NodeToUUID(tonode)})
+			Insert(&timmucroster{Unikid: util.UnikIdByNode(tonode, groupnode, domain), UUID: util.NodeToUUID(tonode), TUUID: guuid})
 		} else {
-			return isReq, sys.ERR_NOEXIST
+			return isReq, errs.ERR_NOEXIST
 		}
 	} else {
-		err = sys.ERR_NOEXIST
+		err = errs.ERR_NOEXIST
 	}
 	return
 }
 
-func (this *tldbhandler) Nopassgroup(groupnode, fromnode, tonode string, domain *string) (err sys.ERROR) {
+func (th *tldbhandle) Nopassgroup(groupnode, fromnode, tonode string, domain *string) (err errs.ERROR) {
 	if guuid := util.NodeToUUID(groupnode); guuid > 0 {
 		if g, _ := SelectByIdx[timgroup]("UUID", guuid); g != nil {
-			if g.Status == sys.GROUP_STATUS_CANCELLED {
-				return sys.ERR_CANCEL
+			if sys.TIMTYPE(g.Status) == sys.GROUP_STATUS_CANCELLED {
+				return errs.ERR_CANCEL
 			}
 			if tr, _ := TDecode(util.Mask(g.RBean), &TimRoomBean{}); tr != nil {
 				if *tr.Founder == fromnode || util.ContainStrings(tr.Managers, fromnode) {
@@ -378,40 +393,40 @@ func (this *tldbhandler) Nopassgroup(groupnode, fromnode, tonode string, domain 
 					defer numlock.Unlock(int64(rid))
 					if a, _ := SelectByIdx[timrelate]("UUID", rid); a != nil {
 						if a.Status == 0x01 {
-							Delete[timrelate](a.tid(), a.Id)
+							Delete[timrelate](a.Tid(), a.Id)
 							return
 						}
 						if a.Status|0xf0 != 0 {
-							return sys.ERR_EXPIREOP
+							return errs.ERR_EXPIREOP
 						}
 					} else {
-						return sys.ERR_NOEXIST
+						return errs.ERR_NOEXIST
 					}
 				} else {
-					return sys.ERR_AUTH
+					return errs.ERR_PERM_DENIED
 				}
 			} else {
-				return sys.ERR_UNDEFINED
+				return errs.ERR_UNDEFINED
 			}
 		} else {
-			return sys.ERR_NOEXIST
+			return errs.ERR_NOEXIST
 		}
 	} else {
-		err = sys.ERR_NOEXIST
+		err = errs.ERR_NOEXIST
 	}
 	return
 }
 
-func (this *tldbhandler) Kickgroup(groupnode, fromnode, tonode string, domain *string) (err sys.ERROR) {
+func (th *tldbhandle) Kickgroup(groupnode, fromnode, tonode string, domain *string) (err errs.ERROR) {
 	if guuid := util.NodeToUUID(groupnode); guuid > 0 {
 		if fromnode == tonode {
-			return sys.ERR_AUTH
+			return errs.ERR_PERM_DENIED
 		}
-		if g, _ := SelectByIdx[timgroup]("UUID", guuid); g != nil && g.Status != sys.GROUP_STATUS_CANCELLED {
+		if g, _ := SelectByIdx[timgroup]("UUID", guuid); g != nil && sys.TIMTYPE(g.Status) != sys.GROUP_STATUS_CANCELLED {
 			if tr, _ := TDecode(util.Mask(g.RBean), &TimRoomBean{}); tr != nil {
 				if *tr.Founder == fromnode || util.ContainStrings(tr.Managers, fromnode) {
 					if *tr.Founder != fromnode && util.ContainStrings(tr.Managers, tonode) {
-						return sys.ERR_AUTH
+						return errs.ERR_PERM_DENIED
 					}
 					if util.ContainStrings(tr.Managers, tonode) {
 						tr.Managers = util.ArraySub(tr.Managers, []string{tonode})
@@ -420,13 +435,13 @@ func (this *tldbhandler) Kickgroup(groupnode, fromnode, tonode string, domain *s
 					rid := util.RelateIdForGroup(groupnode, tonode, domain)
 					numlock.Lock(int64(rid))
 					defer numlock.Unlock(int64(rid))
-					if as, _ := SelectAllByIdxWithTid[timmucroster](guuid, "Relate", rid); as != nil {
+					if as, _ := SelectAllByIdxWithTid[timmucroster](guuid, "Unikid", util.UnikIdByNode(groupnode, tonode, domain)); as != nil {
 						for _, a := range as {
 							Delete[timmucroster](guuid, a.Id)
 						}
 					}
 					tuuid := util.NodeToUUID(tonode)
-					if as, _ := SelectAllByIdxWithTid[timmucroster](tuuid, "Relate", rid); as != nil {
+					if as, _ := SelectAllByIdxWithTid[timmucroster](tuuid, "Unikid", util.UnikIdByNode(tonode, groupnode, domain)); as != nil {
 						for _, a := range as {
 							Delete[timmucroster](tuuid, a.Id)
 						}
@@ -443,67 +458,67 @@ func (this *tldbhandler) Kickgroup(groupnode, fromnode, tonode string, domain *s
 						if a.Status|0x0f == 0x02 {
 							a.Status = 0x02
 							if UpdateNonzero(a) != nil {
-								err = sys.ERR_DATABASE
+								err = errs.ERR_DATABASE
 							}
 						} else {
-							if Delete[timrelate](a.tid(), a.Id) != nil {
-								err = sys.ERR_DATABASE
+							if Delete[timrelate](a.Tid(), a.Id) != nil {
+								err = errs.ERR_DATABASE
 							}
 						}
 					} else {
-						err = sys.ERR_NOEXIST
+						err = errs.ERR_NOEXIST
 					}
 				} else {
-					return sys.ERR_AUTH
+					return errs.ERR_PERM_DENIED
 				}
 			} else {
-				return sys.ERR_UNDEFINED
+				return errs.ERR_UNDEFINED
 			}
 		}
 	} else {
-		err = sys.ERR_NOEXIST
+		err = errs.ERR_NOEXIST
 	}
 	return
 }
 
-func (this *tldbhandler) Leavegroup(groupnode, fromnode string, domain *string) (err sys.ERROR) {
+func (th *tldbhandle) Leavegroup(groupnode, fromnode string, domain *string) (err errs.ERROR) {
 	guuid, tuuid := util.NodeToUUID(groupnode), util.NodeToUUID(fromnode)
 	if guuid > 0 {
-		if err = func() (err sys.ERROR) {
+		if err = func() (err errs.ERROR) {
 			numlock.Lock(int64(guuid))
 			defer numlock.Unlock(int64(guuid))
 			if g, _ := SelectByIdx[timgroup]("UUID", guuid); g != nil {
-				if g.Status == sys.GROUP_STATUS_CANCELLED {
-					return sys.ERR_CANCEL
+				if sys.TIMTYPE(g.Status) == sys.GROUP_STATUS_CANCELLED {
+					return errs.ERR_CANCEL
 				}
 				if tr, _ := TDecode(util.Mask(g.RBean), &TimRoomBean{}); tr != nil {
 					if *tr.Founder == fromnode {
-						return sys.ERR_AUTH
+						return errs.ERR_PERM_DENIED
 					}
 					if util.ContainStrings(tr.Managers, fromnode) {
 						tr.Managers = util.ArraySub(tr.Managers, []string{fromnode})
 						UpdateNonzero(&timgroup{Id: g.Id, UUID: guuid, RBean: util.Mask(TEncode(tr))})
 					}
 				} else {
-					return sys.ERR_UNDEFINED
+					return errs.ERR_UNDEFINED
 				}
 			} else {
-				err = sys.ERR_NOEXIST
+				err = errs.ERR_NOEXIST
 			}
 			return
 		}(); err != nil {
 			return
 		}
 	} else {
-		err = sys.ERR_PARAMS
+		err = errs.ERR_PARAMS
 	}
 	rid := util.RelateIdForGroup(groupnode, fromnode, domain)
-	if as, _ := SelectAllByIdxWithTid[timmucroster](guuid, "Relate", rid); as != nil {
+	if as, _ := SelectAllByIdxWithTid[timmucroster](guuid, "Unikid", util.UnikIdByNode(groupnode, fromnode, domain)); as != nil {
 		for _, a := range as {
 			Delete[timmucroster](guuid, a.Id)
 		}
 	}
-	if as, _ := SelectAllByIdxWithTid[timmucroster](tuuid, "Relate", rid); as != nil {
+	if as, _ := SelectAllByIdxWithTid[timmucroster](tuuid, "Unikid", util.UnikIdByNode(fromnode, groupnode, domain)); as != nil {
 		for _, a := range as {
 			Delete[timmucroster](tuuid, a.Id)
 		}
@@ -520,24 +535,24 @@ func (this *tldbhandler) Leavegroup(groupnode, fromnode string, domain *string) 
 		if a.Status&0xf0 == 0x20 {
 			a.Status = 0x20
 			if UpdateNonzero(a) != nil {
-				err = sys.ERR_DATABASE
+				err = errs.ERR_DATABASE
 			}
-		} else if Delete[timrelate](a.tid(), a.Id) != nil {
-			err = sys.ERR_DATABASE
+		} else if Delete[timrelate](a.Tid(), a.Id) != nil {
+			err = errs.ERR_DATABASE
 		}
 	} else {
-		err = sys.ERR_NOEXIST
+		err = errs.ERR_NOEXIST
 	}
 	return
 }
 
-func (this *tldbhandler) Cancelgroup(groupnode, fromnode string, domain *string) (err sys.ERROR) {
+func (th *tldbhandle) Cancelgroup(groupnode, fromnode string, domain *string) (err errs.ERROR) {
 	if guuid := util.NodeToUUID(groupnode); guuid > 0 {
 		numlock.Lock(int64(guuid))
 		defer numlock.Unlock(int64(guuid))
 		if g, _ := SelectByIdx[timgroup]("UUID", guuid); g != nil {
-			if g.Status == sys.GROUP_STATUS_CANCELLED {
-				return sys.ERR_CANCEL
+			if sys.TIMTYPE(g.Status) == sys.GROUP_STATUS_CANCELLED {
+				return errs.ERR_CANCEL
 			}
 			if tr, _ := TDecode(util.Mask(g.RBean), &TimRoomBean{}); tr != nil {
 				if *tr.Founder == fromnode {
@@ -545,7 +560,7 @@ func (this *tldbhandler) Cancelgroup(groupnode, fromnode string, domain *string)
 						if len(tus) > 0 {
 							for _, tu := range tus {
 								if tu.TUUID != util.NodeToUUID(fromnode) {
-									return sys.ERR_AUTH
+									return errs.ERR_PERM_DENIED
 								}
 							}
 						}
@@ -553,34 +568,34 @@ func (this *tldbhandler) Cancelgroup(groupnode, fromnode string, domain *string)
 							Delete[timmucroster](guuid, tu.Id)
 						}
 					}
-					g.Status = sys.GROUP_STATUS_CANCELLED
+					g.Status = int8(sys.GROUP_STATUS_CANCELLED)
 					if UpdateNonzero(g) != nil {
-						return sys.ERR_DATABASE
+						return errs.ERR_DATABASE
 					}
 				} else {
-					return sys.ERR_AUTH
+					return errs.ERR_PERM_DENIED
 				}
 			} else {
-				return sys.ERR_UNDEFINED
+				return errs.ERR_UNDEFINED
 			}
 		} else {
-			err = sys.ERR_NOEXIST
+			err = errs.ERR_NOEXIST
 		}
 	} else {
-		err = sys.ERR_PARAMS
+		err = errs.ERR_PARAMS
 	}
 	return
 }
 
-func (this *tldbhandler) Blockgroup(groupnode, fromnode string, domain *string) (err sys.ERROR) {
+func (th *tldbhandle) Blockgroup(groupnode, fromnode string, domain *string) (err errs.ERROR) {
 	rid := util.RelateIdForGroup(groupnode, fromnode, domain)
 	guuid, tuuid := util.NodeToUUID(groupnode), util.NodeToUUID(fromnode)
-	if as, _ := SelectAllByIdxWithTid[timmucroster](guuid, "Relate", rid); as != nil {
+	if as, _ := SelectAllByIdxWithTid[timmucroster](guuid, "Unikid", util.UnikIdByNode(groupnode, fromnode, domain)); as != nil {
 		for _, a := range as {
 			Delete[timmucroster](guuid, a.Id)
 		}
 	}
-	if as, _ := SelectAllByIdxWithTid[timmucroster](tuuid, "Relate", rid); as != nil {
+	if as, _ := SelectAllByIdxWithTid[timmucroster](tuuid, "Unikid", util.UnikIdByNode(fromnode, groupnode, domain)); as != nil {
 		for _, a := range as {
 			Delete[timmucroster](tuuid, a.Id)
 		}
@@ -597,7 +612,7 @@ func (this *tldbhandler) Blockgroup(groupnode, fromnode string, domain *string) 
 		if state := a.Status; state&0x0f != 0x02 {
 			a.Status = state&0xf0 | 0x02
 			if UpdateNonzero(a) != nil {
-				err = sys.ERR_DATABASE
+				err = errs.ERR_DATABASE
 			}
 		}
 	} else {
@@ -606,18 +621,18 @@ func (this *tldbhandler) Blockgroup(groupnode, fromnode string, domain *string) 
 	return
 }
 
-func (this *tldbhandler) Blockgroupmember(groupnode, fromnode, tonode string, domain *string) (err sys.ERROR) {
-	if err = checkAdmin(groupnode, fromnode, tonode); err != nil {
+func (th *tldbhandle) Blockgroupmember(groupnode, fromnode, tonode string, domain *string) (err errs.ERROR) {
+	if err = th.checkAdmin(groupnode, fromnode, tonode); err != nil {
 		return
 	}
 	rid := util.RelateIdForGroup(groupnode, tonode, domain)
 	guuid, tuuid := util.NodeToUUID(groupnode), util.NodeToUUID(tonode)
-	if as, _ := SelectAllByIdxWithTid[timmucroster](guuid, "Relate", rid); as != nil {
+	if as, _ := SelectAllByIdxWithTid[timmucroster](guuid, "Unikid", util.UnikIdByNode(groupnode, fromnode, domain)); as != nil {
 		for _, a := range as {
 			Delete[timmucroster](guuid, a.Id)
 		}
 	}
-	if as, _ := SelectAllByIdxWithTid[timmucroster](tuuid, "Relate", rid); as != nil {
+	if as, _ := SelectAllByIdxWithTid[timmucroster](tuuid, "Unikid", util.UnikIdByNode(fromnode, groupnode, domain)); as != nil {
 		for _, a := range as {
 			Delete[timmucroster](tuuid, a.Id)
 		}
@@ -634,7 +649,7 @@ func (this *tldbhandler) Blockgroupmember(groupnode, fromnode, tonode string, do
 		if state := a.Status; state&0xf0 != 0x20 {
 			a.Status = state&0x0f | 0x20
 			if UpdateNonzero(a) != nil {
-				err = sys.ERR_DATABASE
+				err = errs.ERR_DATABASE
 			}
 		}
 	} else {
@@ -643,37 +658,40 @@ func (this *tldbhandler) Blockgroupmember(groupnode, fromnode, tonode string, do
 	return
 }
 
-func checkAdmin(groupnode, fromnode, tonode string) (err sys.ERROR) {
+func (th *tldbhandle) checkAdmin(groupnode, fromnode, tonode string) (err errs.ERROR) {
 	if guuid := util.NodeToUUID(groupnode); guuid > 0 {
 		if fromnode == tonode {
-			return sys.ERR_AUTH
+			return errs.ERR_PERM_DENIED
 		}
 		if g, _ := SelectByIdx[timgroup]("UUID", guuid); g != nil {
-			if g.Status == sys.GROUP_STATUS_CANCELLED {
-				return sys.ERR_CANCEL
+			if sys.TIMTYPE(g.Status) == sys.GROUP_STATUS_CANCELLED {
+				return errs.ERR_CANCEL
 			}
 			if tr, _ := TDecode(util.Mask(g.RBean), &TimRoomBean{}); tr != nil {
 				if *tr.Founder == fromnode || util.ContainStrings(tr.Managers, fromnode) {
 					if *tr.Founder != fromnode && util.ContainStrings(tr.Managers, tonode) {
-						return sys.ERR_AUTH
+						return errs.ERR_PERM_DENIED
 					}
 				} else {
-					return sys.ERR_AUTH
+					return errs.ERR_PERM_DENIED
 				}
 			} else {
-				return sys.ERR_UNDEFINED
+				return errs.ERR_UNDEFINED
 			}
 		} else {
-			return sys.ERR_NOEXIST
+			return errs.ERR_NOEXIST
 		}
 	} else {
-		err = sys.ERR_ACCOUNT
+		err = errs.ERR_ACCOUNT
 	}
 	return
 }
 
-func (this *tldbhandler) ModifyUserInfo(node string, tu *TimUserBean) (err sys.ERROR) {
+func (th *tldbhandle) ModifyUserInfo(node string, tu *TimUserBean) (err errs.ERROR) {
 	uuid := util.NodeToUUID(node)
+	if uuid == 0 {
+		return errs.ERR_ACCOUNT
+	}
 	if a, _ := SelectByIdx[timuser]("UUID", uuid); a != nil {
 		if a.UBean != nil {
 			if ub, _ := TDecode(util.Mask(a.UBean), &TimUserBean{}); ub != nil {
@@ -709,11 +727,11 @@ func (this *tldbhandler) ModifyUserInfo(node string, tu *TimUserBean) (err sys.E
 		}
 		UpdateNonzero(&timuser{Id: a.Id, UUID: a.UUID, UBean: util.Mask(TEncode(tu))})
 	} else {
-		err = sys.ERR_NOEXIST
+		err = errs.ERR_NOEXIST
 	}
 	return
 }
-func (this *tldbhandler) GetUserInfo(nodes []string) (m map[string]*TimUserBean, err sys.ERROR) {
+func (th *tldbhandle) GetUserInfo(nodes []string) (m map[string]*TimUserBean, err errs.ERROR) {
 	if nodes != nil {
 		m = make(map[string]*TimUserBean, 0)
 		for _, node := range nodes {
@@ -728,16 +746,16 @@ func (this *tldbhandler) GetUserInfo(nodes []string) (m map[string]*TimUserBean,
 			}
 		}
 	} else {
-		err = sys.ERR_PARAMS
+		err = errs.ERR_PARAMS
 	}
 	return
 }
 
-func (this *tldbhandler) ModifygroupInfo(node, fnode string, tu *TimRoomBean) (err sys.ERROR) {
+func (th *tldbhandle) ModifygroupInfo(node, fnode string, tu *TimRoomBean) (err errs.ERROR) {
 	if guuid := util.NodeToUUID(node); guuid > 0 {
 		if g, _ := SelectByIdx[timgroup]("UUID", guuid); g != nil {
-			if g.Status == sys.GROUP_STATUS_CANCELLED {
-				return sys.ERR_CANCEL
+			if sys.TIMTYPE(g.Status) == sys.GROUP_STATUS_CANCELLED {
+				return errs.ERR_CANCEL
 			}
 			if tr, _ := TDecode(util.Mask(g.RBean), &TimRoomBean{}); tr != nil {
 				if *tr.Founder == fnode || util.ContainStrings(tr.Managers, fnode) {
@@ -764,26 +782,26 @@ func (this *tldbhandler) ModifygroupInfo(node, fnode string, tu *TimRoomBean) (e
 					}
 					UpdateNonzero(&timgroup{Id: g.Id, UUID: guuid, RBean: util.Mask(TEncode(tr))})
 				} else {
-					return sys.ERR_AUTH
+					return errs.ERR_PERM_DENIED
 				}
 			} else {
-				return sys.ERR_UNDEFINED
+				return errs.ERR_UNDEFINED
 			}
 		} else {
-			return sys.ERR_NOEXIST
+			return errs.ERR_NOEXIST
 		}
 	} else {
-		err = sys.ERR_ACCOUNT
+		err = errs.ERR_ACCOUNT
 	}
 	return
 }
 
-func (this *tldbhandler) GetGroupInfo(nodes []string) (m map[string]*TimRoomBean, err sys.ERROR) {
+func (th *tldbhandle) GetGroupInfo(nodes []string) (m map[string]*TimRoomBean, err errs.ERROR) {
 	if nodes != nil {
 		m = make(map[string]*TimRoomBean, 0)
 		for _, node := range nodes {
 			if guuid := util.NodeToUUID(node); guuid > 0 {
-				if g, _ := SelectByIdx[timgroup]("UUID", guuid); g != nil && g.Status != sys.GROUP_STATUS_CANCELLED {
+				if g, _ := SelectByIdx[timgroup]("UUID", guuid); g != nil && sys.TIMTYPE(g.Status) != sys.GROUP_STATUS_CANCELLED {
 					if tr, _ := TDecode(util.Mask(g.RBean), &TimRoomBean{}); tr != nil {
 						m[node] = tr
 					}
@@ -791,7 +809,11 @@ func (this *tldbhandler) GetGroupInfo(nodes []string) (m map[string]*TimRoomBean
 			}
 		}
 	} else {
-		err = sys.ERR_PARAMS
+		err = errs.ERR_PARAMS
 	}
 	return
+}
+
+func (th *tldbhandle) TimAdminAuth(account, password, domain string) bool {
+	return false
 }
