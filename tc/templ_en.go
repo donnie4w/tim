@@ -4,7 +4,6 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package tc
 
@@ -85,14 +84,14 @@ const (
                     <input name="adminName" placeholder="username" />
                     <input name="adminPwd" placeholder="password" type="password" />
                     Administrator<input name="adminType" type="radio" value="1" checked />
-                    {{if not .Init}}
+                    {{if not .init}}
                     Observer<input name="adminType" type="radio" value="2" />
                     {{end}}
                     <input type="submit" class="btn btn-primary" value="Create" />
             </form>
         </div>
         {{end}}
-        {{if not .Init}}
+        {{if not .init}}
         <div class="container-fluid card mt-1 p-1">
             <div class="m-2">
                 <h6>Manage Accounts</h6>
@@ -111,7 +110,7 @@ const (
 </html>
     `
 
-    sysvarEnText=`
+	sysvarEnText = `
     <html>
 <head>
     <title>tim</title>
@@ -196,7 +195,7 @@ const (
             <form class="row g-3" id="" action="/sysvar" method="post">
                 <h3>Cluster connect operation</h3>
                 <input name="atype" value="1" hidden />
-                <label>Add and connect cluster nodes</label>
+                <label>add and connect cluster nodes</label>
                 <div class="input-group">
                     <span class="input-group-text">Service address of the target node</span>
                     <input type="text" id="addr" name="addr" value="" placeholder="Target address such as  :6001" />
@@ -208,7 +207,7 @@ const (
 </body>
 </html>
     `
-    dataEnText=`
+	dataEnText = `
     <html>
 <head>
     <title>tim</title>
@@ -330,7 +329,7 @@ const (
 </html>
     `
 
-    monitorEnText=`
+	monitorEnText = `
     <html>
 <head>
     <title>tim</title>
@@ -462,6 +461,4 @@ const (
 </script>
 </html>
     `
-
-
 )
