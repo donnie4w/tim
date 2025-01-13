@@ -4,28 +4,27 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package tc
 
 import (
-	"github.com/donnie4w/tim/sys"
+	"github.com/donnie4w/tim/stub"
 )
 
 type SysVar struct {
-	StartTime      string
-	Time           string
-	UUID           int64
-	CSNUM          int32
-	ALLUUIDS       string
-	ADDR           string
-	ADMINADDR      string
+	StartTime string
+	Time      string
+	UUID      int64
+	CSNUM     int32
+	ALLUUIDS  string
+	ADDR      string
+	ADMINADDR string
 }
 
 type SysVarView struct {
 	Show string
 	SYS  *SysVar
-	RN   []*sys.RemoteNode
+	RN   []*stub.RemoteNode
 }
 
 type AdminView struct {
