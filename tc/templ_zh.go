@@ -4,13 +4,11 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package tc
 
-const(
-
-    loginText=`
+const (
+	loginText = `
     <html>
 <head>
     <title>tim</title>
@@ -40,7 +38,7 @@ const(
     </div>
 </html>
     `
-    initText=`
+	initText = `
     <html>
 <head>
     <title>tim</title>
@@ -85,14 +83,14 @@ const(
                     <input name="adminName" placeholder="用户名" />
                     <input name="adminPwd" placeholder="密码" type="password" />
                     管理员<input name="adminType" type="radio" value="1" checked />
-                    {{if not .Init}}
+                    {{if not .init}}
                     观察员<input name="adminType" type="radio" value="2" />
                     {{end}}
                     <input type="submit" class="btn btn-primary" value="新建管理员" />
             </form>
         </div>
         {{end}}
-        {{if not .Init}}
+        {{if not .init}}
         <div class="container-fluid card mt-1 p-1">
             <div class="m-2">
                 <h6>后台管理员</h6>
@@ -111,7 +109,7 @@ const(
 </html>
     `
 
-    sysvarText=`
+	sysvarText = `
     <html>
 <head>
     <title>tim</title>
@@ -209,7 +207,7 @@ const(
 </html>
     `
 
-    dataText=`
+	dataText = `
     <html>
 <head>
     <title>tim</title>
@@ -331,7 +329,7 @@ const(
 </html>
     `
 
-    monitorText=`
+	monitorText = `
     <html>
 <head>
     <title>tim</title>
@@ -463,5 +461,4 @@ const(
 </script>
 </html>
     `
-
 )
