@@ -4,18 +4,18 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package tc
 
 import (
 	"fmt"
+	"github.com/donnie4w/tim/log"
 	"net/http"
 	_ "net/http/pprof"
 	"runtime"
 	"strings"
 
-	. "github.com/donnie4w/gofer/util"
+	goutil "github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
 )
@@ -25,12 +25,12 @@ func tlDebug() {
 	if sys.DEBUGADDR != "" {
 		runtime.SetMutexProfileFraction(1)
 		runtime.SetBlockProfileRate(1)
-		if !strings.Contains(sys.DEBUGADDR, ":") && MatchString("^[0-9]{4,5}$", sys.DEBUGADDR) {
+		if !strings.Contains(sys.DEBUGADDR, ":") && goutil.MatchString("^[0-9]{4,5}$", sys.DEBUGADDR) {
 			sys.DEBUGADDR = fmt.Sprint(":", sys.DEBUGADDR)
 		}
-		sys.FmtLog("Debug start[", sys.DEBUGADDR, "]")
+		log.FmtPrint("Debug start[", sys.DEBUGADDR, "]")
 		if err := http.ListenAndServe(sys.DEBUGADDR, nil); err != nil {
-			sys.FmtLog("debug  start failed:" + err.Error())
+			log.FmtPrint("debug  start failed:" + err.Error())
 		}
 	}
 }
