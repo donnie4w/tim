@@ -4,13 +4,14 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package tc
 
 import (
 	"fmt"
+	"github.com/donnie4w/tim/log"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -27,7 +28,7 @@ import (
 )
 
 func init() {
-	sys.Service.Put(4, adminservice)
+	sys.Service.Put(sys.INIT_TC, adminservice)
 }
 
 type adminService struct {
@@ -46,7 +47,7 @@ func (t *adminService) Serve() (err error) {
 		initAccount()
 	}
 	if strings.TrimSpace(sys.WEBADMINADDR) != "" {
-		err = t._serve(strings.TrimSpace(sys.WEBADMINADDR), sys.Conf.AdminTls, sys.Conf.Ssl_crt, sys.Conf.Ssl_crt_key)
+		go t._serve(strings.TrimSpace(sys.WEBADMINADDR), sys.Conf.AdminTls, sys.Conf.Ssl_crt, sys.Conf.Ssl_crt_key)
 	}
 	return
 }
@@ -66,7 +67,6 @@ func (t *adminService) _serve(addr string, TLS bool, serverCrt, serverKey string
 		return
 	}
 	sys.WEBADMINADDR = addr
-	tlnet.SetLogOFF()
 	t.tlAdmin.Handle("/login", loginHandler)
 	t.tlAdmin.Handle("/init", initHandler)
 	t.tlAdmin.Handle("/lang", langHandler)
@@ -112,19 +112,20 @@ func (t *adminService) _serve(addr string, TLS bool, serverCrt, serverKey string
 
 	if TLS {
 		if IsFileExist(serverCrt) && IsFileExist(serverKey) {
-			sys.FmtLog("webAdmin start tls [", addr, "]")
-			err = t.tlAdmin.HttpStartTLS(addr, serverCrt, serverKey)
+			log.FmtPrint("webAdmin start tls [", addr, "]")
+			err = t.tlAdmin.HttpsStart(addr, serverCrt, serverKey)
 		} else {
-			sys.FmtLog("webAdmin start tls by bytes [", addr, "]")
-			err = t.tlAdmin.HttpStartTlsBytes(addr, []byte(tldbKs.ServerCrt), []byte(tldbKs.ServerKey))
+			log.FmtPrint("webAdmin start tls by bytes [", addr, "]")
+			err = t.tlAdmin.HttpsStartWithBytes(addr, []byte(tldbKs.ServerCrt), []byte(tldbKs.ServerKey))
 		}
 	}
 	if !t.isClose {
-		sys.FmtLog("webAdmin start [", addr, "]")
+		log.FmtPrint("webAdmin start [", addr, "]")
 		err = t.tlAdmin.HttpStart(addr)
 	}
 	if !t.isClose && err != nil {
-		sys.FmtLog("webAdmin start failed:", err.Error())
+		log.FmtPrint("webAdmin start failed:", err.Error())
+		os.Exit(1)
 	}
 	return
 }
