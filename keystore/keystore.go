@@ -14,19 +14,19 @@ import (
 	"strconv"
 	"time"
 
-	. "github.com/donnie4w/gofer/keystore"
-	. "github.com/donnie4w/gofer/util"
+	ks "github.com/donnie4w/gofer/keystore"
+	"github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/sys"
 )
 
 func init() {
-	sys.Service.Put(sys.INIT_KEYSTORE, (serv(1)))
+	sys.Service(sys.INIT_KEYSTORE, serv(1))
 }
 
 type serv byte
 
-func (serv) Serve() error {
-	Init(sys.KEYSTORE)
+func (s serv) Serve() error {
+	s.init(sys.KEYSTORE)
 	return nil
 }
 
@@ -34,11 +34,11 @@ func (serv) Close() error {
 	return nil
 }
 
-func Init(dir string) {
+func (s serv) init(dir string) {
 	if dir == "" {
 		dir, _ = os.Getwd()
 	}
-	if err := InitAdmin(dir); err != nil {
+	if err := s.initAdmin(dir); err != nil {
 		log.FmtPrint("keystore init failed")
 		os.Exit(0)
 	}
@@ -47,8 +47,8 @@ func Init(dir string) {
 		var err error
 		var bs []byte
 		var ok bool
-		if bs, err = RsaEncrypt([]byte(a), sys.OpenSSL.PublicPath); err == nil {
-			if bs, err = RsaDecrypt(bs, sys.OpenSSL.PrivatePath); err == nil {
+		if bs, err = ks.RsaEncrypt([]byte(a), sys.OpenSSL.PublicPath); err == nil {
+			if bs, err = ks.RsaDecrypt(bs, sys.OpenSSL.PrivatePath); err == nil {
 				ok = a == string(bs)
 			}
 		}
@@ -58,20 +58,17 @@ func Init(dir string) {
 	}
 }
 
-func InitAdmin(dir string) (err error) {
-	if KeyStore, err = NewKeyStore(dir, "keystore.tdb"); err == nil {
+func (serv) initAdmin(dir string) (err error) {
+	if ks.KeyStore, err = ks.NewKeyStore(dir, "keystore.tdb"); err == nil {
 		Admin.Load()
 		if v, ok := Admin.GetOther("TIMUUID"); ok {
 			id, _ := strconv.ParseUint(v, 10, 64)
 			sys.UUID = int64(id)
 		} else {
-			sys.UUID = int64(uuid())
+			sys.UUID = int64(util.UUID32())
 			Admin.PutOther("TIMUUID", fmt.Sprint(sys.UUID))
 		}
 	}
+	log.FmtPrint("UUID [", sys.UUID, "]")
 	return
-}
-
-func uuid() uint32 {
-	return UUID32()
 }
