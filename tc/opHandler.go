@@ -4,9 +4,11 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
+
 package tc
 
 import (
+	"github.com/donnie4w/tim/errs"
 	"net/http"
 	"strconv"
 	"strings"
@@ -61,7 +63,7 @@ func timTokenHandler(hc *tlnet.HttpContext) {
 			ta = &TimAck{Ok: false, TimType: int8(sys.TIMTOKEN), Error: err.TimError()}
 		}
 	} else {
-		ta = &TimAck{Ok: false, TimType: int8(sys.TIMTOKEN), Error: sys.ERR_PARAMS.TimError()}
+		ta = &TimAck{Ok: false, TimType: int8(sys.TIMTOKEN), Error: errs.ERR_PARAMS.TimError()}
 	}
 	hc.ResponseBytes(http.StatusOK, JsonEncode(ta))
 }
@@ -107,7 +109,7 @@ func timMessageHandler(hc *tlnet.HttpContext) {
 			}
 		}
 	}
-	tk := &TimAck{Ok: false, Error: sys.ERR_PARAMS.TimError()}
+	tk := &TimAck{Ok: false, Error: errs.ERR_PARAMS.TimError()}
 	hc.ResponseString(string(JsonEncode(tk)))
 }
 
@@ -161,7 +163,7 @@ func timBlockUserHandler(hc *tlnet.HttpContext) {
 		if i, e := strconv.Atoi(t); e == nil {
 			_time = int64(i)
 		} else {
-			hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, N: &account, Error: sys.ERR_PARAMS.TimError()})))
+			hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, N: &account, Error: errs.ERR_PARAMS.TimError()})))
 		}
 	} else {
 		bs := hc.RequestBody()
@@ -174,7 +176,7 @@ func timBlockUserHandler(hc *tlnet.HttpContext) {
 	if sys.HasNode(account) {
 		sys.SendNode(account, &TimAck{Ok: true, TimType: int8(sys.TIMLOGOUT)}, sys.TIMACK)
 	}
-	sys.BlockUser(account, int64(_time))
+	sys.OsBlockUser(account, int64(_time))
 	hc.ResponseString(string(JsonEncode(&TimAck{Ok: true, N: &account})))
 }
 
@@ -203,10 +205,11 @@ func timResetAuthHandler(hc *tlnet.HttpContext) {
 		}
 	}
 	if loginname == "" || pwd == "" {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, N: &loginname, Error: sys.ERR_PARAMS.TimError()})))
+		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, N: &loginname, Error: errs.ERR_PARAMS.TimError()})))
 		return
 	}
-	if err := sys.OsModify(loginname, pwd, domain); err == nil {
+	node := util.UUIDToNode(util.CreateUUID(loginname, domain))
+	if err := sys.OsModify(node, nil, pwd, domain); err == nil {
 		hc.ResponseString(string(JsonEncode(&TimAck{Ok: true, N: &loginname})))
 	} else {
 		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, Error: err.TimError()})))
@@ -273,7 +276,7 @@ func timModifyRoomInfoHandler(hc *tlnet.HttpContext) {
 		}
 	}
 	if unode == "" || gnode == "" {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, Error: sys.ERR_PARAMS.TimError()})))
+		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, Error: errs.ERR_PARAMS.TimError()})))
 		return
 	}
 	if err := sys.OsRoomBean(unode, gnode, trb); err == nil {
@@ -286,7 +289,7 @@ func timModifyRoomInfoHandler(hc *tlnet.HttpContext) {
 // list of block
 func timBlockListHandler(hc *tlnet.HttpContext) {
 	defer util.Recover()
-	hc.ResponseString(string(JsonEncode(sys.BlockList())))
+	hc.ResponseString(string(JsonEncode(sys.OsBlockList())))
 }
 
 // list of online users
