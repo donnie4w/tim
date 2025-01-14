@@ -4,11 +4,12 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package service
 
 import (
+	"github.com/donnie4w/tim/errs"
+	"github.com/donnie4w/tim/mq"
 	"sync/atomic"
 	"time"
 
@@ -49,7 +50,8 @@ func (t *_wsWare) AddTid(ws *tlnet.Websocket, tid *Tid) {
 		t.uMap.Put(tid.Node, append(a, ws.Id))
 	}
 	go sys.Csuser(tid.Node, true, ws.Id)
-	go loginstat(tid.Node, true, tid, ws.Id)
+	//go loginstat(tid.Node, true, tid, ws.Id)
+	go mq.PushOnline(tid.Node, true)
 }
 
 func (t *_wsWare) SetJsonOn(ws *tlnet.Websocket) {
@@ -227,7 +229,7 @@ func (t *_wsWare) delId(id int64) {
 				t.uMap.Del(sk.tid.Node)
 				go sys.Csuser(sk.tid.Node, false, id)
 				go sys.Interrupt(sk.tid)
-				go loginstat(sk.tid.Node, false, sk.tid, id)
+				go mq.PushOnline(sk.tid.Node, false)
 			}
 		}
 	}
@@ -260,7 +262,7 @@ func (t *WsSock) SetJsonOn(on bool) {
 func (t *WsSock) _send(buf *Buffer) (err error) {
 	if t.pingt+int64(sys.PINGTO*int64(time.Second)) < sys.InaccurateTime {
 		t.close()
-		return sys.ERR_PING.Error()
+		return errs.ERR_PING.Error()
 	}
 	sys.Stat.Ob(int64(buf.Len()))
 	return t.ws.Send(buf.Bytes())
@@ -269,7 +271,20 @@ func (t *WsSock) _send(buf *Buffer) (err error) {
 var seq int32 = 0
 
 func (t *WsSock) send(ts thrift.TStruct, tt sys.TIMTYPE, sync bool) (err error) {
-	buf := NewBuffer()
+	lenght := 1
+	if sync {
+		lenght = 5
+	}
+	var bs []byte
+	if ts != nil {
+		if t.jsonOn {
+			bs = JsonEncode(ts)
+		} else {
+			bs = TEncode(ts)
+		}
+		lenght += len(bs)
+	}
+	buf := NewBufferWithCapacity(lenght)
 	sendId := atomic.AddInt32(&seq, 1)
 	var ch chan int8
 	if sync {
@@ -279,13 +294,16 @@ func (t *WsSock) send(ts thrift.TStruct, tt sys.TIMTYPE, sync bool) (err error) 
 	} else {
 		buf.WriteByte(byte(tt))
 	}
-	if ts != nil {
-		if t.jsonOn {
-			buf.Write(JsonEncode(ts))
-		} else {
-			buf.Write(TEncode(ts))
-		}
+	if len(bs) > 0 {
+		buf.Write(bs)
 	}
+	//if ts != nil {
+	//if t.jsonOn {
+	//	buf.Write(JsonEncode(ts))
+	//} else {
+	//	buf.Write(TEncode(ts))
+	//}
+	//}
 	if err = t._send(buf); err == nil && sync {
 		i := 0
 		for t.ws.Error == nil && i < 100 {
@@ -295,11 +313,11 @@ func (t *WsSock) send(ts thrift.TStruct, tt sys.TIMTYPE, sync bool) (err error) 
 				err = nil
 				goto END
 			case <-time.After(time.Second):
-				err = sys.ERR_OVERTIME.Error()
+				err = errs.ERR_OVERTIME.Error()
 			}
 		}
 		if t.ws.Error != nil || err != nil {
-			err = sys.ERR_OVERTIME.Error()
+			err = errs.ERR_OVERTIME.Error()
 		}
 	}
 END:
@@ -307,7 +325,7 @@ END:
 }
 
 func (t *WsSock) sendBigData(data []byte, tt sys.TIMTYPE) (err error) {
-	buf := NewBuffer()
+	buf := NewBufferWithCapacity(1 + len(data))
 	buf.WriteByte(byte(tt))
 	buf.Write(data)
 	return t._send(buf)
@@ -318,5 +336,5 @@ func (t *WsSock) close() {
 }
 
 func awaitEnd(bs []byte) {
-	await.DelAndClose(int64(BytesToInt32(bs)))
+	await.Close(int64(BytesToInt32(bs)))
 }
