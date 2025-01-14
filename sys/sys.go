@@ -4,32 +4,29 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
+
 package sys
 
 import (
 	"os"
-	"time"
 )
 
 type server struct{}
 
-func (this *server) Serve() error {
+func (s *server) Serve() error {
 	praseflag()
 	blankLine()
 	timlogo()
-	DataInit()
-	KeyStoreInit(KEYSTORE)
-	Service.BackForEach(func(_ int, s Server) bool {
+	Service.Ascend(func(_ int, s Server) bool {
 		defer func() { recover() }()
-		go s.Serve()
-		<-time.After(time.Millisecond << 9)
+		s.Serve()
 		return true
 	})
 	select {}
 }
 
-func (this *server) Close() (err error) {
-	Service.FrontForEach(func(_ int, s Server) bool {
+func (s *server) Close() (err error) {
+	Service.Descend(func(_ int, s Server) bool {
 		s.Close()
 		return true
 	})
@@ -41,10 +38,66 @@ func AddNode(addr string) (err error) {
 	return Client2Serve(addr)
 }
 
-func UseDefaultDB() bool {
-	return Conf.Tldb != nil || (Conf.TldbExtent != nil && len(Conf.TldbExtent) > 0)
+func UseBuiltInData() bool {
+	return Conf.InlineDB != nil || len(Conf.InlineExtent) > 0 || Conf.Tldb != nil || len(Conf.TldbExtent) > 0
 }
 
-func UseTldbExtent() bool {
-	return Conf.TldbExtent != nil && len(Conf.TldbExtent) > 0
+type Server interface {
+	Serve() (err error)
+	Close() (err error)
+}
+
+type istat interface {
+	CReq() int64
+	CReqDo()
+	CReqDone()
+
+	CPros() int64
+	CProsDo()
+	CProsDone()
+
+	Tx() int64
+	TxDo()
+	TxDone()
+
+	Ibs() int64
+	Ib(int64)
+
+	Obs() int64
+	Ob(int64)
+}
+
+func GetDBMOD() DBMOD {
+	if Conf.InlineDB != nil || len(Conf.InlineExtent) > 0 {
+		return INLINEDB
+	}
+	if Conf.Tldb != nil || len(Conf.TldbExtent) > 0 {
+		return TLDB
+	}
+	if Conf.ExternalDB != nil {
+		return EXTERNALDB
+	}
+	if Conf.NoDB != nil && *Conf.NoDB {
+		return NODB
+	}
+	return INLINEDB
+}
+
+func GetCstype() CSTYPE {
+	if Conf.Raftx != nil {
+		return CS_RAFTX
+	}
+	if Conf.Rax != nil {
+		return CS_RAX
+	}
+	if Conf.Redis != nil {
+		return CS_REDIS
+	}
+	if Conf.Etcd != nil {
+		return CS_ETCD
+	}
+	if Conf.ZooKeeper != nil {
+		return CS_ZOOKEEPER
+	}
+	return 0
 }
