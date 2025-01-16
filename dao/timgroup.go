@@ -5,7 +5,7 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2024-10-06 20:30:14
+// datetime :2025-01-06 18:18:47
 // gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timgroup
 
