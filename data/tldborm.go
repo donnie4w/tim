@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tlcli-go/tlcli"
 	"github.com/donnie4w/tlorm-go/orm"
@@ -39,19 +40,23 @@ func UpdateNonzero(a timstruct) (err error) {
 	return orm.Table[byte](tldbCli(a.Tid())).UpdateNonzero(a)
 }
 
-func SelectIdByIdx[T timstruct](columnName string, columnValue uint64) (id int64, err error) {
-	return orm.Table[T](tldbCli(columnValue)).SelectIdByIdx(columnName, columnValue)
+func SelectIdByIdx[T timstruct](columnName string, columnValue []byte) (id int64, err error) {
+	return orm.Table[T](tldbCli(util.FNVHash64(columnValue))).SelectIdByIdx(columnName, columnValue)
 }
 
-func SelectById[T timstruct](tid uint64, id int64) (a *T, err error) {
-	return orm.Table[T](tldbCli(tid)).SelectById(id)
+func SelectById[T timstruct](tid []byte, id int64) (a *T, err error) {
+	return orm.Table[T](tldbCli(util.FNVHash64(tid))).SelectById(id)
 }
 
-func SelectByIdx[T any](columnName string, columnValue uint64) (a *T, err error) {
+func SelectByIdx[T any](columnName string, columnValue []byte) (a *T, err error) {
+	return orm.Table[T](tldbCli(util.FNVHash64(columnValue))).SelectByIdx(columnName, columnValue)
+}
+
+func SelectByIdxWithInt[T any](columnName string, columnValue uint64) (a *T, err error) {
 	return orm.Table[T](tldbCli(columnValue)).SelectByIdx(columnName, columnValue)
 }
 
-func SelectByIdxWithTid[T any](tid uint64, columnName string, columnValue uint64) (a *T, err error) {
+func SelectByIdxWithTid[T any](tid uint64, columnName string, columnValue []byte) (a *T, err error) {
 	return orm.Table[T](tldbCli(tid)).SelectByIdx(columnName, columnValue)
 }
 
@@ -59,7 +64,7 @@ func SelectAllByIdx[T any](columnName string, columnValue uint64) (as []*T, err 
 	return orm.Table[T](tldbCli(columnValue)).SelectAllByIdx(columnName, columnValue)
 }
 
-func SelectAllByIdxWithTid[T any](tid uint64, columnName string, columnValue uint64) (as []*T, err error) {
+func SelectAllByIdxWithTid[T any](tid uint64, columnName string, columnValue []byte) (as []*T, err error) {
 	return orm.Table[T](tldbCli(tid)).SelectAllByIdx(columnName, columnValue)
 }
 
@@ -67,12 +72,12 @@ func SelectByIdxLimit[T any](startId, limit int64, columnName string, columnValu
 	return orm.Table[T](tldbCli(columnValue)).SelectByIdxLimit(startId, limit, columnName, columnValue)
 }
 
-func SelectByIdxDescLimit[T any](id, limit int64, columnName string, columnValue uint64) (as []*T, err error) {
-	return orm.Table[T](tldbCli(columnValue)).SelectByIdxDescLimit(columnName, columnValue, id, limit)
+func SelectByIdxDescLimit[T any](id, limit int64, columnName string, columnValue []byte) (as []*T, err error) {
+	return orm.Table[T](tldbCli(util.FNVHash64(columnValue))).SelectByIdxDescLimit(columnName, columnValue, id, limit)
 }
 
-func SelectIdByIdxSeq[T any](columnName string, columnValue uint64, id int64) (_r int64, err error) {
-	return orm.Table[T](tldbCli(columnValue)).SelectIdByIdxSeq(columnName, columnValue, id)
+func SelectIdByIdxSeq[T any](columnName string, columnValue []byte, id int64) (_r int64, err error) {
+	return orm.Table[T](tldbCli(util.FNVHash64(columnValue))).SelectIdByIdxSeq(columnName, columnValue, id)
 }
 
 var tldbsources = make([]*tldbsource, 0)
