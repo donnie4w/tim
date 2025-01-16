@@ -5,7 +5,7 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2024-10-06 20:30:14
+// datetime :2025-01-06 18:18:47
 // gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timblock
 
@@ -27,7 +27,7 @@ type Timblock struct {
 	TUUID      *base.Field[Timblock]
 	TIMESERIES      *base.Field[Timblock]
 	_ID      *int64
-	_UNIKID      *int64
+	_UNIKID      []byte
 	_UUID      *int64
 	_TUUID      *int64
 	_TIMESERIES      *int64
@@ -52,16 +52,14 @@ func (u *Timblock) SetId(arg int64) *Timblock{
 	return u
 }
 
-func (u *Timblock) GetUnikid() (_r int64){
-	if u._UNIKID != nil {
-		_r = *u._UNIKID
-	}
+func (u *Timblock) GetUnikid() (_r []byte){
+	_r = u._UNIKID
 	return
 }
 
-func (u *Timblock) SetUnikid(arg int64) *Timblock{
+func (u *Timblock) SetUnikid(arg []byte) *Timblock{
 	u.Put0(u.UNIKID.FieldName, arg)
-	u._UNIKID = &arg
+	u._UNIKID = arg
 	return u
 }
 
@@ -110,7 +108,7 @@ func (u *Timblock) Scan(fieldname string, value any) {
 	case "id":
 		u.SetId(base.AsInt64(value))
 	case "unikid":
-		u.SetUnikid(base.AsInt64(value))
+		u.SetUnikid(base.AsBytes(value))
 	case "uuid":
 		u.SetUuid(base.AsInt64(value))
 	case "tuuid":
