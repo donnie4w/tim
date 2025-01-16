@@ -5,7 +5,7 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2024-10-06 20:30:14
+// datetime :2025-01-06 18:18:47
 // gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timmessage
 
@@ -23,16 +23,19 @@ type Timmessage struct {
 
 	ID      *base.Field[Timmessage]
 	CHATID      *base.Field[Timmessage]
+	FID      *base.Field[Timmessage]
 	STANZA      *base.Field[Timmessage]
 	TIMESERIES      *base.Field[Timmessage]
 	_ID      *int64
-	_CHATID      *int64
+	_CHATID      []byte
+	_FID      *int64
 	_STANZA      []byte
 	_TIMESERIES      *int64
 }
 
 var _Timmessage_ID = &base.Field[Timmessage]{"id"}
 var _Timmessage_CHATID = &base.Field[Timmessage]{"chatid"}
+var _Timmessage_FID = &base.Field[Timmessage]{"fid"}
 var _Timmessage_STANZA = &base.Field[Timmessage]{"stanza"}
 var _Timmessage_TIMESERIES = &base.Field[Timmessage]{"timeseries"}
 
@@ -49,16 +52,27 @@ func (u *Timmessage) SetId(arg int64) *Timmessage{
 	return u
 }
 
-func (u *Timmessage) GetChatid() (_r int64){
-	if u._CHATID != nil {
-		_r = *u._CHATID
+func (u *Timmessage) GetChatid() (_r []byte){
+	_r = u._CHATID
+	return
+}
+
+func (u *Timmessage) SetChatid(arg []byte) *Timmessage{
+	u.Put0(u.CHATID.FieldName, arg)
+	u._CHATID = arg
+	return u
+}
+
+func (u *Timmessage) GetFid() (_r int64){
+	if u._FID != nil {
+		_r = *u._FID
 	}
 	return
 }
 
-func (u *Timmessage) SetChatid(arg int64) *Timmessage{
-	u.Put0(u.CHATID.FieldName, arg)
-	u._CHATID = &arg
+func (u *Timmessage) SetFid(arg int64) *Timmessage{
+	u.Put0(u.FID.FieldName, arg)
+	u._FID = &arg
 	return u
 }
 
@@ -92,7 +106,9 @@ func (u *Timmessage) Scan(fieldname string, value any) {
 	case "id":
 		u.SetId(base.AsInt64(value))
 	case "chatid":
-		u.SetChatid(base.AsInt64(value))
+		u.SetChatid(base.AsBytes(value))
+	case "fid":
+		u.SetFid(base.AsInt64(value))
 	case "stanza":
 		u.SetStanza(base.AsBytes(value))
 	case "timeseries":
@@ -107,21 +123,23 @@ func (t *Timmessage) ToGdao() {
 func (t *Timmessage) Copy(h *Timmessage) *Timmessage{
 	t.SetId(h.GetId())
 	t.SetChatid(h.GetChatid())
+	t.SetFid(h.GetFid())
 	t.SetStanza(h.GetStanza())
 	t.SetTimeseries(h.GetTimeseries())
 	return t
 }
 
 func (t *Timmessage) String() string {
-	return fmt.Sprint("Id:",t.GetId(), ",","Chatid:",t.GetChatid(), ",","Stanza:",t.GetStanza(), ",","Timeseries:",t.GetTimeseries())
+	return fmt.Sprint("Id:",t.GetId(), ",","Chatid:",t.GetChatid(), ",","Fid:",t.GetFid(), ",","Stanza:",t.GetStanza(), ",","Timeseries:",t.GetTimeseries())
 }
 
 func (t *Timmessage)init(tablename string) {
 	t.ID = _Timmessage_ID
 	t.CHATID = _Timmessage_CHATID
+	t.FID = _Timmessage_FID
 	t.STANZA = _Timmessage_STANZA
 	t.TIMESERIES = _Timmessage_TIMESERIES
-	t.Init(tablename, []base.Column[Timmessage]{t.ID,t.CHATID,t.STANZA,t.TIMESERIES})
+	t.Init(tablename, []base.Column[Timmessage]{t.ID,t.CHATID,t.FID,t.STANZA,t.TIMESERIES})
 }
 
 func NewTimmessage(tablename ...string) (_r *Timmessage) {
@@ -138,6 +156,7 @@ func (t *Timmessage) Encode() ([]byte, error) {
 	m := make(map[string]any, 0)
 	m["id"] = t.GetId()
 	m["chatid"] = t.GetChatid()
+	m["fid"] = t.GetFid()
 	m["stanza"] = t.GetStanza()
 	m["timeseries"] = t.GetTimeseries()
 	return t.Table.Encode(m)
