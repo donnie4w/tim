@@ -14,6 +14,7 @@ import (
 
 	"github.com/donnie4w/gofer/buffer"
 	. "github.com/donnie4w/gofer/util"
+	goutil "github.com/donnie4w/gofer/util"
 	. "github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
@@ -28,23 +29,24 @@ func (th *tldbhandle) init() *tldbhandle {
 
 func (th *tldbhandle) Register(username, pwd string, domain *string) (node string, e errs.ERROR) {
 	uuid := util.CreateUUID(username, domain)
-	if a, _ := SelectByIdx[timuser]("UUID", uuid); a != nil {
+	if a, _ := SelectByIdxWithInt[timuser]("UUID", uuid); a != nil {
 		e = errs.ERR_HASEXIST
 		return
 	}
-	tu := &timuser{UUID: uuid, Pwd: th._pwd(uuid, pwd, domain), Createtime: time.Now().UnixNano()}
-	if _, err := Insert(tu); err == nil {
-		node = util.UUIDToNode(uuid)
-	} else {
-		e = errs.ERR_DATABASE
+	if hs, err := util.Password(uuid, pwd, domain); err != nil {
+		tu := &timuser{UUID: uuid, Pwd: hs, Createtime: time.Now().UnixNano()}
+		if _, err := Insert(tu); err == nil {
+			node = util.UUIDToNode(uuid)
+		}
+		return
 	}
-	return
+	return "", errs.ERR_DATABASE
 }
 
 func (th *tldbhandle) Login(username, pwd string, domain *string) (_r string, e errs.ERROR) {
 	uuid := util.CreateUUID(username, domain)
-	if a, err := SelectByIdx[timuser]("UUID", uuid); err == nil && a != nil {
-		if a.Pwd == th._pwd(uuid, pwd, domain) {
+	if a, err := SelectByIdxWithInt[timuser]("UUID", uuid); err == nil && a != nil {
+		if util.CheckPasswordHash(uuid, pwd, domain, a.Pwd) {
 			_r = util.UUIDToNode(uuid)
 			return
 		}
@@ -57,25 +59,26 @@ func (th *tldbhandle) Modify(uuid uint64, pwd *string, pwdLast string, domain *s
 	if uuid == 0 {
 		return errs.ERR_ACCOUNT
 	}
-	if a, err := SelectByIdx[timuser]("UUID", uuid); err == nil && a != nil {
+	if a, err := SelectByIdxWithInt[timuser]("UUID", uuid); err == nil && a != nil {
 		if pwd != nil {
-			if th._pwd(uuid, *pwd, domain) != a.Pwd {
+			if util.CheckPasswordHash(uuid, *pwd, domain, a.Pwd) {
 				return errs.ERR_PERM_DENIED
 			}
 		} else if pwdLast == "" {
 			return errs.ERR_PARAMS
 		}
-		UpdateNonzero(&timuser{UUID: uuid, Id: a.Id, Pwd: th._pwd(uuid, pwdLast, domain)})
-	} else {
-		e = errs.ERR_NOEXIST
+		if hs, err := util.Password(uuid, pwdLast, domain); err != nil {
+			UpdateNonzero(&timuser{UUID: uuid, Id: a.Id, Pwd: hs})
+			return
+		}
 	}
-	return
+	return errs.ERR_NOEXIST
 }
 
 func (th *tldbhandle) AuthNode(username, pwd string, domain *string) (_r string, err errs.ERROR) {
 	uuid := util.CreateUUID(username, domain)
-	if a, _ := SelectByIdx[timuser]("UUID", uuid); a != nil {
-		if a.Pwd == th._pwd(uuid, pwd, domain) {
+	if a, _ := SelectByIdxWithInt[timuser]("UUID", uuid); a != nil {
+		if util.CheckPasswordHash(uuid, pwd, domain, a.Pwd) {
 			_r = util.UUIDToNode(uuid)
 			return
 		}
@@ -96,7 +99,7 @@ func (th *tldbhandle) _pwd(uuid uint64, pwd string, domain *string) uint64 {
 func (th *tldbhandle) SaveMessage(tm *TimMessage) (err error) {
 	id := *tm.ID
 	tm.ID = nil
-	var chatId uint64
+	var chatId []byte
 	if tm.MsType == sys.SOURCE_ROOM {
 		chatId = util.ChatIdByRoom(tm.RoomTid.Node, tm.FromTid.Domain)
 	} else {
@@ -106,7 +109,7 @@ func (th *tldbhandle) SaveMessage(tm *TimMessage) (err error) {
 	tm.FromTid = &Tid{Node: fid.Node}
 	stanze := util.Mask(TEncode(tm))
 	var mid int64
-	mid, err = Insert(&timmessage{ChatId: chatId, Stanza: stanze})
+	mid, err = Insert(&timmessage{ChatId: chatId, Fid: int64(goutil.FNVHash32([]byte(fid.Node))), Stanza: stanze})
 	tm.Mid = &mid
 	if id == 0 {
 		id = uuid.NewUUID().Int64()
@@ -117,7 +120,7 @@ func (th *tldbhandle) SaveMessage(tm *TimMessage) (err error) {
 }
 
 func (th *tldbhandle) GetMessage(fromNode string, domain *string, rtype int8, to string, mid, limit int64) (tmList []*TimMessage, err error) {
-	chatId := uint64(0)
+	var chatId []byte
 	if rtype == 1 {
 		chatId = util.ChatIdByNode(fromNode, to, domain)
 	} else {
@@ -139,21 +142,22 @@ func (th *tldbhandle) GetMessage(fromNode string, domain *string, rtype int8, to
 	return
 }
 
-func (th *tldbhandle) GetMessageByMid(tid uint64, mid int64) (tm *TimMessage, err error) {
+func (th *tldbhandle) GetChatIdByMid(tid []byte, mid int64) (chatId []byte, fid int64, err error) {
 	if mid <= 0 {
 		err = errs.ERR_PARAMS.Error()
 		return
 	}
 	if a, e := SelectById[timmessage](tid, mid); e == nil && a != nil {
-		tm, err = TDecode(util.Mask(a.Stanza), &TimMessage{})
+		chatId = a.ChatId
+		fid = a.Fid
 	} else {
 		err = e
 	}
 	return
 }
 
-func (th *tldbhandle) DelMessageByMid(tid uint64, mid int64) (err error) {
-	return Delete[timmessage](tid, mid)
+func (th *tldbhandle) DelMessageByMid(tid []byte, mid int64) (err error) {
+	return Delete[timmessage](goutil.FNVHash64(tid), mid)
 }
 
 // func (th *tldbhandle) ExistOfflineMessage(tm *TimMessage) (exsit bool) {
@@ -214,7 +218,7 @@ func (th *tldbhandle) DelOfflineMessage(tid uint64, ids ...int64) (_r int64, err
 
 func (th *tldbhandle) AuthGroupAndUser(groupnode, usernode string, domain *string) (ok bool, err error) {
 	if util.CheckNode(groupnode) && util.CheckNode(usernode) {
-		if a, _ := SelectByIdx[timgroup]("UUID", util.NodeToUUID(groupnode)); a != nil && a.Status == 1 {
+		if a, _ := SelectByIdxWithInt[timgroup]("UUID", util.NodeToUUID(groupnode)); a != nil && a.Status == 1 {
 			relateid := util.RelateIdForGroup(groupnode, usernode, domain)
 			if a, _ := SelectByIdx[timrelate]("UUID", relateid); a != nil {
 				ok = a.Status == 0x11
@@ -237,14 +241,14 @@ func (th *tldbhandle) AuthUserAndUser(fnode, tnode string, domain *string) (_r b
 }
 
 func (th *tldbhandle) ExistUser(node string) (_r bool) {
-	if a, _ := SelectByIdx[timuser]("UUID", util.NodeToUUID(node)); a != nil {
+	if a, _ := SelectByIdxWithInt[timuser]("UUID", util.NodeToUUID(node)); a != nil {
 		_r = true
 	}
 	return
 }
 
 func (th *tldbhandle) ExistGroup(node string) (_r bool) {
-	if a, _ := SelectByIdx[timgroup]("UUID", util.NodeToUUID(node)); a != nil {
+	if a, _ := SelectByIdxWithInt[timgroup]("UUID", util.NodeToUUID(node)); a != nil {
 		_r = true
 	}
 	return
