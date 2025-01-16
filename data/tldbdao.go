@@ -7,19 +7,24 @@
 
 package data
 
+import (
+	"github.com/donnie4w/gofer/util"
+)
+
 type timmessage struct {
 	Id         int64
-	ChatId     uint64 `idx:"1"`
+	ChatId     []byte `idx:"1"`
+	Fid        int64
 	Stanza     []byte
 	Timeseries int64 `idx:"1"`
 }
 
-func (this timmessage) Tid() uint64 { return this.ChatId }
+func (this timmessage) Tid() uint64 { return util.FNVHash64(this.ChatId) }
 
 type timuser struct {
 	Id         int64
 	UUID       uint64 `idx:"1"`
-	Pwd        uint64
+	Pwd        string
 	Createtime int64
 	UBean      []byte
 	Timeseries int64 `idx:"1"`
@@ -42,7 +47,7 @@ func (this timgroup) Tid() uint64 { return this.UUID }
 type timoffline struct {
 	Id         int64
 	UUID       uint64 `idx:"1"`
-	ChatId     uint64
+	ChatId     []byte
 	Stanza     []byte
 	Mid        int64
 	Timeseries int64 `idx:"1"`
@@ -52,16 +57,16 @@ func (this timoffline) Tid() uint64 { return this.UUID }
 
 type timrelate struct {
 	Id         int64
-	UUID       uint64 `idx:"1"`
+	UUID       []byte `idx:"1"`
 	Status     uint8
 	Timeseries int64 `idx:"1"`
 }
 
-func (this timrelate) Tid() uint64 { return this.UUID }
+func (this timrelate) Tid() uint64 { return util.FNVHash64(this.UUID) }
 
 type timroster struct {
 	Id         int64
-	Unikid     uint64 `idx:"1"`
+	Unikid     []byte `idx:"1"`
 	UUID       uint64 `idx:"1"`
 	TUUID      uint64
 	Timeseries int64 `idx:"1"`
@@ -71,7 +76,7 @@ func (this timroster) Tid() uint64 { return this.UUID }
 
 type timmucroster struct {
 	Id         int64
-	Unikid     uint64 `idx:"1"`
+	Unikid     []byte `idx:"1"`
 	UUID       uint64 `idx:"1"`
 	TUUID      uint64
 	Timeseries int64 `idx:"1"`
@@ -81,7 +86,7 @@ func (this timmucroster) Tid() uint64 { return this.UUID }
 
 type timblock struct {
 	Id         int64
-	UnikId     uint64 `idx:"1"`
+	UnikId     []byte `idx:"1"`
 	UUID       uint64 `idx:"1"`
 	TUUID      uint64
 	Timeseries int64 `idx:"1"`
@@ -91,7 +96,7 @@ func (this timblock) Tid() uint64 { return this.UUID }
 
 type timblockroom struct {
 	Id         int64
-	UnikId     uint64 `idx:"1"`
+	UnikId     []byte `idx:"1"`
 	UUID       uint64 `idx:"1"`
 	TUUID      uint64
 	Timeseries int64 `idx:"1"`
