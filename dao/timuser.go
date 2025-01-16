@@ -5,7 +5,7 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2024-10-06 20:30:14
+// datetime :2025-01-06 18:18:47
 // gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timuser
 
@@ -29,7 +29,7 @@ type Timuser struct {
 	TIMESERIES      *base.Field[Timuser]
 	_ID      *int64
 	_UUID      *int64
-	_PWD      *int64
+	_PWD      *string
 	_CREATETIME      *int64
 	_UBEAN      []byte
 	_TIMESERIES      *int64
@@ -68,14 +68,14 @@ func (u *Timuser) SetUuid(arg int64) *Timuser{
 	return u
 }
 
-func (u *Timuser) GetPwd() (_r int64){
+func (u *Timuser) GetPwd() (_r string){
 	if u._PWD != nil {
 		_r = *u._PWD
 	}
 	return
 }
 
-func (u *Timuser) SetPwd(arg int64) *Timuser{
+func (u *Timuser) SetPwd(arg string) *Timuser{
 	u.Put0(u.PWD.FieldName, arg)
 	u._PWD = &arg
 	return u
@@ -126,7 +126,7 @@ func (u *Timuser) Scan(fieldname string, value any) {
 	case "uuid":
 		u.SetUuid(base.AsInt64(value))
 	case "pwd":
-		u.SetPwd(base.AsInt64(value))
+		u.SetPwd(base.AsString(value))
 	case "createtime":
 		u.SetCreatetime(base.AsInt64(value))
 	case "ubean":
