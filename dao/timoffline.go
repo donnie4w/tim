@@ -5,7 +5,7 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2024-10-06 20:30:14
+// datetime :2025-01-06 18:18:47
 // gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timoffline
 
@@ -29,7 +29,7 @@ type Timoffline struct {
 	TIMESERIES      *base.Field[Timoffline]
 	_ID      *int64
 	_UUID      *int64
-	_CHATID      *int64
+	_CHATID      []byte
 	_STANZA      []byte
 	_MID      *int64
 	_TIMESERIES      *int64
@@ -68,16 +68,14 @@ func (u *Timoffline) SetUuid(arg int64) *Timoffline{
 	return u
 }
 
-func (u *Timoffline) GetChatid() (_r int64){
-	if u._CHATID != nil {
-		_r = *u._CHATID
-	}
+func (u *Timoffline) GetChatid() (_r []byte){
+	_r = u._CHATID
 	return
 }
 
-func (u *Timoffline) SetChatid(arg int64) *Timoffline{
+func (u *Timoffline) SetChatid(arg []byte) *Timoffline{
 	u.Put0(u.CHATID.FieldName, arg)
-	u._CHATID = &arg
+	u._CHATID = arg
 	return u
 }
 
@@ -126,7 +124,7 @@ func (u *Timoffline) Scan(fieldname string, value any) {
 	case "uuid":
 		u.SetUuid(base.AsInt64(value))
 	case "chatid":
-		u.SetChatid(base.AsInt64(value))
+		u.SetChatid(base.AsBytes(value))
 	case "stanza":
 		u.SetStanza(base.AsBytes(value))
 	case "mid":
