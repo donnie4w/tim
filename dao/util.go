@@ -7,6 +7,8 @@
 
 package dao
 
+import "github.com/donnie4w/gofer/util"
+
 func (u *Timblock) Tid() uint64 {
 	return uint64(u.GetUuid())
 }
@@ -24,11 +26,11 @@ func (u *Timroster) Tid() uint64 {
 }
 
 func (u *Timmessage) Tid() uint64 {
-	return uint64(u.GetChatid())
+	return util.FNVHash64(u.GetChatid())
 }
 
 func (u *Timrelate) Tid() uint64 {
-	return uint64(u.GetUuid())
+	return util.FNVHash64(u.GetUuid())
 }
 
 func (u *Timmucroster) Tid() uint64 {
