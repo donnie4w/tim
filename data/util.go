@@ -14,12 +14,13 @@ import (
 	"strconv"
 	"time"
 
-	. "github.com/donnie4w/gofer/lock"
+	"github.com/donnie4w/gofer/lock"
 	"github.com/donnie4w/tim/sys"
 )
 
 var Service service
-var numlock = NewNumLock(1 << 8)
+var numlock = lock.NewNumLock(1 << 9)
+var strlock = lock.NewStrlock(1 << 9)
 
 func getService() service {
 	switch sys.GetDBMOD() {
@@ -36,7 +37,7 @@ func getService() service {
 }
 
 func init() {
-	sys.Service.Put(sys.INIT_DATA, (serv(1)))
+	sys.Service(sys.INIT_DATA, serv(1))
 }
 
 type serv byte
