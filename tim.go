@@ -4,20 +4,19 @@
 // license that can be found in the LICENSE file.
 //
 // github.com/donnie4w/tim
-//
 
 package main
 
 import (
 	_ "github.com/donnie4w/tim/data"
+	_ "github.com/donnie4w/tim/inet"
 	_ "github.com/donnie4w/tim/keystore"
-	_ "github.com/donnie4w/tim/level1"
 	_ "github.com/donnie4w/tim/service"
 	. "github.com/donnie4w/tim/sys"
 	_ "github.com/donnie4w/tim/tc"
-	_ "github.com/donnie4w/tim/timnet"
+	_ "github.com/donnie4w/tim/trans"
 )
 
 func main() {
-	Tim.Serve()
+	Start()
 }
