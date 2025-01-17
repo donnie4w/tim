@@ -21,12 +21,16 @@ type csNet interface {
 	TimStream(syncId int64, vb *stub.VBean) (err error)
 	TimCsVBean(syncId int64, vb *stub.CsVrBean) (err error)
 	TimAck(syncId int64) (err error)
+	TimCsDevice(syncId int64, vb *stub.CsDevice) (err error)
+	TimCsDeviceAck(syncId int64, vb *stub.CsDevice) (err error)
 }
 
 const (
-	TIMMESSAGE  byte = 1
-	TIMPRESENCE byte = 2
-	TIMSTREAM   byte = 3
-	TIMCSVBEAN  byte = 4
-	TIMACK      byte = 5
+	TIMMESSAGE     byte = 1
+	TIMPRESENCE    byte = 2
+	TIMSTREAM      byte = 3
+	TIMCSVBEAN     byte = 4
+	TIMACK         byte = 5
+	TIMCSDEVICE    byte = 6
+	TIMCSDEVICEACK byte = 7
 )
