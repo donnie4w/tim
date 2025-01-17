@@ -8,16 +8,15 @@
 package tc
 
 import (
+	goutil "github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/errs"
-	"net/http"
-	"strconv"
-	"strings"
-
-	. "github.com/donnie4w/gofer/util"
-	. "github.com/donnie4w/tim/stub"
+	"github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
 	"github.com/donnie4w/tlnet"
+	"net/http"
+	"strconv"
+	"strings"
 )
 
 func timTokenHandler(hc *tlnet.HttpContext) {
@@ -44,7 +43,7 @@ func timTokenHandler(hc *tlnet.HttpContext) {
 		}
 	} else {
 		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
+		if t, err := goutil.JsonDecode[tk](bs); err == nil {
 			nodeOrName = t.Name
 			if t.Domain != "" {
 				domain = &t.Domain
@@ -55,45 +54,45 @@ func timTokenHandler(hc *tlnet.HttpContext) {
 		}
 	}
 
-	var ta *TimAck
+	var ta *stub.TimAck
 	if nodeOrName != "" {
 		if t, n, err := sys.OsToken(nodeOrName, password, domain); err == nil {
-			ta = &TimAck{Ok: true, TimType: int8(sys.TIMTOKEN), N: &n, T: &t}
+			ta = &stub.TimAck{Ok: true, TimType: int8(sys.TIMTOKEN), N: &n, N2: &t}
 		} else {
-			ta = &TimAck{Ok: false, TimType: int8(sys.TIMTOKEN), Error: err.TimError()}
+			ta = &stub.TimAck{Ok: false, TimType: int8(sys.TIMTOKEN), Error: err.TimError()}
 		}
 	} else {
-		ta = &TimAck{Ok: false, TimType: int8(sys.TIMTOKEN), Error: errs.ERR_PARAMS.TimError()}
+		ta = &stub.TimAck{Ok: false, TimType: int8(sys.TIMTOKEN), Error: errs.ERR_PARAMS.TimError()}
 	}
-	hc.ResponseBytes(http.StatusOK, JsonEncode(ta))
+	hc.ResponseBytes(http.StatusOK, goutil.JsonEncode(ta))
 }
 
 func timOsMessageHandler(hc *tlnet.HttpContext) {
 	defer util.Recover()
 	type tk struct {
-		Nodes   []string    `json:"nodes"`
-		Message *TimMessage `json:"message"`
+		Nodes   []string         `json:"nodes"`
+		Message *stub.TimMessage `json:"message"`
 	}
 	var nodes []string
-	var message *TimMessage
+	var message *stub.TimMessage
 
 	if reqform(hc) {
-		nodes, _ = JsonDecode[[]string]([]byte(hc.PostParam("nodes")))
-		message, _ = JsonDecode[*TimMessage]([]byte(hc.PostParam("message")))
+		nodes, _ = goutil.JsonDecode[[]string]([]byte(hc.PostParam("nodes")))
+		message, _ = goutil.JsonDecode[*stub.TimMessage]([]byte(hc.PostParam("message")))
 	} else {
 		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
+		if t, err := goutil.JsonDecode[tk](bs); err == nil {
 			nodes = t.Nodes
 			message = t.Message
 		}
 	}
 
 	if err := sys.OsMessage(nodes, message); err == nil {
-		tk := &TimAck{Ok: true}
-		hc.ResponseString(string(JsonEncode(tk)))
+		tk := &stub.TimAck{Ok: true}
+		hc.ResponseString(string(goutil.JsonEncode(tk)))
 	} else {
-		tk := &TimAck{Ok: false, Error: err.TimError()}
-		hc.ResponseString(string(JsonEncode(tk)))
+		tk := &stub.TimAck{Ok: false, Error: err.TimError()}
+		hc.ResponseString(string(goutil.JsonEncode(tk)))
 	}
 }
 
@@ -103,14 +102,14 @@ func timMessageHandler(hc *tlnet.HttpContext) {
 	if id, err := strconv.ParseInt(hc.ReqInfo.Header.Get("id"), 10, 64); err == nil {
 		if ws, b := sys.WsById(id); b {
 			if err := sys.MessageHandle(bs, ws); err == nil {
-				tk := &TimAck{Ok: true}
-				hc.ResponseString(string(JsonEncode(tk)))
+				tk := &stub.TimAck{Ok: true}
+				hc.ResponseString(string(goutil.JsonEncode(tk)))
 				return
 			}
 		}
 	}
-	tk := &TimAck{Ok: false, Error: errs.ERR_PARAMS.TimError()}
-	hc.ResponseString(string(JsonEncode(tk)))
+	tk := &stub.TimAck{Ok: false, Error: errs.ERR_PARAMS.TimError()}
+	hc.ResponseString(string(goutil.JsonEncode(tk)))
 }
 
 func timRegisterHandler(hc *tlnet.HttpContext) {
@@ -132,7 +131,7 @@ func timRegisterHandler(hc *tlnet.HttpContext) {
 		}
 	} else {
 		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
+		if t, err := goutil.JsonDecode[tk](bs); err == nil {
 			username = t.Username
 			password = t.Password
 			domain = t.Domain
@@ -140,11 +139,11 @@ func timRegisterHandler(hc *tlnet.HttpContext) {
 	}
 
 	if node, err := sys.OsRegister(username, password, domain); err == nil {
-		tk := &TimAck{Ok: true, N: &node}
-		hc.ResponseString(string(JsonEncode(tk)))
+		tk := &stub.TimAck{Ok: true, N: &node}
+		hc.ResponseString(string(goutil.JsonEncode(tk)))
 	} else {
-		tk := &TimAck{Ok: false, Error: err.TimError()}
-		hc.ResponseString(string(JsonEncode(tk)))
+		tk := &stub.TimAck{Ok: false, Error: err.TimError()}
+		hc.ResponseString(string(goutil.JsonEncode(tk)))
 	}
 }
 
@@ -163,21 +162,21 @@ func timBlockUserHandler(hc *tlnet.HttpContext) {
 		if i, e := strconv.Atoi(t); e == nil {
 			_time = int64(i)
 		} else {
-			hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, N: &account, Error: errs.ERR_PARAMS.TimError()})))
+			hc.ResponseString(string(goutil.JsonEncode(&stub.TimAck{Ok: false, N: &account, Error: errs.ERR_PARAMS.TimError()})))
 		}
 	} else {
 		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
+		if t, err := goutil.JsonDecode[tk](bs); err == nil {
 			account = t.Account
 			_time = t.Time
 		}
 	}
 
 	if sys.HasNode(account) {
-		sys.SendNode(account, &TimAck{Ok: true, TimType: int8(sys.TIMLOGOUT)}, sys.TIMACK)
+		sys.SendNode(account, &stub.TimAck{Ok: true, TimType: int8(sys.TIMLOGOUT)}, sys.TIMACK)
 	}
 	sys.OsBlockUser(account, int64(_time))
-	hc.ResponseString(string(JsonEncode(&TimAck{Ok: true, N: &account})))
+	hc.ResponseString(string(goutil.JsonEncode(&stub.TimAck{Ok: true, N: &account})))
 }
 
 func timResetAuthHandler(hc *tlnet.HttpContext) {
@@ -198,21 +197,21 @@ func timResetAuthHandler(hc *tlnet.HttpContext) {
 		pwd = hc.PostParam("pwd")
 	} else {
 		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
+		if t, err := goutil.JsonDecode[tk](bs); err == nil {
 			loginname = t.Loginname
 			domain = t.Domain
 			pwd = t.Pwd
 		}
 	}
 	if loginname == "" || pwd == "" {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, N: &loginname, Error: errs.ERR_PARAMS.TimError()})))
+		hc.ResponseString(string(goutil.JsonEncode(&stub.TimAck{Ok: false, N: &loginname, Error: errs.ERR_PARAMS.TimError()})))
 		return
 	}
 	node := util.UUIDToNode(util.CreateUUID(loginname, domain))
 	if err := sys.OsModify(node, nil, pwd, domain); err == nil {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: true, N: &loginname})))
+		hc.ResponseString(string(goutil.JsonEncode(&stub.TimAck{Ok: true, N: &loginname})))
 	} else {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, Error: err.TimError()})))
+		hc.ResponseString(string(goutil.JsonEncode(&stub.TimAck{Ok: false, Error: err.TimError()})))
 	}
 }
 
@@ -240,7 +239,7 @@ func timNewRoomHandler(hc *tlnet.HttpContext) {
 		}
 	} else {
 		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
+		if t, err := goutil.JsonDecode[tk](bs); err == nil {
 			node = t.Node
 			domain = t.Domain
 			gtype = t.Gtype
@@ -248,9 +247,9 @@ func timNewRoomHandler(hc *tlnet.HttpContext) {
 		}
 	}
 	if gnode, err := sys.OsRoom(node, topic, domain, gtype); err == nil {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: true, N: &gnode})))
+		hc.ResponseString(string(goutil.JsonEncode(&stub.TimAck{Ok: true, N: &gnode})))
 	} else {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, Error: err.TimError()})))
+		hc.ResponseString(string(goutil.JsonEncode(&stub.TimAck{Ok: false, Error: err.TimError()})))
 	}
 }
 
@@ -258,45 +257,39 @@ func timModifyRoomInfoHandler(hc *tlnet.HttpContext) {
 	defer util.Recover()
 	var unode string
 	var gnode string
-	var trb *TimRoomBean
+	var trb *stub.TimRoomBean
 	type tk struct {
-		Unode    string       `json:"unode"`
-		Gnode    string       `json:"gnode"`
-		RoomBean *TimRoomBean `json:"roombean"`
+		Unode    string            `json:"unode"`
+		Gnode    string            `json:"gnode"`
+		RoomBean *stub.TimRoomBean `json:"roombean"`
 	}
 	if reqform(hc) {
 		unode, gnode = hc.PostParam("unode"), hc.PostParam("gnode")
-		trb, _ = JsonDecode[*TimRoomBean]([]byte(hc.PostParam("roombean")))
+		trb, _ = goutil.JsonDecode[*stub.TimRoomBean]([]byte(hc.PostParam("roombean")))
 	} else {
 		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
+		if t, err := goutil.JsonDecode[tk](bs); err == nil {
 			unode = t.Unode
 			gnode = t.Gnode
 			trb = t.RoomBean
 		}
 	}
 	if unode == "" || gnode == "" {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, Error: errs.ERR_PARAMS.TimError()})))
+		hc.ResponseString(string(goutil.JsonEncode(&stub.TimAck{Ok: false, Error: errs.ERR_PARAMS.TimError()})))
 		return
 	}
 	if err := sys.OsRoomBean(unode, gnode, trb); err == nil {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: true})))
+		hc.ResponseString(string(goutil.JsonEncode(&stub.TimAck{Ok: true})))
 	} else {
-		hc.ResponseString(string(JsonEncode(&TimAck{Ok: false, Error: err.TimError()})))
+		hc.ResponseString(string(goutil.JsonEncode(&stub.TimAck{Ok: false, Error: err.TimError()})))
 	}
-}
-
-// list of block
-func timBlockListHandler(hc *tlnet.HttpContext) {
-	defer util.Recover()
-	hc.ResponseString(string(JsonEncode(sys.OsBlockList())))
 }
 
 // list of online users
 func timOnlineHandler(hc *tlnet.HttpContext) {
 	defer util.Recover()
 	tidlist, _ := sys.WssList(0, 0)
-	hc.ResponseString(string(JsonEncode(tidlist)))
+	hc.ResponseString(string(goutil.JsonEncode(tidlist)))
 }
 
 // vroom operation
@@ -315,45 +308,45 @@ func timVroomHandler(hc *tlnet.HttpContext) {
 		}
 	} else {
 		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
+		if t, err := goutil.JsonDecode[tk](bs); err == nil {
 			node = t.Node
 			rtype = t.Rtype
 		}
 	}
 	if node != "" && rtype > 0 {
 		if _r := sys.OsVroomprocess(node, rtype); _r != "" {
-			hc.ResponseString(string(JsonEncode(&TimAck{Ok: true, N: &_r})))
+			hc.ResponseString(string(goutil.JsonEncode(&stub.TimAck{Ok: true, N: &_r})))
 			return
 		}
 	}
-	hc.ResponseString(string(JsonEncode(&TimAck{Ok: false})))
+	hc.ResponseString(string(goutil.JsonEncode(&stub.TimAck{Ok: false})))
 }
 
 // modify user info
 func timModifyUserInfoHnadler(hc *tlnet.HttpContext) {
 	defer util.Recover()
 	type tk struct {
-		Node     string       `json:"node"`
-		UserBean *TimUserBean `json:"userbean"`
+		Node     string            `json:"node"`
+		UserBean *stub.TimUserBean `json:"userbean"`
 	}
 	var node string
-	var userBean *TimUserBean
+	var userBean *stub.TimUserBean
 	if reqform(hc) {
 		node = hc.PostParamTrimSpace("node")
-		userBean, _ = JsonDecode[*TimUserBean]([]byte(hc.PostParam("userbean")))
+		userBean, _ = goutil.JsonDecode[*stub.TimUserBean]([]byte(hc.PostParam("userbean")))
 	} else {
 		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
+		if t, err := goutil.JsonDecode[tk](bs); err == nil {
 			node = t.Node
 			userBean = t.UserBean
 		}
 	}
 	if err := sys.OsUserBean(node, userBean); err == nil {
-		tk := &TimAck{Ok: true}
-		hc.ResponseString(string(JsonEncode(tk)))
+		tk := &stub.TimAck{Ok: true}
+		hc.ResponseString(string(goutil.JsonEncode(tk)))
 	} else {
-		tk := &TimAck{Ok: false, Error: err.TimError()}
-		hc.ResponseString(string(JsonEncode(tk)))
+		tk := &stub.TimAck{Ok: false, Error: err.TimError()}
+		hc.ResponseString(string(goutil.JsonEncode(tk)))
 	}
 }
 
@@ -370,7 +363,7 @@ func timDetectHandler(hc *tlnet.HttpContext) {
 		}
 	} else {
 		bs := hc.RequestBody()
-		if t, err := JsonDecode[tk](bs); err == nil {
+		if t, err := goutil.JsonDecode[tk](bs); err == nil {
 			nodes = t.Nodes
 		}
 	}
