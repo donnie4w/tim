@@ -9,13 +9,12 @@ package tc
 
 import (
 	"encoding/json"
-	"runtime"
-	"time"
-
 	"github.com/donnie4w/tim/sys"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/mem"
+	"runtime"
+	"time"
 )
 
 type dataMonitor struct {
@@ -31,8 +30,8 @@ func getDataMonitor() (dm *dataMonitor) {
 	dm.Input = sys.Stat.Ibs()
 	dm.Output = sys.Stat.Obs()
 	dm.Online = sys.WssLen()
-	dm.OnlineTotal = sys.WssTt()
-	dm.Unaccess = sys.Unaccess()
+	//dm.OnlineTotal = sys.WssTt()
+	//dm.Unaccess = sys.Unaccess()
 	return
 }
 
