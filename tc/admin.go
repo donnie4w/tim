@@ -9,54 +9,55 @@ package tc
 
 import (
 	"fmt"
+	"github.com/donnie4w/gofer/hashmap"
+	KS "github.com/donnie4w/gofer/keystore"
+	goutil "github.com/donnie4w/gofer/util"
+	"github.com/donnie4w/tim/keystore"
 	"github.com/donnie4w/tim/log"
-	"net/http"
-	"os"
-	"sort"
-	"strconv"
-	"strings"
-	"time"
-
-	. "github.com/donnie4w/gofer/hashmap"
-	tldbKs "github.com/donnie4w/gofer/keystore"
-	. "github.com/donnie4w/gofer/util"
-	. "github.com/donnie4w/tim/keystore"
-
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
 	"github.com/donnie4w/tlnet"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func init() {
-	sys.Service.Put(sys.INIT_TC, adminservice)
+	sys.Service(sys.INIT_TC, newAdminService())
 }
 
 type adminService struct {
 	isClose bool
-	tlAdmin *tlnet.Tlnet
+	server  *tlnet.Tlnet
 }
 
-var adminservice = &adminService{false, tlnet.NewTlnet()}
+func newAdminService() *adminService {
+	return &adminService{false, tlnet.NewTlnet()}
+}
 
 func (t *adminService) Serve() (err error) {
-	if strings.TrimSpace(sys.DEBUGADDR) != "" {
+	if strings.TrimSpace(sys.Conf.PprofAddr) != "" {
 		go tlDebug()
 		<-time.After(500 * time.Millisecond)
 	}
-	if sys.Conf.Init {
-		initAccount()
-	}
-	if strings.TrimSpace(sys.WEBADMINADDR) != "" {
-		go t._serve(strings.TrimSpace(sys.WEBADMINADDR), sys.Conf.AdminTls, sys.Conf.Ssl_crt, sys.Conf.Ssl_crt_key)
+	if sys.Conf.WebAdminListen != "" {
+		if !sys.Conf.NoInit {
+			initAccount()
+		}
+		go t._serve(strings.TrimSpace(sys.Conf.WebAdminListen), !sys.Conf.WebAdminNoTls, sys.Conf.Ssl_crt, sys.Conf.Ssl_crt_key)
+	} else {
+		log.FmtPrint("No WebAdmin Service")
 	}
 	return
 }
 
 func (t *adminService) Close() (err error) {
 	defer util.Recover()
-	if strings.TrimSpace(sys.WEBADMINADDR) != "" {
+	if sys.Conf.WebAdminListen != "" {
 		t.isClose = true
-		err = t.tlAdmin.Close()
+		err = t.server.Close()
 	}
 	return
 }
@@ -64,79 +65,78 @@ func (t *adminService) Close() (err error) {
 func (t *adminService) _serve(addr string, TLS bool, serverCrt, serverKey string) (err error) {
 	defer util.Recover()
 	if addr, err = util.ParseAddr(addr); err != nil {
-		return
+		log.FmtPrint("WebAdmin Service ParseAddr error:", err.Error())
+		os.Exit(1)
 	}
-	sys.WEBADMINADDR = addr
-	t.tlAdmin.Handle("/login", loginHandler)
-	t.tlAdmin.Handle("/init", initHandler)
-	t.tlAdmin.Handle("/lang", langHandler)
-	t.tlAdmin.Handle("/", initHandler)
-	t.tlAdmin.Handle("/bootstrap.css", cssHandler)
-	t.tlAdmin.Handle("/bootstrap.min.js", jsHandler)
-	t.tlAdmin.HandleWithFilter("/sysvar", loginFilter(), sysVarHtml)
+	t.server.Handle("/login", loginHandler)
+	t.server.Handle("/init", initHandler)
+	t.server.Handle("/lang", langHandler)
+	t.server.Handle("/", initHandler)
+	t.server.Handle("/bootstrap.css", cssHandler)
+	t.server.Handle("/bootstrap.min.js", jsHandler)
+	t.server.HandleWithFilter("/sysvar", loginFilter(), sysVarHtml)
 
-	t.tlAdmin.HandleWithFilter("/timResetAuth", authFilter(), timResetAuthHandler)
-	t.tlAdmin.HandleWithFilter("/timToken", authFilter(), timTokenHandler)
-	t.tlAdmin.HandleWithFilter("/timOsMessage", authFilter(), timOsMessageHandler)
-	t.tlAdmin.HandleWithFilter("/timMessage", authFilter(), timMessageHandler)
-	t.tlAdmin.HandleWithFilter("/timRegister", authFilter(), timRegisterHandler)
-	t.tlAdmin.HandleWithFilter("/timModifyUserInfo", authFilter(), timModifyUserInfoHnadler)
-	t.tlAdmin.HandleWithFilter("/timBlockUser", authFilter(), timBlockUserHandler)
-	t.tlAdmin.HandleWithFilter("/timBlockList", authFilter(), timBlockListHandler)
-	t.tlAdmin.HandleWithFilter("/timOnline", authFilter(), timOnlineHandler)
-	t.tlAdmin.HandleWithFilter("/timVroom", authFilter(), timVroomHandler)
-	t.tlAdmin.HandleWithFilter("/timNewRoom", authFilter(), timNewRoomHandler)
-	t.tlAdmin.HandleWithFilter("/timDetect", authFilter(), timDetectHandler)
-	t.tlAdmin.HandleWithFilter("/timModifyRoomInfo", authFilter(), timModifyRoomInfoHandler)
-	t.tlAdmin.HandleWithFilter("/timAddroster", authFilter(), timAddrosterHandler)
-	t.tlAdmin.HandleWithFilter("/timRmroster", authFilter(), timRmrosterHandler)
-	t.tlAdmin.HandleWithFilter("/timBlockroster", authFilter(), timBlockrosterHandler)
-	t.tlAdmin.HandleWithFilter("/timBlockRosterList", authFilter(), timBlockRosterListHandler)
-	t.tlAdmin.HandleWithFilter("/timAddRoom", authFilter(), timAddRoomHandler)
-	t.tlAdmin.HandleWithFilter("/timPullInRoom", authFilter(), timPullInRoomHandler)
-	t.tlAdmin.HandleWithFilter("/timRejectRoom", authFilter(), timRejectRoomHandler)
-	t.tlAdmin.HandleWithFilter("/timKickRoom", authFilter(), timKickRoomHandler)
-	t.tlAdmin.HandleWithFilter("/timLeaveRoom", authFilter(), timLeaveRoomHandler)
-	t.tlAdmin.HandleWithFilter("/timCancelRoom", authFilter(), timCancelRoomHandler)
-	t.tlAdmin.HandleWithFilter("/timBlockRoom", authFilter(), timBlockRoomHandler)
-	t.tlAdmin.HandleWithFilter("/timBlockRoomMember", authFilter(), timBlockRoomMemberHandler)
-	t.tlAdmin.HandleWithFilter("/timBlockRoomList", authFilter(), timBlockRoomListHandler)
-	t.tlAdmin.HandleWithFilter("/timBlockRoomMemberlist", authFilter(), timBlockRoomMemberlistHandler)
+	t.server.HandleWithFilter("/timResetAuth", authFilter(), timResetAuthHandler)
+	t.server.HandleWithFilter("/timToken", authFilter(), timTokenHandler)
+	t.server.HandleWithFilter("/timOsMessage", authFilter(), timOsMessageHandler)
+	t.server.HandleWithFilter("/timMessage", authFilter(), timMessageHandler)
+	t.server.HandleWithFilter("/timRegister", authFilter(), timRegisterHandler)
+	t.server.HandleWithFilter("/timModifyUserInfo", authFilter(), timModifyUserInfoHnadler)
+	t.server.HandleWithFilter("/timBlockUser", authFilter(), timBlockUserHandler)
+	t.server.HandleWithFilter("/timOnline", authFilter(), timOnlineHandler)
+	t.server.HandleWithFilter("/timVroom", authFilter(), timVroomHandler)
+	t.server.HandleWithFilter("/timNewRoom", authFilter(), timNewRoomHandler)
+	t.server.HandleWithFilter("/timDetect", authFilter(), timDetectHandler)
+	t.server.HandleWithFilter("/timModifyRoomInfo", authFilter(), timModifyRoomInfoHandler)
+	t.server.HandleWithFilter("/timAddroster", authFilter(), timAddrosterHandler)
+	t.server.HandleWithFilter("/timRmroster", authFilter(), timRmrosterHandler)
+	t.server.HandleWithFilter("/timBlockroster", authFilter(), timBlockrosterHandler)
+	t.server.HandleWithFilter("/timBlockRosterList", authFilter(), timBlockRosterListHandler)
+	t.server.HandleWithFilter("/timAddRoom", authFilter(), timAddRoomHandler)
+	t.server.HandleWithFilter("/timPullInRoom", authFilter(), timPullInRoomHandler)
+	t.server.HandleWithFilter("/timRejectRoom", authFilter(), timRejectRoomHandler)
+	t.server.HandleWithFilter("/timKickRoom", authFilter(), timKickRoomHandler)
+	t.server.HandleWithFilter("/timLeaveRoom", authFilter(), timLeaveRoomHandler)
+	t.server.HandleWithFilter("/timCancelRoom", authFilter(), timCancelRoomHandler)
+	t.server.HandleWithFilter("/timBlockRoom", authFilter(), timBlockRoomHandler)
+	t.server.HandleWithFilter("/timBlockRoomMember", authFilter(), timBlockRoomMemberHandler)
+	t.server.HandleWithFilter("/timBlockRoomList", authFilter(), timBlockRoomListHandler)
+	t.server.HandleWithFilter("/timBlockRoomMemberlist", authFilter(), timBlockRoomMemberlistHandler)
 
-	t.tlAdmin.HandleWithFilter("/monitor", loginFilter(), monitorHtml)
-	t.tlAdmin.HandleWebSocketBindConfig("/monitorData", mntHandler, mntConfig())
-	t.tlAdmin.HandleWithFilter("/data", loginFilter(), dataMonitorHtml)
-	t.tlAdmin.HandleWebSocketBindConfig("/ddmonitorData", ddmntHandler, ddmntConfig())
+	t.server.HandleWithFilter("/monitor", loginFilter(), monitorHtml)
+	t.server.HandleWebSocketBindConfig("/monitorData", mntHandler, mntConfig())
+	t.server.HandleWithFilter("/data", loginFilter(), dataMonitorHtml)
+	t.server.HandleWebSocketBindConfig("/ddmonitorData", ddmntHandler, ddmntConfig())
 
-	t.tlAdmin.HandleWebSocketBindConfig("/tim", wsAdmHandler, wsAdmConfig())
+	t.server.HandleWebSocketBindConfig("/tim", wsAdmHandler, wsAdmConfig())
 
 	if TLS {
-		if IsFileExist(serverCrt) && IsFileExist(serverKey) {
-			log.FmtPrint("webAdmin start tls [", addr, "]")
-			err = t.tlAdmin.HttpsStart(addr, serverCrt, serverKey)
+		if goutil.IsFileExist(serverCrt) && goutil.IsFileExist(serverKey) {
+			log.FmtPrint("WebAdmin Service start tls[", addr, "]")
+			err = t.server.HttpsStart(addr, serverCrt, serverKey)
 		} else {
-			log.FmtPrint("webAdmin start tls by bytes [", addr, "]")
-			err = t.tlAdmin.HttpsStartWithBytes(addr, []byte(tldbKs.ServerCrt), []byte(tldbKs.ServerKey))
+			log.FmtPrint("WebAdmin Service start tls by bytes[", addr, "]")
+			err = t.server.HttpsStartWithBytes(addr, []byte(KS.ServerCrt), []byte(KS.ServerKey))
 		}
 	}
 	if !t.isClose {
-		log.FmtPrint("webAdmin start [", addr, "]")
-		err = t.tlAdmin.HttpStart(addr)
+		log.FmtPrint("WebAdmin Service start[", addr, "]")
+		err = t.server.HttpStart(addr)
 	}
 	if !t.isClose && err != nil {
-		log.FmtPrint("webAdmin start failed:", err.Error())
+		log.FmtPrint("WebAdmin Service start failed:", err.Error())
 		os.Exit(1)
 	}
 	return
 }
 
-var sessionMap = NewMapL[string, *tldbKs.UserBean]()
+var sessionMap = hashmap.NewMapL[string, *KS.UserBean]()
 
 func loginFilter() (f *tlnet.Filter) {
 	defer util.Recover()
 	f = tlnet.NewFilter()
 	f.AddIntercept(".*?", func(hc *tlnet.HttpContext) bool {
-		if len(Admin.AdminList()) > 0 {
+		if len(keystore.Admin.AdminList()) > 0 {
 			if !isLogin(hc) {
 				hc.Redirect("/login")
 				return true
@@ -164,8 +164,8 @@ func authFilter() (f *tlnet.Filter) {
 	f.AddIntercept(".*?", func(hc *tlnet.HttpContext) bool {
 		name := hc.Request().Header.Get("username")
 		pwd := hc.Request().Header.Get("password")
-		if _r, ok := Admin.GetAdmin(name); ok {
-			if strings.EqualFold(_r.Pwd, Md5Str(pwd)) {
+		if _r, ok := keystore.Admin.GetAdmin(name); ok {
+			if strings.EqualFold(_r.Pwd, goutil.Md5Str(pwd)) {
 				return false
 			}
 		}
@@ -176,15 +176,15 @@ func authFilter() (f *tlnet.Filter) {
 }
 
 func getSessionid() string {
-	return fmt.Sprint("t", CRC32(Int64ToBytes(sys.UUID)))
+	return fmt.Sprint("t", goutil.CRC32(goutil.Int64ToBytes(sys.UUID)))
 }
 
 func getLangId() string {
-	return fmt.Sprint("l", CRC32(Int64ToBytes(sys.UUID)))
+	return fmt.Sprint("l", goutil.CRC32(goutil.Int64ToBytes(sys.UUID)))
 }
 
 func isLogin(hc *tlnet.HttpContext) (isLogin bool) {
-	if len(Admin.AdminList()) > 0 {
+	if len(keystore.Admin.AdminList()) > 0 {
 		if _r, err := hc.GetCookie(getSessionid()); err == nil && sessionMap.Has(_r) {
 			isLogin = true
 		}
@@ -239,7 +239,7 @@ func initHandler(hc *tlnet.HttpContext) {
 			hc.ResponseString(resultHtml("server error:", err))
 		}
 	}()
-	if len(Admin.AdminList()) > 0 && !isLogin(hc) {
+	if len(keystore.Admin.AdminList()) > 0 && !isLogin(hc) {
 		hc.Redirect("/login")
 		return
 	}
@@ -247,7 +247,7 @@ func initHandler(hc *tlnet.HttpContext) {
 		isadmin := isAdmin(hc)
 		if _type == "1" {
 			if name, pwd, _type := hc.PostParamTrimSpace("adminName"), hc.PostParamTrimSpace("adminPwd"), hc.PostParamTrimSpace("adminType"); name != "" && pwd != "" {
-				if n := len(Admin.AdminList()); (n > 0 && isadmin) || n == 0 {
+				if n := len(keystore.Admin.AdminList()); (n > 0 && isadmin) || n == 0 {
 					alterType := false
 					if t, err := strconv.Atoi(_type); err == nil {
 						if _r, err := hc.GetCookie(getSessionid()); err == nil && sessionMap.Has(_r) {
@@ -256,7 +256,7 @@ func initHandler(hc *tlnet.HttpContext) {
 							}
 						}
 						if !alterType {
-							Admin.PutAdmin(name, pwd, int8(t))
+							keystore.Admin.PutAdmin(name, pwd, int8(t))
 						}
 					}
 				} else {
@@ -266,10 +266,10 @@ func initHandler(hc *tlnet.HttpContext) {
 		} else if _type == "2" && isLogin(hc) {
 			if isadmin {
 				if name := hc.PostParamTrimSpace("adminName"); name != "" {
-					if u, ok := Admin.GetAdmin(name); ok && u.Type == 1 {
+					if u, ok := keystore.Admin.GetAdmin(name); ok && u.Type == 1 {
 						i, j := 0, 0
-						for _, s := range Admin.AdminList() {
-							if _u, _ := Admin.GetAdmin(s); _u.Type == 1 {
+						for _, s := range keystore.Admin.AdminList() {
+							if _u, _ := keystore.Admin.GetAdmin(s); _u.Type == 1 {
 								i++
 							} else if _u.Type == 2 {
 								j++
@@ -280,8 +280,8 @@ func initHandler(hc *tlnet.HttpContext) {
 							return
 						}
 					}
-					Admin.DelAdmin(name)
-					sessionMap.Range(func(k string, v *tldbKs.UserBean) bool {
+					keystore.Admin.DelAdmin(name)
+					sessionMap.Range(func(k string, v *KS.UserBean) bool {
 						if v.Name == name {
 							sessionMap.Del(k)
 						}
@@ -310,9 +310,9 @@ func loginHandler(hc *tlnet.HttpContext) {
 	}()
 	if hc.PostParamTrimSpace("type") == "1" {
 		name, pwd := hc.PostParamTrimSpace("name"), hc.PostParamTrimSpace("pwd")
-		if _r, ok := Admin.GetAdmin(name); ok {
-			if strings.EqualFold(_r.Pwd, Md5Str(pwd)) {
-				sid := Md5Str(fmt.Sprint(time.Now().UnixNano()))
+		if _r, ok := keystore.Admin.GetAdmin(name); ok {
+			if strings.EqualFold(_r.Pwd, goutil.Md5Str(pwd)) {
+				sid := goutil.Md5Str(fmt.Sprint(time.Now().UnixNano()))
 				sessionMap.Put(sid, _r)
 				hc.SetCookie(getSessionid(), sid, "/", 86400)
 				hc.Redirect("/")
@@ -334,14 +334,14 @@ func initHtml(hc *tlnet.HttpContext) {
 	}()
 	_isAdmin := isAdmin(hc)
 	show, init, sc := "", false, _isAdmin
-	if len(Admin.AdminList()) == 0 {
+	if len(keystore.Admin.AdminList()) == 0 {
 		show, init, sc = "no user is created for admin, create a management user first", true, true
 	}
 	av := &AdminView{Show: show, Init: init, ShowCreate: sc}
 	if isLogin(hc) {
 		m := make(map[string]string, 0)
-		for _, s := range Admin.AdminList() {
-			if u, ok := Admin.GetAdmin(s); ok {
+		for _, s := range keystore.Admin.AdminList() {
+			if u, ok := keystore.Admin.GetAdmin(s); ok {
 				if _isAdmin && u.Type == 1 {
 					m[s] = "Admin"
 				} else if u.Type == 2 {
@@ -364,8 +364,8 @@ func loginHtml(hc *tlnet.HttpContext) {
 }
 
 func initAccount() {
-	if len(Admin.AdminList()) == 0 {
-		Admin.PutAdmin(sys.DefaultAccount[0], sys.DefaultAccount[1], 1)
+	if len(keystore.Admin.AdminList()) == 0 {
+		keystore.Admin.PutAdmin(sys.DefaultAccount[0], sys.DefaultAccount[1], 1)
 	}
 }
 
@@ -376,9 +376,9 @@ func sysVarHtml(hc *tlnet.HttpContext) {
 			hc.ResponseString(resultHtml("server error:", err))
 		}
 	}()
-	rn := sys.GetRemoteNode()
-	sort.Slice(rn, func(i, j int) bool { return rn[i].UUID > rn[j].UUID })
-	svv := &SysVarView{Show: "", RN: rn}
+	//rn := sys.GetRemoteNode()
+	//sort.Slice(rn, func(i, j int) bool { return rn[i].UUID > rn[j].UUID })
+	svv := &SysVarView{Show: "", RN: nil}
 	if _type := hc.PostParamTrimSpace("atype"); _type != "" {
 		if _type == "1" {
 			_addr := hc.PostParamTrimSpace("addr")
@@ -402,12 +402,12 @@ func sysvar() (s *SysVar) {
 	s.StartTime = fmt.Sprint(sys.STARTTIME)
 	s.Time = fmt.Sprint(time.Now())
 	s.UUID = sys.UUID
-	s.CSNUM = int32(len(sys.GetALLUUIDS()))
-	s.ADDR = fmt.Sprint(sys.CSADDR)
-	s.ADMINADDR = sys.WEBADMINADDR
-	aus := append([]int64{}, sys.GetALLUUIDS()...)
-	sort.Slice(aus, func(i, j int) bool { return aus[i] > aus[j] })
-	s.ALLUUIDS = fmt.Sprint(aus)
+	//s.CSNUM = int32(len(sys.GetALLUUIDS()))
+	s.ADDR = fmt.Sprint(sys.Conf.CsAccess)
+	s.ADMINADDR = sys.Conf.WebAdminListen
+	//aus := append([]int64{}, sys.GetALLUUIDS()...)
+	//sort.Slice(aus, func(i, j int) bool { return aus[i] > aus[j] })
+	//s.ALLUUIDS = fmt.Sprint(aus)
 	return
 }
 
