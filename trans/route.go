@@ -58,6 +58,20 @@ func router(bs []byte, cn csNet) (err error) {
 		if len(bs) <= 9 {
 			return cn.TimAck(util.BytesToInt64(bs[1:9]))
 		}
+	case TIMCSDEVICE:
+		if len(bs) <= 9 {
+			return cn.TimCsDevice(util.BytesToInt64(bs[1:9]), nil)
+		}
+		if p, err := util.TDecode[*stub.CsDevice](bs[9:], stub.NewCsDevice()); err == nil {
+			return cn.TimCsDevice(util.BytesToInt64(bs[1:9]), p)
+		}
+	case TIMCSDEVICEACK:
+		if len(bs) <= 9 {
+			return cn.TimCsDeviceAck(util.BytesToInt64(bs[1:9]), nil)
+		}
+		if p, err := util.TDecode[*stub.CsDevice](bs[9:], stub.NewCsDevice()); err == nil {
+			return cn.TimCsDeviceAck(util.BytesToInt64(bs[1:9]), p)
+		}
 	default:
 		err = fmt.Errorf("unknow command")
 	}
