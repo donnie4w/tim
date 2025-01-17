@@ -8,14 +8,13 @@
 package vgate
 
 import (
-	"github.com/donnie4w/tim/amr"
-	"sync"
-	"time"
-
 	"github.com/donnie4w/gofer/hashmap"
 	"github.com/donnie4w/gofer/lock"
+	"github.com/donnie4w/tim/amr"
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
+	"sync"
+	"time"
 )
 
 var VGate = &vgate{vmap: hashmap.NewMap[string, *VRoom](), mux: &sync.Mutex{}, umap: hashmap.NewMap[int64, *hashmap.Map[string, int8]](), strLock: lock.NewStrlock(1 << 7), numLock: lock.NewNumLock(1 << 7)}
@@ -42,8 +41,8 @@ func (vg *vgate) umapSub(wsId int64, vnode string) {
 	if m, ok := vg.umap.Get(wsId); ok {
 		m.Put(vnode, 0)
 	} else {
-		vg.numLock.Lock(wsId)
-		defer vg.numLock.Unlock(wsId)
+		lock := vg.numLock.Lock(wsId)
+		defer lock.Unlock()
 		if !vg.umap.Has(wsId) {
 			vg.umap.Put(wsId, hashmap.NewMap[string, int8]())
 		}
@@ -58,28 +57,28 @@ func (vg *vgate) Register(fnode, vnode string) (_r bool) {
 		return
 	}
 	if !vg.vmap.Has(vnode) {
-		v := &VRoom{vnode: vnode, subuuid: hashmap.NewMap[int64, int8](), subnode: hashmap.NewMapL[int64, int8](), FoundNode: fnode, lastupdatetime: time.Now().UnixNano()}
-		//if fnode != "" {
-		//	v.pushAuth.Put(fnode, 0)
-		//}
+		tt := time.Now().UnixNano()
+		v := &VRoom{vnode: vnode, subuuid: hashmap.NewMap[int64, int8](), subnode: hashmap.NewMapL[int64, int8](), FoundNode: fnode, lastupdatetime: tt}
 		vg.vmap.Put(vnode, v)
-		_r = true
-		vg.putAmr(vnode)
+		if putAmr(vnode) == nil {
+			v.amrtime = tt
+			_r = true
+		}
 	}
 	return
 }
 
 func (vg *vgate) rmVnode(vnode string) {
 	if vg.vmap.Del(vnode) {
-		vg.delAmr(vnode)
+		delAmr(vnode)
 	}
 }
 
-func (vg *vgate) putAmr(vnode string) {
-	amr.PutVnode(vnode, sys.UUID)
+func putAmr(vnode string) error {
+	return amr.PutVnode(vnode)
 }
 
-func (vg *vgate) delAmr(vnode string) {
+func delAmr(vnode string) {
 	amr.DelVnode(vnode)
 }
 
@@ -106,8 +105,8 @@ func (vg *vgate) _sub(vnode string, srcUuid int64, wsId int64, isBinary bool) {
 			vg.umapSub(wsId, vnode)
 		}
 	} else {
-		vg.strLock.Lock(vnode)
-		defer vg.strLock.Unlock(vnode)
+		lock := vg.strLock.Lock(vnode)
+		defer lock.Unlock()
 		if !vg.vmap.Has(vnode) {
 			v := &VRoom{vnode: vnode, subuuid: hashmap.NewMap[int64, int8](), subnode: hashmap.NewMapL[int64, int8](), lastupdatetime: time.Now().UnixNano()}
 			vg.vmap.Put(vnode, v)
@@ -216,6 +215,7 @@ type VRoom struct {
 	subnode *hashmap.MapL[int64, int8]
 	//pushAuth       *hashmap.Map[string, int8]
 	FoundNode      string
+	amrtime        int64
 	lastupdatetime int64
 }
 
@@ -258,11 +258,15 @@ func (vr *VRoom) delnode(wsId int64) {
 //}
 
 func (vr *VRoom) Expires() bool {
-	return vr.lastupdatetime+int64(time.Minute) < time.Now().UnixNano()
+	return vr.lastupdatetime+int64(5*time.Minute) < time.Now().UnixNano()
 }
 
 func (vr *VRoom) Updatetime() {
 	vr.lastupdatetime = time.Now().UnixNano()
+	if vr.lastupdatetime-vr.amrtime > int64(86400*time.Second)/2 {
+		vr.amrtime = vr.lastupdatetime
+		putAmr(vr.vnode)
+	}
 }
 
 func (vr *VRoom) SubMap() *hashmap.MapL[int64, int8] {
@@ -270,8 +274,5 @@ func (vr *VRoom) SubMap() *hashmap.MapL[int64, int8] {
 }
 
 func (vr *VRoom) AuthStream(node string) bool {
-	//if vr.pushAuth.Has(node) || vr.FoundNode == node {
-	//	return true
-	//}
 	return vr.FoundNode == node
 }
