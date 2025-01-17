@@ -18,10 +18,11 @@ import (
 )
 
 func init() {
-	sys.Service.Put(sys.INIT_TRANS, tw)
+	sys.Service(sys.INIT_TRANS, tw)
 	sys.CsMessageService = tw.CsMessageService
 	sys.CsPresenceService = tw.CsPresenceService
 	sys.CsVBeanService = tw.CsVBeanService
+	sys.CsDevice = tw.CsDevice
 }
 
 var tw = NewTransWare()
@@ -42,18 +43,28 @@ func NewTransWare() *TransWare {
 	tw.csmap = hashmap.NewMap[int64, csNet]()
 	tw.numlock = lock.NewNumLock(1 << 7)
 	tw.dataWait = lock.NewFastAwait[any]()
+	go tw.twTicker()
 	return tw
 }
 
 func (tw *TransWare) Serve() error {
-	tw.tserver = newTServer(tw)
-	go tw.tserver.serve(sys.Conf.CsListen)
-	tw.register()
+	if sys.GetCstype() != 0 {
+		tw.tserver = newTServer(tw)
+		go tw.tserver.serve(sys.Conf.CsListen)
+		tw.registerUuid()
+	}
 	return nil
 }
 
-func (tw *TransWare) register() {
-	amr.Put(util.Int64ToBytes(sys.UUID), []byte(sys.Conf.CsAddr), 60)
+func (tw *TransWare) registerUuid() {
+	defer util.Recover(nil)
+	for {
+		if amr.PutCsAccess() == nil {
+			break
+		} else {
+			time.Sleep(5 * time.Second)
+		}
+	}
 }
 
 func (tw *TransWare) Close() error {
@@ -123,7 +134,7 @@ func (tw *TransWare) CsVBeanService(uuid int64, vb *stub.VBean, sync bool) bool 
 		if sync {
 			syncId = util.UUID64()
 		}
-		switch sys.TIMTYPE(vb.GetDtype()) {
+		switch sys.TIMTYPE(vb.GetRtype()) {
 		case sys.VROOM_MESSAGE:
 			if cn.TimStream(syncId, vb) == nil {
 				if sync {
@@ -152,7 +163,6 @@ func (tw *TransWare) CsVBeanService(uuid int64, vb *stub.VBean, sync bool) bool 
 				}
 			}
 		}
-
 	}
 	return false
 }
@@ -163,7 +173,7 @@ func (tw *TransWare) getAndSetCsnet(uuid int64) csNet {
 		tw.numlock.Lock(uuid)
 		defer tw.numlock.Unlock(uuid)
 		if cn, b = tw.csmap.Get(uuid); !b {
-			if addr := string(amr.Get(util.Int64ToBytes(uuid))); addr != "" {
+			if addr := amr.GetCsAccess(uuid); addr != "" {
 				conn := newConnect(tw)
 				if conn.open(addr) == nil {
 					tw.csmap.Put(uuid, conn)
@@ -175,12 +185,34 @@ func (tw *TransWare) getAndSetCsnet(uuid int64) csNet {
 	return cn
 }
 
+func (tw *TransWare) CsDevice(node string) []byte {
+	if uuids := amr.GetAccount(node); len(uuids) > 0 {
+		for _, uuid := range uuids {
+			if uuid != sys.UUID {
+				if cn := tw.getAndSetCsnet(uuid); cn != nil {
+					syncId := util.UUID64()
+					if cn.TimCsDevice(syncId, &stub.CsDevice{Node: &node}) == nil {
+						if v, err := tw.dataWait.Wait(syncId, sys.WaitTimeout); err == nil && v != nil {
+							return v.(*stub.CsDevice).GetTypeList()
+						} else if err != nil {
+							cn.addNoAck()
+						}
+					} else {
+						return []byte{}
+					}
+				}
+			}
+		}
+	}
+	return []byte{}
+}
+
 func (tw *TransWare) twTicker() {
-	tk := time.NewTicker(30 * time.Second)
+	tk := time.NewTicker(time.Duration(sys.UUIDCSTIME*2/3) * time.Second)
 	for {
 		select {
 		case <-tk.C:
-			tw.register()
+			tw.registerUuid()
 		}
 	}
 }
