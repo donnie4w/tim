@@ -83,14 +83,14 @@ const (
                     <input name="adminName" placeholder="用户名" />
                     <input name="adminPwd" placeholder="密码" type="password" />
                     管理员<input name="adminType" type="radio" value="1" checked />
-                    {{if not .init}}
+                    {{if not .Init}}
                     观察员<input name="adminType" type="radio" value="2" />
                     {{end}}
                     <input type="submit" class="btn btn-primary" value="新建管理员" />
             </form>
         </div>
         {{end}}
-        {{if not .init}}
+        {{if not .Init}}
         <div class="container-fluid card mt-1 p-1">
             <div class="m-2">
                 <h6>后台管理员</h6>
