@@ -10,7 +10,6 @@ package trans
 import (
 	"context"
 	"fmt"
-	"github.com/donnie4w/raftx/rafterrors"
 	"github.com/donnie4w/tim/log"
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
@@ -30,6 +29,10 @@ func newTServer(transWare *TransWare) *tServer {
 }
 
 func (t *tServer) serve(listenAddr string) (err error) {
+	if listenAddr, err = util.ParseAddr(listenAddr); err != nil {
+		log.FmtPrint("Cluster tim Service ParseAddr error:", err.Error())
+		os.Exit(1)
+	}
 	defer util.Recover2(&err)
 	cfg := &tsf.TsfConfig{ListenAddr: listenAddr, TConfiguration: &tsf.TConfiguration{ProcessMerge: true}}
 	tc := &tsf.TContext{}
@@ -48,12 +51,12 @@ func (t *tServer) serve(listenAddr string) (err error) {
 	}
 	if t.server, err = tsf.NewTsf(cfg, tc); err == nil {
 		if err = t.server.Listen(); err == nil {
-			log.Info("raftx service listen ", listenAddr)
+			log.FmtPrint("Cluster tim service start [", listenAddr, "] ")
 			err = t.server.AcceptLoop()
 		}
 	}
-	if err != nil {
-		log.FmtPrint(fmt.Sprint("failed to start listener:", err))
+	if !t.isClose && err != nil {
+		log.Error("Cluster tim service failed:", err)
 		os.Exit(0)
 	}
 	return
@@ -99,7 +102,6 @@ func (c *connect) open(addr string) (err error) {
 	if err = conn.Open(); err == nil {
 		go conn.On(tx)
 	} else {
-		err = rafterrors.ErrConnectionFailed
 		return
 	}
 	to := time.After(time.Second)
@@ -108,7 +110,7 @@ func (c *connect) open(addr string) (err error) {
 	case <-to:
 		conn.Close()
 		log.Errorf("connect timeout: %s -> %s ", sys.Conf.CsListen, addr)
-		err = rafterrors.ErrNetworkTimeout
+		err = fmt.Errorf(fmt.Sprint("connect timeout: %s -> %s ", sys.Conf.CsListen, addr))
 	}
 	return
 }
