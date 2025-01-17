@@ -8,29 +8,25 @@
 package tc
 
 import (
-	"fmt"
 	"github.com/donnie4w/tim/log"
+	"github.com/donnie4w/tim/sys"
+	"github.com/donnie4w/tim/util"
 	"net/http"
 	_ "net/http/pprof"
 	"runtime"
-	"strings"
-
-	goutil "github.com/donnie4w/gofer/util"
-	"github.com/donnie4w/tim/sys"
-	"github.com/donnie4w/tim/util"
 )
 
 func tlDebug() {
 	defer util.Recover()
-	if sys.DEBUGADDR != "" {
+	if sys.Conf.PprofAddr != "" {
 		runtime.SetMutexProfileFraction(1)
 		runtime.SetBlockProfileRate(1)
-		if !strings.Contains(sys.DEBUGADDR, ":") && goutil.MatchString("^[0-9]{4,5}$", sys.DEBUGADDR) {
-			sys.DEBUGADDR = fmt.Sprint(":", sys.DEBUGADDR)
-		}
-		log.FmtPrint("Debug start[", sys.DEBUGADDR, "]")
-		if err := http.ListenAndServe(sys.DEBUGADDR, nil); err != nil {
-			log.FmtPrint("debug  start failed:" + err.Error())
+		var err error
+		if sys.Conf.PprofAddr, err = util.ParseAddr(sys.Conf.PprofAddr); err == nil {
+			log.FmtPrint("Http pprof Service start[", sys.Conf.PprofAddr, "]")
+			if err := http.ListenAndServe(sys.Conf.PprofAddr, nil); err != nil {
+				log.FmtPrint("Http pprof Service start failed:" + err.Error())
+			}
 		}
 	}
 }
