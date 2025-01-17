@@ -13,7 +13,6 @@ import (
 	"github.com/donnie4w/gothrift/thrift"
 	"github.com/donnie4w/tim/errs"
 	"github.com/donnie4w/tim/stub"
-
 	"github.com/donnie4w/tsf"
 	"sync"
 	"sync/atomic"
@@ -118,4 +117,12 @@ func (t *trans) TimAck(syncId int64) (err error) {
 		t.writeMessage(TIMACK, syncId, nil)
 	}
 	return nil
+}
+
+func (t *trans) TimCsDevice(syncId int64, cd *stub.CsDevice) (err error) {
+	return t.writeMessage(TIMCSDEVICE, syncId, cd)
+}
+
+func (t *trans) TimCsDeviceAck(syncId int64, cd *stub.CsDevice) (err error) {
+	return t.writeMessage(TIMCSDEVICEACK, syncId, cd)
 }
