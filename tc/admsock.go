@@ -8,27 +8,25 @@
 package tc
 
 import (
-	"github.com/donnie4w/tim/errs"
-	"sync/atomic"
-	"time"
-
-	. "github.com/donnie4w/gofer/buffer"
-	. "github.com/donnie4w/gofer/hashmap"
-	. "github.com/donnie4w/gofer/lock"
-	. "github.com/donnie4w/gofer/util"
+	"github.com/donnie4w/gofer/buffer"
+	"github.com/donnie4w/gofer/hashmap"
+	"github.com/donnie4w/gofer/lock"
+	goutil "github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/gothrift/thrift"
+	"github.com/donnie4w/tim/errs"
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
 	"github.com/donnie4w/tlnet"
+	"sync/atomic"
 )
 
-var numLock = NewNumLock(64)
-var await = NewAwait[int8](1 << 10)
+var numLock = lock.NewNumLock(64)
+var await = lock.NewFastAwait[int8]()
 
-var admwsware = &wsware{wsmap: NewMapL[int64, *WsSock]()}
+var admwsware = &wsware{wsmap: hashmap.NewMapL[int64, *WsSock]()}
 
 type wsware struct {
-	wsmap *MapL[int64, *WsSock]
+	wsmap *hashmap.MapL[int64, *WsSock]
 }
 
 func (t *wsware) Addws(ws *tlnet.Websocket) {
@@ -41,11 +39,22 @@ func (t *wsware) Addws(ws *tlnet.Websocket) {
 	t.wsmap.Put(ws.Id, wss)
 }
 
-func (t *wsware) SendWs(id int64, ts thrift.TStruct, tt sys.TIMTYPE) (_r bool) {
+func (t *wsware) Send(id int64, ts thrift.TStruct, tt sys.TIMTYPE) (_r bool) {
 	if wss, ok := t.wsmap.Get(id); ok {
 		if err := wss.send(ts, tt, false); err == nil {
 			_r = ok
 		}
+	}
+	return
+}
+
+func (t *wsware) SendWs(sock *tlnet.Websocket, ts thrift.TStruct, tt sys.TIMTYPE) (_r bool) {
+	if wss, ok := t.wsmap.Get(sock.Id); ok {
+		if err := wss.send(ts, tt, false); err == nil {
+			_r = ok
+		}
+	} else {
+		NewWsSock(sock).send(ts, tt, false)
 	}
 	return
 }
@@ -105,12 +114,12 @@ func NewWsSock(ws *tlnet.Websocket) (_r *WsSock) {
 	return
 }
 
-func (t *WsSock) _send(buf *Buffer) (err error) {
+func (t *WsSock) _send(buf *buffer.Buffer) (err error) {
 	sys.Stat.Ob(int64(buf.Len()))
 	return t.ws.Send(buf.Bytes())
 }
 
-var seq int32 = 0
+var syncIndex atomic.Int32
 
 func (t *WsSock) send(ts thrift.TStruct, tt sys.TIMTYPE, sync bool) (err error) {
 	length := 1
@@ -119,56 +128,41 @@ func (t *WsSock) send(ts thrift.TStruct, tt sys.TIMTYPE, sync bool) (err error) 
 	}
 	var bs []byte
 	if ts != nil {
-		bs = TEncode(ts)
+		bs = goutil.TEncode(ts)
 		length += len(bs)
 	}
-	buf := NewBufferWithCapacity(length)
-	sendId := atomic.AddInt32(&seq, 1)
-	var ch chan int8
+	resendNum := byte(2)
+START:
+	buf := buffer.NewBufferWithCapacity(length)
+	var sendId int32
 	if sync {
+		sendId = syncIndex.Add(1)
 		buf.WriteByte(byte(tt) | 0x80)
-		buf.Write(Int32ToBytes(sendId))
-		ch = await.Get(int64(sendId))
+		buf.Write(goutil.Int32ToBytes(sendId))
 	} else {
 		buf.WriteByte(byte(tt))
 	}
-	//if ts != nil {
-	//	buf.Write(TEncode(ts))
-	//}
 	if len(bs) > 0 {
 		buf.Write(bs)
 	}
 	if err = t._send(buf); err == nil && sync {
-		i := 0
-		for t.ws.Error == nil && i < 100 {
-			i++
-			select {
-			case <-ch:
-				err = nil
-				goto END
-			case <-time.After(time.Second):
-				err = errs.ERR_OVERTIME.Error()
-			}
-		}
-		if t.ws.Error != nil || err != nil {
-			err = errs.ERR_OVERTIME.Error()
+		if _, err = await.Wait(int64(sendId), sys.WaitTimeout); err == nil {
+			return
+		} else if t.ws.Error == nil && resendNum > 0 {
+			resendNum--
+			goto START
 		}
 	}
-END:
+	if t.ws.Error != nil || err != nil {
+		err = errs.ERR_OVERTIME.Error()
+	}
 	return
 }
-
-//func (t *WsSock) sendBigData(data []byte, tt sys.TIMTYPE) (err error) {
-//	buf := NewBuffer()
-//	buf.WriteByte(byte(tt))
-//	buf.Write(data)
-//	return t._send(buf)
-//}
 
 func (t *WsSock) close() {
 	admwsware.delws(t.ws)
 }
 
 func awaitEnd(bs []byte) {
-	await.Close(int64(BytesToInt32(bs)))
+	await.Close(int64(goutil.BytesToInt32(bs)))
 }
