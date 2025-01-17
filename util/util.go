@@ -11,23 +11,20 @@ import (
 	"errors"
 	"fmt"
 	"github.com/donnie4w/gofer/base58"
-	"runtime"
-	"runtime/debug"
-	"sort"
-	"strings"
-
 	"github.com/donnie4w/gofer/buffer"
 	"github.com/donnie4w/gofer/keystore"
-	"github.com/donnie4w/gofer/pool/gopool"
-	. "github.com/donnie4w/gofer/util"
-	"github.com/donnie4w/simplelog/logging"
+	goutil "github.com/donnie4w/gofer/util"
+	"github.com/donnie4w/tim/log"
 	. "github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tim/sys"
+	"golang.org/x/crypto/bcrypt"
+	"runtime/debug"
+	"strings"
 )
 
-var GoPool = gopool.NewPool(100, 100<<3)
-var GoPoolTx = gopool.NewPool(int64(runtime.NumCPU()), int64(runtime.NumCPU())<<2)
-var GoPoolTx2 = gopool.NewPool(int64(runtime.NumCPU()), int64(runtime.NumCPU())<<3)
+//var GoPool = gopool.NewPool(100, 100<<3)
+//var GoPoolTx = gopool.NewPool(int64(runtime.NumCPU()), int64(runtime.NumCPU())<<2)
+//var GoPoolTx2 = gopool.NewPool(int64(runtime.NumCPU()), int64(runtime.NumCPU())<<3)
 
 func CreateUUIDByTid(tid *Tid) uint64 {
 	return CreateUUID(tid.Node, tid.Domain)
@@ -41,18 +38,18 @@ func CreateUUID(name string, domain *string) uint64 {
 	if domain != nil && *domain != "" {
 		buf.WriteString(*domain)
 	}
-	u := CRC64(buf.Bytes())
-	bs := Int64ToBytes(int64(u))
+	u := goutil.CRC64(buf.Bytes())
+	bs := goutil.Int64ToBytes(int64(u))
 	_bs := MaskWithSeed(bs, Mask(sys.MaskSeed))
-	b8 := CRC8(_bs[:7])
+	b8 := goutil.CRC8(_bs[:7])
 	bs[7] = b8
-	return uint64(BytesToInt64(bs))
+	return uint64(goutil.BytesToInt64(bs))
 }
 
 func NewTimUUID() uint64 {
 	buf := buffer.NewBufferWithCapacity(len(sys.Conf.Salt) + 8)
 	buf.WriteString(sys.Conf.Salt)
-	buf.Write(Int64ToBytes(UUID64()))
+	buf.Write(goutil.Int64ToBytes(goutil.UUID64()))
 	return CreateUUID(string(buf.Bytes()), nil)
 }
 
@@ -70,9 +67,9 @@ func UUIDToNode(uuid uint64) string {
 }
 
 func CheckUUID(uuid uint64) bool {
-	bs := Int64ToBytes(int64(uuid))
+	bs := goutil.Int64ToBytes(int64(uuid))
 	_bs := MaskWithSeed(bs, Mask(sys.MaskSeed))
-	b8 := CRC8(_bs[:7])
+	b8 := goutil.CRC8(_bs[:7])
 	return b8 == bs[7]
 }
 
@@ -97,63 +94,80 @@ func CheckNodes(nodes ...string) bool {
 	return true
 }
 
-func ChatIdByRoom(node string, domain *string) uint64 {
-	buf := buffer.NewBufferByPool()
-	defer buf.Free()
-	buf.Write(Int64ToBytes(int64(CreateUUID(node, domain))))
-	buf.WriteString(sys.Conf.Salt)
-	return CRC64(buf.Bytes())
+func ChatIdByRoom(node string, domain *string) []byte {
+	var r [16]byte
+	uuidBs := goutil.Int64ToBytes(int64(CreateUUID(node, domain)))
+	copy(r[0:8], uuidBs)
+	return r[:]
 }
 
-func ChatIdByNode(fromNode, toNode string, domain *string) uint64 {
-	buf := buffer.NewBufferByPool()
-	defer buf.Free()
+func ChatIdByNode(fromNode, toNode string, domain *string) []byte {
+	var r [16]byte
 	f, t := CreateUUID(fromNode, domain), CreateUUID(toNode, domain)
 	if f < t {
 		f, t = t, f
 	}
-	buf.Write(Int64ToBytes(int64(f)))
-	buf.Write(Int64ToBytes(int64(t)))
-	buf.WriteString(sys.Conf.Salt)
-	return CRC64(buf.Bytes())
+	copy(r[0:8], goutil.Int64ToBytes(int64(f)))
+	copy(r[8:16], goutil.Int64ToBytes(int64(t)))
+	return r[:]
 }
 
-func RelateIdForGroup(groupNode, userNode string, domain *string) uint64 {
-	buf := buffer.NewBufferByPool()
-	defer buf.Free()
+func RelateIdForGroup(groupNode, userNode string, domain *string) []byte {
+	var r [16]byte
 	f, t := CreateUUID(groupNode, domain), CreateUUID(userNode, domain)
-	buf.Write(Int64ToBytes(int64(f)))
-	buf.WriteString(sys.Conf.Salt)
-	buf.Write(Int64ToBytes(int64(t)))
-	buf.WriteString(sys.Conf.Salt)
-	return CRC64(buf.Bytes())
+	if f < t {
+		f, t = t, f
+	}
+	copy(r[0:8], goutil.Int64ToBytes(int64(f)))
+	copy(r[8:16], goutil.Int64ToBytes(int64(t)))
+	return r[:]
 }
 
-func UnikId(f, t uint64) uint64 {
-	buf := buffer.NewBufferByPool()
-	defer buf.Free()
-	buf.Write(Int64ToBytes(int64(f)))
-	buf.WriteString(sys.Conf.Salt)
-	buf.Write(Int64ToBytes(int64(t)))
-	buf.WriteString(sys.Conf.Salt)
-	return CRC64(buf.Bytes())
+func UnikId(f, t uint64) []byte {
+	var r [16]byte
+	if f < t {
+		f, t = t, f
+	}
+	copy(r[0:8], goutil.Int64ToBytes(int64(f)))
+	copy(r[8:16], goutil.Int64ToBytes(int64(t)))
+	return r[:]
 }
 
-func UnikIdByNode(fromNode, toNode string, domain *string) uint64 {
-	buf := buffer.NewBufferByPool()
-	defer buf.Free()
+func UnikIdByNode(fromNode, toNode string, domain *string) []byte {
+	var r [16]byte
 	f, t := CreateUUID(fromNode, domain), CreateUUID(toNode, domain)
-	buf.Write(Int64ToBytes(int64(f)))
-	buf.Write(Int64ToBytes(int64(t)))
-	buf.WriteString(sys.Conf.Salt)
-	return CRC64(buf.Bytes())
+	copy(r[0:8], goutil.Int64ToBytes(int64(f)))
+	copy(r[8:16], goutil.Int64ToBytes(int64(t)))
+	return r[:]
 }
 
-/***********************************************************/
+func Password(uuid uint64, pwd string, domain *string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword(passwordBytes(uuid, pwd, domain), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
+}
+
+func passwordBytes(uuid uint64, pwd string, domain *string) []byte {
+	buf := buffer.NewBufferByPool()
+	defer buf.Free()
+	buf.Write(goutil.Int64ToBytes(int64(uuid)))
+	buf.WriteString(sys.Conf.Salt)
+	if domain != nil {
+		buf.WriteString(*domain)
+	}
+	buf.Write([]byte(pwd))
+	return buf.Bytes()
+}
+
+func CheckPasswordHash(uuid uint64, pwd string, domain *string, hash string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(hash), passwordBytes(uuid, pwd, domain)) == nil
+}
 
 func MaskId(id int64) (_r int64) {
-	ids := Int64ToBytes(id)
-	return BytesToInt64(Mask(ids))
+	ids := goutil.Int64ToBytes(id)
+	return goutil.BytesToInt64(Mask(ids))
 }
 
 func Mask(bs []byte) (_r []byte) {
@@ -188,7 +202,7 @@ func MaskWithSeed(bs []byte, seed []byte) (_r []byte) {
 
 func ParseAddr(addr string) (_r string, err error) {
 	if _r = addr; !strings.Contains(_r, ":") {
-		if MatchString("^[0-9]{4,5}$", addr) {
+		if goutil.MatchString("^[0-9]{4,5}$", addr) {
 			_r = ":" + _r
 		} else {
 			err = errors.New("error format :" + addr)
@@ -233,7 +247,7 @@ func ArraySub[K int | int8 | int32 | int64 | string](a1, a2 []K) (_r []K) {
 
 func Recover() {
 	if err := recover(); err != nil {
-		logging.Error(string(debug.Stack()))
+		log.Error(string(debug.Stack()))
 	}
 }
 
@@ -254,25 +268,36 @@ func AesDecode(bs []byte) ([]byte, error) {
 }
 
 func ContainStrings(li []string, v string) (b bool) {
-	if li == nil {
-		return false
+	//if li == nil {
+	//	return false
+	//}
+	//sort.Strings(li)
+	//idx := sort.SearchStrings(li, v)
+	//if idx < len(li) {
+	//	b = li[idx] == v
+	//}
+	for _, item := range li {
+		if item == v {
+			return true
+		}
 	}
-	sort.Strings(li)
-	idx := sort.SearchStrings(li, v)
-	if idx < len(li) {
-		b = li[idx] == v
-	}
-	return
+	return false
 }
 
 func ContainInt[T int64 | uint64 | int | uint | uint32 | int32](li []T, v T) (b bool) {
-	if li == nil {
-		return false
+	//if li == nil {
+	//	return false
+	//}
+	//sort.Slice(li, func(i, j int) bool { return li[i] < li[j] })
+	//idx := sort.Search(len(li), func(i int) bool { return li[i] >= v })
+	//if idx < len(li) {
+	//	b = li[idx] == v
+	//}
+	//return
+	for _, item := range li {
+		if item == v {
+			return true
+		}
 	}
-	sort.Slice(li, func(i, j int) bool { return li[i] < li[j] })
-	idx := sort.Search(len(li), func(i int) bool { return li[i] >= v })
-	if idx < len(li) {
-		b = li[idx] == v
-	}
-	return
+	return false
 }
