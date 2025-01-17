@@ -8,34 +8,31 @@
 package util
 
 import (
-	"fmt"
 	"testing"
-
-	"github.com/donnie4w/simplelog/logging"
 )
 
 func TestMarkId(t *testing.T) {
-	var i int64 = 1 << 18
+	var i int64 = 1 << 50
 	id := MaskId(i)
 	id2 := MaskId(id)
-	logging.Debug(i)
-	logging.Debug(id)
-	logging.Debug(id2)
+	t.Log(i)
+	t.Log(id)
+	t.Log(id2)
 }
 
 func TestMark(t *testing.T) {
 	bs := []byte("hello world")
 	bs1 := Mask(bs)
 	bs2 := Mask(bs1)
-	logging.Debug(string(bs1))
-	logging.Debug(string(bs2))
+	t.Log(string(bs1))
+	t.Log(string(bs2))
 }
 
 func BenchmarkNodeName(b *testing.B) {
 	domain := "tt"
 	u := CreateUUID("aiaeinf22ienfefne1f", &domain)
-	fmt.Println(u)
-	fmt.Println(CheckUUID(2790553438565061983))
+	b.Log(u)
+	b.Log(CheckUUID(2790553438565061983))
 }
 
 func BenchmarkUUIDByNode(b *testing.B) {
@@ -46,9 +43,9 @@ func BenchmarkUUIDByNode(b *testing.B) {
 }
 
 func BenchmarkSearchString(b *testing.B) {
-	fmt.Println(ContainStrings([]string{"ab", "b", "c"}, "ab"))
+	b.Log(ContainStrings([]string{"ab", "b", "c"}, "ab"))
 }
 
 func BenchmarkSearchInt(b *testing.B) {
-	fmt.Println(ContainInt([]int{11, 22, 33, 44}, 33))
+	b.Log(ContainInt([]int{11, 22, 33, 44}, 33))
 }
