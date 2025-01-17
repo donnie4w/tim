@@ -8,6 +8,7 @@
 package tc
 
 import (
+	"bytes"
 	"github.com/donnie4w/gofer/hashmap"
 	goutil "github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/adm"
@@ -27,7 +28,7 @@ func wsAdmConfig() *tlnet.WebsocketConfig {
 	wc := &tlnet.WebsocketConfig{}
 	wc.Origin = sys.ORIGIN
 	wc.OnError = func(self *tlnet.Websocket) {
-		mq.Unsub(mq.ONLINE, self.Id)
+		mq.Unsub(mq.ONLINESTATUS, self.Id)
 		admwsware.delws(self)
 	}
 	wc.OnOpen = func(hc *tlnet.HttpContext) {
@@ -53,71 +54,45 @@ func processor(ws *tlnet.Websocket, bs []byte) {
 	switch sys.TIMTYPE(bs[0] & 0x7f) {
 	case sys.ADMPING:
 		admwsware.Ping(ws.Id)
-	//case sys.ADMRESETAUTH:
-	//	if nab, err := goutil.TDecode(bs[1:], stub.NewAuthBean()); err == nil {
-	//		admwsware.SendWs(ws.Id, adm.Admhandler.ModifyPwd(nab), sys.ADMRESETAUTH)
-	//	}
 	case sys.ADMAUTH:
 		if ab, err := goutil.TDecode(bs[1:], stub.NewAuthBean()); err == nil {
-			ack := adm.Admhandler.Auth(ab)
+			ack := adm.Auth(ab)
 			if ack != nil && ack.GetOk() {
+				expiredMap.Delete(ws)
 				admwsware.Addws(ws)
 			}
-			admwsware.SendWs(ws.Id, ack, sys.ADMAUTH)
+			admwsware.SendWs(ws, ack, sys.ADMAUTH)
 		}
-	//case sys.ADMTOKEN:
-	//	if at, err := goutil.TDecode(bs[1:], stub.NewAdmToken()); err == nil {
-	//		admwsware.SendWs(ws.Id, adm.Admhandler.Token(at), sys.ADMTOKEN)
-	//	}
-	//case sys.ADMPROXYMESSAGE:
-	//	if apm, err := goutil.TDecode(bs[1:], stub.NewAdmProxyMessage()); err == nil {
-	//		admwsware.SendWs(ws.Id, adm.Admhandler.ProxyMessage(apm), sys.ADMPROXYMESSAGE)
-	//	}
-	//case sys.ADMREGISTER:
-	//	if am, err := goutil.TDecode(bs[1:], stub.NewAdmMessage()); err == nil {
-	//		admwsware.SendWs(ws.Id, adm.Admhandler.TimMessage(am), sys.ADMREGISTER)
-	//	}
-	//case sys.ADMMODIFYUSERINFO:
-	//	if amui, err := goutil.TDecode(bs[1:], stub.NewAdmModifyUserInfo()); err == nil {
-	//		admwsware.SendWs(ws.Id, adm.Admhandler.ModifyUserInfo(amui), sys.ADMMODIFYUSERINFO)
-	//	}
-	//case sys.ADMMODIFYROOMINFO:
-	//	if arb, err := goutil.TDecode(bs[1:], stub.NewAdmRoomBean()); err == nil {
-	//		admwsware.SendWs(ws.Id, adm.Admhandler.ModifyRoomInfo(arb), sys.ADMMODIFYROOMINFO)
-	//	}
-	//case sys.ADMBLOCKUSER:
-	//	if abu, err := goutil.TDecode(bs[1:], stub.NewAdmBlockUser()); err == nil {
-	//		admwsware.SendWs(ws.Id, adm.Admhandler.BlockUser(abu), sys.ADMBLOCKUSER)
-	//	}
-	//case sys.ADMBLOCKLIST:
-	//	if abl := adm.Admhandler.BlockList(); abl != nil {
-	//		admwsware.SendWs(ws.Id, abl, sys.ADMBLOCKLIST)
-	//	}
-	//case sys.ADMONLINEUSER:
-	//	if aou, err := goutil.TDecode(bs[1:], stub.NewAdmOnlineUser()); err == nil {
-	//		admwsware.SendWs(ws.Id, adm.Admhandler.OnlineUser(aou), sys.ADMONLINEUSER)
-	//	}
-	//case sys.ADMVROOM:
-	//	if avb, err := goutil.TDecode(bs[1:], stub.NewAdmVroomBean()); err == nil {
-	//		admwsware.SendWs(ws.Id, adm.Admhandler.Vroom(avb), sys.ADMVROOM)
-	//	}
-	//case sys.ADMTIMROOM:
-	//	if arb, err := goutil.TDecode(bs[1:], stub.NewAdmRoomReq()); err == nil {
-	//		admwsware.SendWs(ws.Id, adm.Admhandler.TimRoom(arb), sys.ADMTIMROOM)
-	//	}
-	//case sys.ADMDETECT:
-	//	if adb, err := goutil.TDecode(bs[1:], stub.NewAdmDetectBean()); err == nil {
-	//		admwsware.SendWs(ws.Id, adm.Admhandler.Detect(adb), sys.ADMDETECT)
-	//	}
 	case sys.ADMSUB:
 		if adb, err := goutil.TDecode(bs[1:], stub.NewAdmSubBean()); err == nil {
 			switch mq.TopicType(adb.GetSubType()) {
-			case mq.ONLINE:
-				mq.Sub(mq.ONLINE, ws.Id, func(a any) {
+			case mq.ONLINESTATUS:
+				mq.Sub(mq.ONLINESTATUS, ws.Id, func(a any) {
 					adb.Bs = a.(*stub.AdmSubBean).GetBs()
-					admwsware.SendWs(ws.Id, adb, sys.ADMSUB)
+					admwsware.Send(ws.Id, adb, sys.ADMSUB)
 				})
 			}
+		}
+	case sys.ADMSTREAM:
+	case sys.ADMBIGSTRING:
+	case sys.ADMBIGBINARY:
+	case sys.ADMBIGBINARYSTREAM:
+		bs = bs[1:]
+		vnodeIdx := bytes.IndexByte(bs, sys.SEP_BIN)
+		vnode := string(bs[:vnodeIdx])
+		bs = bs[vnodeIdx+1:]
+		fnodeIdx := bytes.IndexByte(bs, sys.SEP_BIN)
+		fnode := string(bs[:fnodeIdx])
+		bs = bs[fnodeIdx+1:]
+		sid := goutil.UUID64()
+		vb := &stub.VBean{StreamId: &sid, Vnode: vnode, Rnode: &fnode, Body: bs, Rtype: int8(sys.VROOM_MESSAGE)}
+		if b, _ := sys.TimSteamProcessor(vb, sys.TRANS_GOAL); !b {
+			ok, n, t := false, vnode, int64(int32(goutil.FNVHash32(goutil.Int64ToBytes(sys.UUID))))
+			ack := stub.NewAdmAck()
+			ack.Ok = &ok
+			ack.N = &n
+			ack.T = &t
+			admwsware.Send(ws.Id, ack, sys.ADMBIGBINARYSTREAM)
 		}
 	}
 }
@@ -142,10 +117,10 @@ func expiredTimer() {
 							k.Close()
 							admwsware.delws(k)
 							expiredMap.Delete(k)
-						} else {
-							break
+							continue
 						}
 					}
+					break
 				}
 			}()
 		}
