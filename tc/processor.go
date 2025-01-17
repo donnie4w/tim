@@ -8,12 +8,11 @@
 package tc
 
 import (
+	"github.com/donnie4w/tim/log"
+	"github.com/donnie4w/tlnet"
 	htmlTpl "html/template"
 	"os"
 	textTpl "text/template"
-
-	"github.com/donnie4w/simplelog/logging"
-	"github.com/donnie4w/tlnet"
 )
 
 type TXTYPE int
@@ -71,17 +70,16 @@ func textTplByPath(path string, data any, hc *tlnet.HttpContext) {
 	if tp, err := textTpl.ParseFiles(path); err == nil {
 		tp.Execute(hc.Writer(), data)
 	} else {
-		logging.Error(err)
+		log.Error(err)
 	}
 }
 
 func textTplByText(text string, data any, hc *tlnet.HttpContext) {
-
 	tl := textTpl.New("tldb")
 	if _, err := tl.Parse(text); err == nil {
 		tl.Execute(hc.Writer(), data)
 	} else {
-		logging.Error(err)
+		log.Error(err)
 	}
 }
 
@@ -89,6 +87,6 @@ func htmlTplByPath(path string, data any, hc *tlnet.HttpContext) {
 	if tp, err := htmlTpl.ParseFiles(path); err == nil {
 		tp.Execute(hc.Writer(), data)
 	} else {
-		logging.Error(err)
+		log.Error(err)
 	}
 }
