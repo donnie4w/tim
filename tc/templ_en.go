@@ -84,14 +84,14 @@ const (
                     <input name="adminName" placeholder="username" />
                     <input name="adminPwd" placeholder="password" type="password" />
                     Administrator<input name="adminType" type="radio" value="1" checked />
-                    {{if not .init}}
+                    {{if not .Init}}
                     Observer<input name="adminType" type="radio" value="2" />
                     {{end}}
                     <input type="submit" class="btn btn-primary" value="Create" />
             </form>
         </div>
         {{end}}
-        {{if not .init}}
+        {{if not .Init}}
         <div class="container-fluid card mt-1 p-1">
             <div class="m-2">
                 <h6>Manage Accounts</h6>
