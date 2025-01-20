@@ -17,43 +17,41 @@ type RemoteNode struct {
 }
 
 type ConfBean struct {
-	Seed                 int64       `json:"seed"`
+	MaskSeed             string      `json:"maskseed"`
 	Salt                 string      `json:"salt"`
 	Tldb                 *tldb       `json:"tldb"`
-	TldbExtent           []*tldb     `json:"tldb.extent"`
+	TldbExtent           []*tldb     `json:"tldb_extent"`
 	InlineDB             *InlineDB   `json:"inlinedb"`
-	InlineExtent         []*InlineDB `json:"inlinedb.extent"`
+	InlineExtent         []*InlineDB `json:"inlinedb_extent"`
 	ExternalDB           *externalDB `json:"externaldb"`
 	NoDB                 *bool       `json:"nodb"`
 	Security             *security   `json:"security"`
-	Listen               int         `json:"listen"`
+	PprofAddr            string      `json:"pprof_addr"`
+	ClientListen         string      `json:"client_listen"`
 	Ssl_crt              string      `json:"ssl_certificate"`
 	Ssl_crt_key          string      `json:"ssl_certificate_key"`
-	ConnectLimit         int64       `json:"connectLimit"`
+	ConnectLimit         int64       `json:"connect_limit"`
 	Memlimit             int         `json:"memlimit"`
 	MaxMessageSize       int         `json:"maxmessagesize"`
-	Public               string      `json:"public.node"`
-	CacheAuthExpire      int         `json:"cache.authexpire"`
-	Pwd                  string      `json:"cluster.pwd"`
-	NodeMaxlength        *int        `json:"node.maxlength"`
-	EncryptKey           string      `json:"cluster.encryptkey"`
-	CsListen             string      `json:"cluster.listen"`
-	CsAddr               string      `json:"cluster.csaddr"`
-	AdminListen          string      `json:"web.admin.listen"`
-	AdminTls             bool        `json:"admin.tls"`
-	AdmListen            *string     `json:"tcp.admin.listen"`
-	Init                 bool        `json:"init"`
-	Bind                 *string     `json:"bind"`
-	PingTo               int64       `json:"ping.timeout"`
+	CacheAuthExpire      int64       `json:"cache_authexpire"`
+	NodeMaxlength        *int        `json:"node_maxlength"`
+	CsListen             string      `json:"cluster_listen"`
+	CsAccess             string      `json:"cluster_access"`
+	WebAdminListen       string      `json:"webadmin_listen"`
+	WebAdminNoTls        bool        `json:"webadmin_nouse_tls"`
+	AdmListen            *string     `json:"server_api_listen"`
+	NoInit               bool        `json:"noinit"`
+	PingTo               int64       `json:"ping_timeout"`
 	Keystore             *string     `json:"keystore"`
 	MaxBackup            *int        `json:"maxbackup"`
-	LimitRate            int64       `json:"limitRate"`
-	DeviceLimit          int         `json:"device.limit"`
-	DevicetypeLimit      int         `json:"devicetype.limit"`
-	MessageNoAuth        bool        `json:"message.noauth"`
-	PresenceOfflineBlock bool        `json:"presence.offline.block"`
+	RequestRate          int64       `json:"request_rate"`
+	DeviceLimit          int         `json:"device_limit"`
+	DevicetypeLimit      int         `json:"devicetype_limit"`
+	MessageNoAuth        bool        `json:"message_noauth"`
+	PresenceOfflineBlock bool        `json:"presence_offline_block"`
 	TimAdminAuth         bool        `json:"timAdminAuth"`
 	TTL                  uint64      `json:"ttl"`
+	TokenTimeout         int64       `json:"tokenTimeout"`
 	BlockAPI             []int8      `json:"blockapi"`
 	Raftx                *Raftx      `json:"raftx"`
 	Rax                  *Rax        `json:"rax"`
@@ -62,6 +60,10 @@ type ConfBean struct {
 	ZooKeeper            *ZooKeeper  `json:"zookeeper"`
 	//Notice               *notice     `json:"notice"`
 	//NoDBAuth             *noDBAuth `json:"nodbauth"`
+	Public     string  `json:"public.node"`
+	Pwd        string  `json:"cluster.pwd"`
+	EncryptKey string  `json:"cluster.encryptkey"`
+	Bind       *string `json:"bind"`
 }
 
 type externalDB struct {
@@ -80,7 +82,7 @@ type externalDB struct {
 
 	Tim_sql_savemessage     string `json:"tim.sql.message.save"`
 	Tim_sql_getmessage      string `json:"tim.sql.message.get"`
-	Tim_sql_getmessage_byid string `json:"tim.sql.message.get.byid"`
+	Tim_sql_getchatid_byid  string `json:"tim.sql.message.chatid.byid"`
 	Tim_sql_delmessage_byid string `json:"tim.sql.message.del.byid"`
 
 	Tim_sql_offlinemsg_save       string `json:"tim.sql.offlinemsg.save"`
@@ -120,9 +122,9 @@ type InlineDB struct {
 type security struct {
 	MaxDatalimit   int64   `json:"maxdata"`
 	ReqHzSecond    int     `json:"reqhzsecond"`
-	ForBidRegister bool    `json:"forbid.register"`
-	ForBidToken    bool    `json:"forbid.token"`
-	ConnectAuthUrl *string `json:"connectauth.url"`
+	ForBidRegister bool    `json:"forbid_register"`
+	ForBidToken    bool    `json:"forbid_token"`
+	ConnectAuthUrl *string `json:"connectauth_url"`
 }
 
 type Openssl struct {
@@ -152,33 +154,36 @@ type tldb struct {
 }
 
 type Raftx struct {
-	ListenAddr string
-	Peers      []string
+	ListenAddr string   `json:"listen"`
+	Peers      []string `json:"peers"`
 }
 
 type Redis struct {
-	Addr     string
-	Username string
-	Password string
+	Addr     []string `json:"addr"`
+	Username string   `json:"username"`
+	Password string   `json:"password"`
+	DB       int      `json:"db"`
+	Protocol int      `json:"protocol"`
 }
 
 type Etcd struct {
-	Endpoints []string
-	Username  string
-	Password  string
-	CAFile    string // CA certificate path
-	CertFile  string // Path of the client certificate
-	KeyFile   string // Path of the client private key
+	Endpoints []string `json:"endpoints"`
+	Username  string   `json:"username"`
+	Password  string   `json:"password"`
+	CAFile    string   `json:"cafile"`   // CA certificate path
+	CertFile  string   `json:"certfile"` // Path of the client certificate
+	KeyFile   string   `json:"keyfile"`  // Path of the client private key
 }
 
 type ZooKeeper struct {
-	Endpoints []string
-	Username  string
-	Password  string
+	Servers        []string `json:"servers"`
+	Username       string   `json:"username"`
+	Password       string   `json:"password"`
+	SessionTimeout int      `json:"session_timeout"`
 }
 
 type Rax struct {
-	Endpoints []string
-	Username  string
-	Password  string
+	Endpoints []string `json:"endpoints"`
+	Username  string   `json:"username"`
+	Password  string   `json:"password"`
 }
