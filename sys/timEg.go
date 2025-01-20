@@ -10,7 +10,7 @@ package sys
 import (
 	"github.com/donnie4w/gothrift/thrift"
 	"github.com/donnie4w/tim/errs"
-	. "github.com/donnie4w/tim/stub"
+	"github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tlnet"
 )
 
@@ -18,8 +18,7 @@ type TIMTYPE byte
 type BUSINESSTYPE int32
 
 const (
-	TIMEXP TIMTYPE = 0
-
+	TIMEXP             TIMTYPE = 0
 	TIMACK             TIMTYPE = 12
 	TIMPING            TIMTYPE = 13
 	TIMREGISTER        TIMTYPE = 14
@@ -44,9 +43,13 @@ const (
 )
 
 const (
-	ADMPING TIMTYPE = 11
-	ADMAUTH TIMTYPE = 12
-	ADMSUB  TIMTYPE = 13
+	ADMPING            TIMTYPE = 11
+	ADMAUTH            TIMTYPE = 12
+	ADMSUB             TIMTYPE = 13
+	ADMSTREAM          TIMTYPE = 14
+	ADMBIGSTRING       TIMTYPE = 15
+	ADMBIGBINARY       TIMTYPE = 16
+	ADMBIGBINARYSTREAM TIMTYPE = 17
 )
 
 const (
@@ -104,68 +107,64 @@ const (
 )
 
 var (
-	AckHandle             func([]byte) (err errs.ERROR)
-	PingHandle            func(*tlnet.Websocket) (err errs.ERROR)
-	RegisterHandle        func([]byte) (node string, err errs.ERROR)
-	TokenHandle           func([]byte) (_r int64, err errs.ERROR)
-	AuthHandle            func([]byte, *tlnet.Websocket) (err errs.ERROR)
-	OfflinemsgHandle      func(*tlnet.Websocket) (err errs.ERROR)
-	BroadpresenceHandle   func([]byte, *tlnet.Websocket) (err errs.ERROR)
-	PullMessageHandle     func([]byte, *tlnet.Websocket) (err errs.ERROR)
-	VRoomHandle           func([]byte, *tlnet.Websocket) (err errs.ERROR)
-	MessageHandle         func([]byte, *tlnet.Websocket) (err errs.ERROR)
-	BigStringHandle       func([]byte, *tlnet.Websocket) (err errs.ERROR)
-	BigBinaryHandle       func([]byte, *tlnet.Websocket) (err errs.ERROR)
-	BigBinaryStreamHandle func([]byte, *tlnet.Websocket) (err errs.ERROR)
-	PresenceHandle        func([]byte, *tlnet.Websocket) (err errs.ERROR)
-	StreamHandle          func([]byte, *tlnet.Websocket) (err errs.ERROR)
-	BusinessHandle        func([]byte, *tlnet.Websocket) (err errs.ERROR)
-	NodeInfoHandle        func([]byte, *tlnet.Websocket) (err errs.ERROR)
-
-	OsToken              func(string, *string, *string) (int64, string, errs.ERROR)
-	OsRegister           func(string, string, *string) (string, errs.ERROR)
-	OsUserBean           func(string, *TimUserBean) errs.ERROR
-	OsRoom               func(string, string, *string, int8) (string, errs.ERROR)
-	OsRoomBean           func(string, string, *TimRoomBean) errs.ERROR
-	OsMessage            func([]string, *TimMessage) (err errs.ERROR)
-	OsPresence           func([]string, *TimPresence) (err errs.ERROR)
-	OsModify             func(string, *string, string, *string) errs.ERROR
-	OsVroomprocess       func(string, int8) string
-	OsBlockUser          func(string, int64)
-	OsBlockList          func() map[string]int64
-	TimMessageProcessor  func(*TimMessage, int8) errs.ERROR
-	TimPresenceProcessor func(*TimPresence, int8) errs.ERROR
-	TimSteamProcessor    func(*VBean, int8) errs.ERROR
-	PxMessage func(int64, *TimMessage) errs.ERROR
-
-	// Deprecated: Use CsMessageService instead.
+	AckHandle             func([]byte) errs.ERROR
+	PingHandle            func(*tlnet.Websocket) errs.ERROR
+	RegisterHandle        func([]byte) (string, errs.ERROR)
+	TokenHandle           func([]byte) (string, errs.ERROR)
+	AuthHandle            func([]byte, *tlnet.Websocket) errs.ERROR
+	OfflinemsgHandle      func(*tlnet.Websocket) errs.ERROR
+	BroadpresenceHandle   func([]byte, *tlnet.Websocket) errs.ERROR
+	PullMessageHandle     func([]byte, *tlnet.Websocket) errs.ERROR
+	VRoomHandle           func([]byte, *tlnet.Websocket) errs.ERROR
+	MessageHandle         func([]byte, *tlnet.Websocket) errs.ERROR
+	BigStringHandle       func([]byte, *tlnet.Websocket) errs.ERROR
+	BigBinaryHandle       func([]byte, *tlnet.Websocket) errs.ERROR
+	BigBinaryStreamHandle func([]byte, *tlnet.Websocket) errs.ERROR
+	PresenceHandle        func([]byte, *tlnet.Websocket) errs.ERROR
+	StreamHandle          func([]byte, *tlnet.Websocket) errs.ERROR
+	BusinessHandle        func([]byte, *tlnet.Websocket) errs.ERROR
+	NodeInfoHandle        func([]byte, *tlnet.Websocket) errs.ERROR
+	AuthRoster            func(string, string, *string, bool) bool
+	AuthGroupuser         func(string, string, *string) bool
+	OsToken               func(string, *string, *string) (string, string, errs.ERROR)
+	OsRegister            func(string, string, *string) (string, errs.ERROR)
+	OsUserBean            func(string, *stub.TimUserBean) errs.ERROR
+	OsRoom                func(string, string, *string, int8) (string, errs.ERROR)
+	OsRoomBean            func(string, string, *stub.TimRoomBean) errs.ERROR
+	OsMessage             func([]string, *stub.TimMessage) errs.ERROR
+	OsPresence            func([]string, *stub.TimPresence) errs.ERROR
+	OsModify              func(string, *string, string, *string) errs.ERROR
+	OsVroomprocess        func(string, int8) string
+	OsBlockUser           func(string, int64)
+	TimMessageProcessor   func(*stub.TimMessage, int8) errs.ERROR
+	TimPresenceProcessor  func(*stub.TimPresence, int8) errs.ERROR
+	TimSteamProcessor     func(*stub.VBean, int8) (bool, errs.ERROR)
+	PxMessage             func(*stub.TimMessage) errs.ERROR
+	SendNode              func(string, thrift.TStruct, TIMTYPE) bool
+	SendWs                func(int64, thrift.TStruct, TIMTYPE) bool
+	WssList               func(int64, int64) ([]*stub.Tid, int64)
+	DeviceTypeList        func(string) []byte
+	WssLen                func() int64
+	WsById                func(int64) (*tlnet.Websocket, bool)
+	WsByNode              func(string) (*tlnet.Websocket, bool)
+	HasNode               func(string) bool
+	HasWs                 func(*tlnet.Websocket) bool
+	DelWs                 func(*tlnet.Websocket)
+	Interrupt             func(*stub.Tid) errs.ERROR
+	Detect                func([]string)
+	CsMessageService      func(int64, *stub.TimMessage, bool) bool
+	CsPresenceService     func(int64, *stub.TimPresence, bool) bool
+	CsVBeanService        func(int64, *stub.VBean, bool) bool
+	CsDevice              func(string) []byte
 	//CsMessage func(*TimMessage, int8) bool
-	// Deprecated: Use CsPresenceService instead.
 	//CsPresence func(*TimPresence, int8) bool
-	// Deprecated: Use CsVBeanService instead.
 	//CsVBean func(*VBean) bool
-
-	CsNode        func(string) int64
-	CsWssInfo     func(string) []byte
-	Csuser        func(string, bool, int64) error
-	GetALLUUIDS   func() []int64
-	Client2Serve  func(string) error
-	GetRemoteNode func() []*RemoteNode
-	SendNode      func(string, thrift.TStruct, TIMTYPE) bool
-	SendWs        func(int64, thrift.TStruct, TIMTYPE) bool
-	WssList       func(int64, int64) ([]*Tid, int64)
-	WssInfo       func(string) []byte
-	WssLen        func() int64
-	WssTt         func() int64
-	DelWs         func(*tlnet.Websocket)
-	WsById        func(int64) (*tlnet.Websocket, bool)
-	HasNode       func(string) bool
-	HasWs         func(*tlnet.Websocket) bool
-	Unaccess      func() []int64
-	Interrupt     func(*Tid) errs.ERROR
-	Detect        func([]string)
-
-	CsMessageService  func(int64, *TimMessage, bool) bool
-	CsPresenceService func(int64, *TimPresence, bool) bool
-	CsVBeanService    func(int64, *VBean, bool) bool
+	//CsNode        func(string) int64
+	//CsWssInfo func(string) []byte
+	//Csuser    func(string, bool, int64) error
+	//GetALLUUIDS   func() []int64
+	//Client2Serve  func(string) error
+	//GetRemoteNode func() []*RemoteNode
+	//WssTt     func() int64
+	//Unaccess  func() []int64
 )
