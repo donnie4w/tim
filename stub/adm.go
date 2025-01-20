@@ -930,6 +930,7 @@ func (p *AdmToken) Validate() error {
 //  - BnType
 //  - FromNode
 //  - ToNode
+//  - Domain
 //  - RoomNode
 //  - DataBinary
 //  - DataString
@@ -946,13 +947,14 @@ type AdmMessage struct {
 	BnType *int32 `thrift:"bnType,5" db:"bnType" json:"bnType,omitempty"`
 	FromNode *string `thrift:"fromNode,6" db:"fromNode" json:"fromNode,omitempty"`
 	ToNode *string `thrift:"toNode,7" db:"toNode" json:"toNode,omitempty"`
-	RoomNode *string `thrift:"roomNode,8" db:"roomNode" json:"roomNode,omitempty"`
-	DataBinary []byte `thrift:"dataBinary,9" db:"dataBinary" json:"dataBinary,omitempty"`
-	DataString *string `thrift:"dataString,10" db:"dataString" json:"dataString,omitempty"`
-	Udtype *int16 `thrift:"udtype,11" db:"udtype" json:"udtype,omitempty"`
-	Udshow *int16 `thrift:"udshow,12" db:"udshow" json:"udshow,omitempty"`
-	Extend map[string]string `thrift:"extend,13" db:"extend" json:"extend,omitempty"`
-	Extra map[string][]byte `thrift:"extra,14" db:"extra" json:"extra,omitempty"`
+	Domain *string `thrift:"domain,8" db:"domain" json:"domain,omitempty"`
+	RoomNode *string `thrift:"roomNode,9" db:"roomNode" json:"roomNode,omitempty"`
+	DataBinary []byte `thrift:"dataBinary,10" db:"dataBinary" json:"dataBinary,omitempty"`
+	DataString *string `thrift:"dataString,11" db:"dataString" json:"dataString,omitempty"`
+	Udtype *int16 `thrift:"udtype,12" db:"udtype" json:"udtype,omitempty"`
+	Udshow *int16 `thrift:"udshow,13" db:"udshow" json:"udshow,omitempty"`
+	Extend map[string]string `thrift:"extend,14" db:"extend" json:"extend,omitempty"`
+	Extra map[string][]byte `thrift:"extra,15" db:"extra" json:"extra,omitempty"`
 }
 
 func NewAdmMessage() *AdmMessage {
@@ -1014,6 +1016,15 @@ func (p *AdmMessage) GetToNode() string {
 		return AdmMessage_ToNode_DEFAULT
 	}
 	return *p.ToNode
+}
+
+var AdmMessage_Domain_DEFAULT string
+
+func (p *AdmMessage) GetDomain() string {
+	if !p.IsSetDomain() {
+		return AdmMessage_Domain_DEFAULT
+	}
+	return *p.Domain
 }
 
 var AdmMessage_RoomNode_DEFAULT string
@@ -1091,6 +1102,10 @@ func (p *AdmMessage) IsSetFromNode() bool {
 
 func (p *AdmMessage) IsSetToNode() bool {
 	return p.ToNode != nil
+}
+
+func (p *AdmMessage) IsSetDomain() bool {
+	return p.Domain != nil
 }
 
 func (p *AdmMessage) IsSetRoomNode() bool {
@@ -1241,7 +1256,7 @@ func (p *AdmMessage) Read(ctx context.Context, iprot thrift.TProtocol) error {
 				}
 			}
 		case 11:
-			if fieldTypeId == thrift.I16 {
+			if fieldTypeId == thrift.STRING {
 				if err := p.ReadField11(ctx, iprot); err != nil {
 					return err
 				}
@@ -1261,7 +1276,7 @@ func (p *AdmMessage) Read(ctx context.Context, iprot thrift.TProtocol) error {
 				}
 			}
 		case 13:
-			if fieldTypeId == thrift.MAP {
+			if fieldTypeId == thrift.I16 {
 				if err := p.ReadField13(ctx, iprot); err != nil {
 					return err
 				}
@@ -1273,6 +1288,16 @@ func (p *AdmMessage) Read(ctx context.Context, iprot thrift.TProtocol) error {
 		case 14:
 			if fieldTypeId == thrift.MAP {
 				if err := p.ReadField14(ctx, iprot); err != nil {
+					return err
+				}
+			} else {
+				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+					return err
+				}
+			}
+		case 15:
+			if fieldTypeId == thrift.MAP {
+				if err := p.ReadField15(ctx, iprot); err != nil {
 					return err
 				}
 			} else {
@@ -1370,34 +1395,34 @@ func (p *AdmMessage) ReadField8(ctx context.Context, iprot thrift.TProtocol) err
 	if v, err := iprot.ReadString(ctx); err != nil {
 		return thrift.PrependError("error reading field 8: ", err)
 	} else {
-		p.RoomNode = &v
+		p.Domain = &v
 	}
 	return nil
 }
 
 func (p *AdmMessage) ReadField9(ctx context.Context, iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadBinary(ctx); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return thrift.PrependError("error reading field 9: ", err)
+	} else {
+		p.RoomNode = &v
+	}
+	return nil
+}
+
+func (p *AdmMessage) ReadField10(ctx context.Context, iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadBinary(ctx); err != nil {
+		return thrift.PrependError("error reading field 10: ", err)
 	} else {
 		p.DataBinary = v
 	}
 	return nil
 }
 
-func (p *AdmMessage) ReadField10(ctx context.Context, iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadString(ctx); err != nil {
-		return thrift.PrependError("error reading field 10: ", err)
-	} else {
-		p.DataString = &v
-	}
-	return nil
-}
-
 func (p *AdmMessage) ReadField11(ctx context.Context, iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI16(ctx); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return thrift.PrependError("error reading field 11: ", err)
 	} else {
-		p.Udtype = &v
+		p.DataString = &v
 	}
 	return nil
 }
@@ -1406,12 +1431,21 @@ func (p *AdmMessage) ReadField12(ctx context.Context, iprot thrift.TProtocol) er
 	if v, err := iprot.ReadI16(ctx); err != nil {
 		return thrift.PrependError("error reading field 12: ", err)
 	} else {
-		p.Udshow = &v
+		p.Udtype = &v
 	}
 	return nil
 }
 
 func (p *AdmMessage) ReadField13(ctx context.Context, iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI16(ctx); err != nil {
+		return thrift.PrependError("error reading field 13: ", err)
+	} else {
+		p.Udshow = &v
+	}
+	return nil
+}
+
+func (p *AdmMessage) ReadField14(ctx context.Context, iprot thrift.TProtocol) error {
 	_, _, size, err := iprot.ReadMapBegin(ctx)
 	if err != nil {
 		return thrift.PrependError("error reading map begin: ", err)
@@ -1439,7 +1473,7 @@ func (p *AdmMessage) ReadField13(ctx context.Context, iprot thrift.TProtocol) er
 	return nil
 }
 
-func (p *AdmMessage) ReadField14(ctx context.Context, iprot thrift.TProtocol) error {
+func (p *AdmMessage) ReadField15(ctx context.Context, iprot thrift.TProtocol) error {
 	_, _, size, err := iprot.ReadMapBegin(ctx)
 	if err != nil {
 		return thrift.PrependError("error reading map begin: ", err)
@@ -1486,6 +1520,7 @@ func (p *AdmMessage) Write(ctx context.Context, oprot thrift.TProtocol) error {
 		if err := p.writeField12(ctx, oprot); err != nil { return err }
 		if err := p.writeField13(ctx, oprot); err != nil { return err }
 		if err := p.writeField14(ctx, oprot); err != nil { return err }
+		if err := p.writeField15(ctx, oprot); err != nil { return err }
 	}
 	if err := oprot.WriteFieldStop(ctx); err != nil {
 		return thrift.PrependError("write field stop error: ", err)
@@ -1598,84 +1633,99 @@ func (p *AdmMessage) writeField7(ctx context.Context, oprot thrift.TProtocol) (e
 }
 
 func (p *AdmMessage) writeField8(ctx context.Context, oprot thrift.TProtocol) (err error) {
-	if p.IsSetRoomNode() {
-		if err := oprot.WriteFieldBegin(ctx, "roomNode", thrift.STRING, 8); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field begin error 8:roomNode: ", p), err)
+	if p.IsSetDomain() {
+		if err := oprot.WriteFieldBegin(ctx, "domain", thrift.STRING, 8); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 8:domain: ", p), err)
 		}
-		if err := oprot.WriteString(ctx, string(*p.RoomNode)); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T.roomNode (8) field write error: ", p), err)
+		if err := oprot.WriteString(ctx, string(*p.Domain)); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T.domain (8) field write error: ", p), err)
 		}
 		if err := oprot.WriteFieldEnd(ctx); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field end error 8:roomNode: ", p), err)
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 8:domain: ", p), err)
 		}
 	}
 	return err
 }
 
 func (p *AdmMessage) writeField9(ctx context.Context, oprot thrift.TProtocol) (err error) {
-	if p.IsSetDataBinary() {
-		if err := oprot.WriteFieldBegin(ctx, "dataBinary", thrift.STRING, 9); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field begin error 9:dataBinary: ", p), err)
+	if p.IsSetRoomNode() {
+		if err := oprot.WriteFieldBegin(ctx, "roomNode", thrift.STRING, 9); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 9:roomNode: ", p), err)
 		}
-		if err := oprot.WriteBinary(ctx, p.DataBinary); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T.dataBinary (9) field write error: ", p), err)
+		if err := oprot.WriteString(ctx, string(*p.RoomNode)); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T.roomNode (9) field write error: ", p), err)
 		}
 		if err := oprot.WriteFieldEnd(ctx); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field end error 9:dataBinary: ", p), err)
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 9:roomNode: ", p), err)
 		}
 	}
 	return err
 }
 
 func (p *AdmMessage) writeField10(ctx context.Context, oprot thrift.TProtocol) (err error) {
-	if p.IsSetDataString() {
-		if err := oprot.WriteFieldBegin(ctx, "dataString", thrift.STRING, 10); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field begin error 10:dataString: ", p), err)
+	if p.IsSetDataBinary() {
+		if err := oprot.WriteFieldBegin(ctx, "dataBinary", thrift.STRING, 10); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 10:dataBinary: ", p), err)
 		}
-		if err := oprot.WriteString(ctx, string(*p.DataString)); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T.dataString (10) field write error: ", p), err)
+		if err := oprot.WriteBinary(ctx, p.DataBinary); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T.dataBinary (10) field write error: ", p), err)
 		}
 		if err := oprot.WriteFieldEnd(ctx); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field end error 10:dataString: ", p), err)
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 10:dataBinary: ", p), err)
 		}
 	}
 	return err
 }
 
 func (p *AdmMessage) writeField11(ctx context.Context, oprot thrift.TProtocol) (err error) {
-	if p.IsSetUdtype() {
-		if err := oprot.WriteFieldBegin(ctx, "udtype", thrift.I16, 11); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field begin error 11:udtype: ", p), err)
+	if p.IsSetDataString() {
+		if err := oprot.WriteFieldBegin(ctx, "dataString", thrift.STRING, 11); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 11:dataString: ", p), err)
 		}
-		if err := oprot.WriteI16(ctx, int16(*p.Udtype)); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T.udtype (11) field write error: ", p), err)
+		if err := oprot.WriteString(ctx, string(*p.DataString)); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T.dataString (11) field write error: ", p), err)
 		}
 		if err := oprot.WriteFieldEnd(ctx); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field end error 11:udtype: ", p), err)
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 11:dataString: ", p), err)
 		}
 	}
 	return err
 }
 
 func (p *AdmMessage) writeField12(ctx context.Context, oprot thrift.TProtocol) (err error) {
-	if p.IsSetUdshow() {
-		if err := oprot.WriteFieldBegin(ctx, "udshow", thrift.I16, 12); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field begin error 12:udshow: ", p), err)
+	if p.IsSetUdtype() {
+		if err := oprot.WriteFieldBegin(ctx, "udtype", thrift.I16, 12); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 12:udtype: ", p), err)
 		}
-		if err := oprot.WriteI16(ctx, int16(*p.Udshow)); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T.udshow (12) field write error: ", p), err)
+		if err := oprot.WriteI16(ctx, int16(*p.Udtype)); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T.udtype (12) field write error: ", p), err)
 		}
 		if err := oprot.WriteFieldEnd(ctx); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field end error 12:udshow: ", p), err)
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 12:udtype: ", p), err)
 		}
 	}
 	return err
 }
 
 func (p *AdmMessage) writeField13(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if p.IsSetUdshow() {
+		if err := oprot.WriteFieldBegin(ctx, "udshow", thrift.I16, 13); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 13:udshow: ", p), err)
+		}
+		if err := oprot.WriteI16(ctx, int16(*p.Udshow)); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T.udshow (13) field write error: ", p), err)
+		}
+		if err := oprot.WriteFieldEnd(ctx); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 13:udshow: ", p), err)
+		}
+	}
+	return err
+}
+
+func (p *AdmMessage) writeField14(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetExtend() {
-		if err := oprot.WriteFieldBegin(ctx, "extend", thrift.MAP, 13); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field begin error 13:extend: ", p), err)
+		if err := oprot.WriteFieldBegin(ctx, "extend", thrift.MAP, 14); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 14:extend: ", p), err)
 		}
 		if err := oprot.WriteMapBegin(ctx, thrift.STRING, thrift.STRING, len(p.Extend)); err != nil {
 			return thrift.PrependError("error writing map begin: ", err)
@@ -1692,16 +1742,16 @@ func (p *AdmMessage) writeField13(ctx context.Context, oprot thrift.TProtocol) (
 			return thrift.PrependError("error writing map end: ", err)
 		}
 		if err := oprot.WriteFieldEnd(ctx); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field end error 13:extend: ", p), err)
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 14:extend: ", p), err)
 		}
 	}
 	return err
 }
 
-func (p *AdmMessage) writeField14(ctx context.Context, oprot thrift.TProtocol) (err error) {
+func (p *AdmMessage) writeField15(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetExtra() {
-		if err := oprot.WriteFieldBegin(ctx, "extra", thrift.MAP, 14); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field begin error 14:extra: ", p), err)
+		if err := oprot.WriteFieldBegin(ctx, "extra", thrift.MAP, 15); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 15:extra: ", p), err)
 		}
 		if err := oprot.WriteMapBegin(ctx, thrift.STRING, thrift.STRING, len(p.Extra)); err != nil {
 			return thrift.PrependError("error writing map begin: ", err)
@@ -1718,7 +1768,7 @@ func (p *AdmMessage) writeField14(ctx context.Context, oprot thrift.TProtocol) (
 			return thrift.PrependError("error writing map end: ", err)
 		}
 		if err := oprot.WriteFieldEnd(ctx); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field end error 14:extra: ", p), err)
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 15:extra: ", p), err)
 		}
 	}
 	return err
@@ -1761,6 +1811,12 @@ func (p *AdmMessage) Equals(other *AdmMessage) bool {
 			return false
 		}
 		if (*p.ToNode) != (*other.ToNode) { return false }
+	}
+	if p.Domain != other.Domain {
+		if p.Domain == nil || other.Domain == nil {
+			return false
+		}
+		if (*p.Domain) != (*other.Domain) { return false }
 	}
 	if p.RoomNode != other.RoomNode {
 		if p.RoomNode == nil || other.RoomNode == nil {
@@ -6317,11 +6373,11 @@ func (p *AdmProxyMessage) Validate() error {
 }
 
 // Attributes:
-//  - Account
+//  - Nodelist
 //  - Blocktime
 // 
 type AdmSysBlockUser struct {
-	Account *string `thrift:"account,1" db:"account" json:"account,omitempty"`
+	Nodelist []string `thrift:"nodelist,1" db:"nodelist" json:"nodelist,omitempty"`
 	Blocktime *int64 `thrift:"blocktime,2" db:"blocktime" json:"blocktime,omitempty"`
 }
 
@@ -6329,13 +6385,11 @@ func NewAdmSysBlockUser() *AdmSysBlockUser {
 	return &AdmSysBlockUser{}
 }
 
-var AdmSysBlockUser_Account_DEFAULT string
+var AdmSysBlockUser_Nodelist_DEFAULT []string
 
-func (p *AdmSysBlockUser) GetAccount() string {
-	if !p.IsSetAccount() {
-		return AdmSysBlockUser_Account_DEFAULT
-	}
-	return *p.Account
+
+func (p *AdmSysBlockUser) GetNodelist() []string {
+	return p.Nodelist
 }
 
 var AdmSysBlockUser_Blocktime_DEFAULT int64
@@ -6347,8 +6401,8 @@ func (p *AdmSysBlockUser) GetBlocktime() int64 {
 	return *p.Blocktime
 }
 
-func (p *AdmSysBlockUser) IsSetAccount() bool {
-	return p.Account != nil
+func (p *AdmSysBlockUser) IsSetNodelist() bool {
+	return p.Nodelist != nil
 }
 
 func (p *AdmSysBlockUser) IsSetBlocktime() bool {
@@ -6371,7 +6425,7 @@ func (p *AdmSysBlockUser) Read(ctx context.Context, iprot thrift.TProtocol) erro
 		}
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.STRING {
+			if fieldTypeId == thrift.LIST {
 				if err := p.ReadField1(ctx, iprot); err != nil {
 					return err
 				}
@@ -6406,10 +6460,23 @@ func (p *AdmSysBlockUser) Read(ctx context.Context, iprot thrift.TProtocol) erro
 }
 
 func (p *AdmSysBlockUser) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadString(ctx); err != nil {
-		return thrift.PrependError("error reading field 1: ", err)
-	} else {
-		p.Account = &v
+	_, size, err := iprot.ReadListBegin(ctx)
+	if err != nil {
+		return thrift.PrependError("error reading list begin: ", err)
+	}
+	tSlice := make([]string, 0, size)
+	p.Nodelist = tSlice
+	for i := 0; i < size; i++ {
+		var _elem43 string
+		if v, err := iprot.ReadString(ctx); err != nil {
+			return thrift.PrependError("error reading field 0: ", err)
+		} else {
+			_elem43 = v
+		}
+		p.Nodelist = append(p.Nodelist, _elem43)
+	}
+	if err := iprot.ReadListEnd(ctx); err != nil {
+		return thrift.PrependError("error reading list end: ", err)
 	}
 	return nil
 }
@@ -6441,15 +6508,23 @@ func (p *AdmSysBlockUser) Write(ctx context.Context, oprot thrift.TProtocol) err
 }
 
 func (p *AdmSysBlockUser) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
-	if p.IsSetAccount() {
-		if err := oprot.WriteFieldBegin(ctx, "account", thrift.STRING, 1); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:account: ", p), err)
+	if p.IsSetNodelist() {
+		if err := oprot.WriteFieldBegin(ctx, "nodelist", thrift.LIST, 1); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:nodelist: ", p), err)
 		}
-		if err := oprot.WriteString(ctx, string(*p.Account)); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T.account (1) field write error: ", p), err)
+		if err := oprot.WriteListBegin(ctx, thrift.STRING, len(p.Nodelist)); err != nil {
+			return thrift.PrependError("error writing list begin: ", err)
+		}
+		for _, v := range p.Nodelist {
+			if err := oprot.WriteString(ctx, string(v)); err != nil {
+				return thrift.PrependError(fmt.Sprintf("%T. (0) field write error: ", p), err)
+			}
+		}
+		if err := oprot.WriteListEnd(ctx); err != nil {
+			return thrift.PrependError("error writing list end: ", err)
 		}
 		if err := oprot.WriteFieldEnd(ctx); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field end error 1:account: ", p), err)
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 1:nodelist: ", p), err)
 		}
 	}
 	return err
@@ -6476,11 +6551,10 @@ func (p *AdmSysBlockUser) Equals(other *AdmSysBlockUser) bool {
 	} else if p == nil || other == nil {
 		return false
 	}
-	if p.Account != other.Account {
-		if p.Account == nil || other.Account == nil {
-			return false
-		}
-		if (*p.Account) != (*other.Account) { return false }
+	if len(p.Nodelist) != len(other.Nodelist) { return false }
+	for i, _tgt := range p.Nodelist {
+		_src44 := other.Nodelist[i]
+		if _tgt != _src44 { return false }
 	}
 	if p.Blocktime != other.Blocktime {
 		if p.Blocktime == nil || other.Blocktime == nil {
@@ -6784,19 +6858,19 @@ func (p *AdmSysBlockList) ReadField1(ctx context.Context, iprot thrift.TProtocol
 	tMap := make(map[string]int64, size)
 	p.Usermap = tMap
 	for i := 0; i < size; i++ {
-		var _key43 string
+		var _key45 string
 		if v, err := iprot.ReadString(ctx); err != nil {
 			return thrift.PrependError("error reading field 0: ", err)
 		} else {
-			_key43 = v
+			_key45 = v
 		}
-		var _val44 int64
+		var _val46 int64
 		if v, err := iprot.ReadI64(ctx); err != nil {
 			return thrift.PrependError("error reading field 0: ", err)
 		} else {
-			_val44 = v
+			_val46 = v
 		}
-		p.Usermap[_key43] = _val44
+		p.Usermap[_key45] = _val46
 	}
 	if err := iprot.ReadMapEnd(ctx); err != nil {
 		return thrift.PrependError("error reading map end: ", err)
@@ -6854,8 +6928,8 @@ func (p *AdmSysBlockList) Equals(other *AdmSysBlockList) bool {
 	}
 	if len(p.Usermap) != len(other.Usermap) { return false }
 	for k, _tgt := range p.Usermap {
-		_src45 := other.Usermap[k]
-		if _tgt != _src45 { return false }
+		_src47 := other.Usermap[k]
+		if _tgt != _src47 { return false }
 	}
 	return true
 }
@@ -6979,11 +7053,11 @@ func (p *AdmTidList) ReadField1(ctx context.Context, iprot thrift.TProtocol) err
 	tSlice := make([]*AdmTid, 0, size)
 	p.Tidlist = tSlice
 	for i := 0; i < size; i++ {
-		_elem46 := &AdmTid{}
-		if err := _elem46.Read(ctx, iprot); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem46), err)
+		_elem48 := &AdmTid{}
+		if err := _elem48.Read(ctx, iprot); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem48), err)
 		}
-		p.Tidlist = append(p.Tidlist, _elem46)
+		p.Tidlist = append(p.Tidlist, _elem48)
 	}
 	if err := iprot.ReadListEnd(ctx); err != nil {
 		return thrift.PrependError("error reading list end: ", err)
@@ -7063,8 +7137,8 @@ func (p *AdmTidList) Equals(other *AdmTidList) bool {
 	}
 	if len(p.Tidlist) != len(other.Tidlist) { return false }
 	for i, _tgt := range p.Tidlist {
-		_src47 := other.Tidlist[i]
-		if !_tgt.Equals(_src47) { return false }
+		_src49 := other.Tidlist[i]
+		if !_tgt.Equals(_src49) { return false }
 	}
 	if p.Size != other.Size {
 		if p.Size == nil || other.Size == nil {
@@ -7537,7 +7611,6 @@ type Admiface interface {
 	//  - Abu
 	// 
 	SysBlockUser(ctx context.Context, abu *AdmSysBlockUser) (_r *AdmAck, _err error)
-	SysBlockList(ctx context.Context) (_r *AdmSysBlockList, _err error)
 	// Parameters:
 	//  - Au
 	// 
@@ -7599,7 +7672,7 @@ type Admiface interface {
 	// Parameters:
 	//  - Fromnode
 	//  - Domain
-	//  - ids
+	//  - Ids
 	// 
 	DelOfflineMsg(ctx context.Context, fromnode string, domain string, ids []int64) (_r *AdmAck, _err error)
 	// Parameters:
@@ -7729,6 +7802,18 @@ type Admiface interface {
 	//  - VNode
 	// 
 	VirtualroomUnSub(ctx context.Context, wsid int64, fromnode string, domain string, vNode string) (_r *AdmAck, _err error)
+	// Parameters:
+	//  - Fromnode
+	//  - Domain
+	//  - Tonode
+	// 
+	Authroster(ctx context.Context, fromnode string, domain string, tonode string) (_r *AdmAck, _err error)
+	// Parameters:
+	//  - Fromnode
+	//  - Domain
+	//  - RoomNode
+	// 
+	Authgroupuser(ctx context.Context, fromnode string, domain string, roomNode string) (_r *AdmAck, _err error)
 }
 
 type AdmifaceClient struct {
@@ -7770,17 +7855,17 @@ func (p *AdmifaceClient) SetLastResponseMeta_(meta thrift.ResponseMeta) {
 //  - Ab
 // 
 func (p *AdmifaceClient) Auth(ctx context.Context, ab *AuthBean) (_r *AdmAck, _err error) {
-	var _args48 AdmifaceAuthArgs
-	_args48.Ab = ab
-	var _result50 AdmifaceAuthResult
-	var _meta49 thrift.ResponseMeta
-	_meta49, _err = p.Client_().Call(ctx, "Auth", &_args48, &_result50)
-	p.SetLastResponseMeta_(_meta49)
+	var _args50 AdmifaceAuthArgs
+	_args50.Ab = ab
+	var _result52 AdmifaceAuthResult
+	var _meta51 thrift.ResponseMeta
+	_meta51, _err = p.Client_().Call(ctx, "Auth", &_args50, &_result52)
+	p.SetLastResponseMeta_(_meta51)
 	if _err != nil {
 		return
 	}
-	if _ret51 := _result50.GetSuccess(); _ret51 != nil {
-		return _ret51, nil
+	if _ret53 := _result52.GetSuccess(); _ret53 != nil {
+		return _ret53, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "Auth failed: unknown result")
 }
@@ -7792,35 +7877,35 @@ func (p *AdmifaceClient) Auth(ctx context.Context, ab *AuthBean) (_r *AdmAck, _e
 //  - Newpwd_
 // 
 func (p *AdmifaceClient) ModifyPwd(ctx context.Context, fromnode string, domain string, oldpwd string, newpwd string) (_r *AdmAck, _err error) {
-	var _args52 AdmifaceModifyPwdArgs
-	_args52.Fromnode = fromnode
-	_args52.Domain = domain
-	_args52.Oldpwd = oldpwd
-	_args52.Newpwd_ = newpwd
-	var _result54 AdmifaceModifyPwdResult
-	var _meta53 thrift.ResponseMeta
-	_meta53, _err = p.Client_().Call(ctx, "ModifyPwd", &_args52, &_result54)
-	p.SetLastResponseMeta_(_meta53)
+	var _args54 AdmifaceModifyPwdArgs
+	_args54.Fromnode = fromnode
+	_args54.Domain = domain
+	_args54.Oldpwd = oldpwd
+	_args54.Newpwd_ = newpwd
+	var _result56 AdmifaceModifyPwdResult
+	var _meta55 thrift.ResponseMeta
+	_meta55, _err = p.Client_().Call(ctx, "ModifyPwd", &_args54, &_result56)
+	p.SetLastResponseMeta_(_meta55)
 	if _err != nil {
 		return
 	}
-	if _ret55 := _result54.GetSuccess(); _ret55 != nil {
-		return _ret55, nil
+	if _ret57 := _result56.GetSuccess(); _ret57 != nil {
+		return _ret57, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "ModifyPwd failed: unknown result")
 }
 
 func (p *AdmifaceClient) Ping(ctx context.Context) (_r *AdmAck, _err error) {
-	var _args56 AdmifacePingArgs
-	var _result58 AdmifacePingResult
-	var _meta57 thrift.ResponseMeta
-	_meta57, _err = p.Client_().Call(ctx, "Ping", &_args56, &_result58)
-	p.SetLastResponseMeta_(_meta57)
+	var _args58 AdmifacePingArgs
+	var _result60 AdmifacePingResult
+	var _meta59 thrift.ResponseMeta
+	_meta59, _err = p.Client_().Call(ctx, "Ping", &_args58, &_result60)
+	p.SetLastResponseMeta_(_meta59)
 	if _err != nil {
 		return
 	}
-	if _ret59 := _result58.GetSuccess(); _ret59 != nil {
-		return _ret59, nil
+	if _ret61 := _result60.GetSuccess(); _ret61 != nil {
+		return _ret61, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "Ping failed: unknown result")
 }
@@ -7829,17 +7914,17 @@ func (p *AdmifaceClient) Ping(ctx context.Context) (_r *AdmAck, _err error) {
 //  - Atoken
 // 
 func (p *AdmifaceClient) Token(ctx context.Context, atoken *AdmToken) (_r *AdmAck, _err error) {
-	var _args60 AdmifaceTokenArgs
-	_args60.Atoken = atoken
-	var _result62 AdmifaceTokenResult
-	var _meta61 thrift.ResponseMeta
-	_meta61, _err = p.Client_().Call(ctx, "Token", &_args60, &_result62)
-	p.SetLastResponseMeta_(_meta61)
+	var _args62 AdmifaceTokenArgs
+	_args62.Atoken = atoken
+	var _result64 AdmifaceTokenResult
+	var _meta63 thrift.ResponseMeta
+	_meta63, _err = p.Client_().Call(ctx, "Token", &_args62, &_result64)
+	p.SetLastResponseMeta_(_meta63)
 	if _err != nil {
 		return
 	}
-	if _ret63 := _result62.GetSuccess(); _ret63 != nil {
-		return _ret63, nil
+	if _ret65 := _result64.GetSuccess(); _ret65 != nil {
+		return _ret65, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "Token failed: unknown result")
 }
@@ -7848,17 +7933,17 @@ func (p *AdmifaceClient) Token(ctx context.Context, atoken *AdmToken) (_r *AdmAc
 //  - Amb
 // 
 func (p *AdmifaceClient) TimMessageBroadcast(ctx context.Context, amb *AdmMessageBroadcast) (_r *AdmAck, _err error) {
-	var _args64 AdmifaceTimMessageBroadcastArgs
-	_args64.Amb = amb
-	var _result66 AdmifaceTimMessageBroadcastResult
-	var _meta65 thrift.ResponseMeta
-	_meta65, _err = p.Client_().Call(ctx, "TimMessageBroadcast", &_args64, &_result66)
-	p.SetLastResponseMeta_(_meta65)
+	var _args66 AdmifaceTimMessageBroadcastArgs
+	_args66.Amb = amb
+	var _result68 AdmifaceTimMessageBroadcastResult
+	var _meta67 thrift.ResponseMeta
+	_meta67, _err = p.Client_().Call(ctx, "TimMessageBroadcast", &_args66, &_result68)
+	p.SetLastResponseMeta_(_meta67)
 	if _err != nil {
 		return
 	}
-	if _ret67 := _result66.GetSuccess(); _ret67 != nil {
-		return _ret67, nil
+	if _ret69 := _result68.GetSuccess(); _ret69 != nil {
+		return _ret69, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "TimMessageBroadcast failed: unknown result")
 }
@@ -7867,17 +7952,17 @@ func (p *AdmifaceClient) TimMessageBroadcast(ctx context.Context, amb *AdmMessag
 //  - Apb
 // 
 func (p *AdmifaceClient) TimPresenceBroadcast(ctx context.Context, apb *AdmPresenceBroadcast) (_r *AdmAck, _err error) {
-	var _args68 AdmifaceTimPresenceBroadcastArgs
-	_args68.Apb = apb
-	var _result70 AdmifaceTimPresenceBroadcastResult
-	var _meta69 thrift.ResponseMeta
-	_meta69, _err = p.Client_().Call(ctx, "TimPresenceBroadcast", &_args68, &_result70)
-	p.SetLastResponseMeta_(_meta69)
+	var _args70 AdmifaceTimPresenceBroadcastArgs
+	_args70.Apb = apb
+	var _result72 AdmifaceTimPresenceBroadcastResult
+	var _meta71 thrift.ResponseMeta
+	_meta71, _err = p.Client_().Call(ctx, "TimPresenceBroadcast", &_args70, &_result72)
+	p.SetLastResponseMeta_(_meta71)
 	if _err != nil {
 		return
 	}
-	if _ret71 := _result70.GetSuccess(); _ret71 != nil {
-		return _ret71, nil
+	if _ret73 := _result72.GetSuccess(); _ret73 != nil {
+		return _ret73, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "TimPresenceBroadcast failed: unknown result")
 }
@@ -7886,17 +7971,17 @@ func (p *AdmifaceClient) TimPresenceBroadcast(ctx context.Context, apb *AdmPrese
 //  - Apm
 // 
 func (p *AdmifaceClient) ProxyMessage(ctx context.Context, apm *AdmProxyMessage) (_r *AdmAck, _err error) {
-	var _args72 AdmifaceProxyMessageArgs
-	_args72.Apm = apm
-	var _result74 AdmifaceProxyMessageResult
-	var _meta73 thrift.ResponseMeta
-	_meta73, _err = p.Client_().Call(ctx, "ProxyMessage", &_args72, &_result74)
-	p.SetLastResponseMeta_(_meta73)
+	var _args74 AdmifaceProxyMessageArgs
+	_args74.Apm = apm
+	var _result76 AdmifaceProxyMessageResult
+	var _meta75 thrift.ResponseMeta
+	_meta75, _err = p.Client_().Call(ctx, "ProxyMessage", &_args74, &_result76)
+	p.SetLastResponseMeta_(_meta75)
 	if _err != nil {
 		return
 	}
-	if _ret75 := _result74.GetSuccess(); _ret75 != nil {
-		return _ret75, nil
+	if _ret77 := _result76.GetSuccess(); _ret77 != nil {
+		return _ret77, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "ProxyMessage failed: unknown result")
 }
@@ -7905,17 +7990,17 @@ func (p *AdmifaceClient) ProxyMessage(ctx context.Context, apm *AdmProxyMessage)
 //  - Ab
 // 
 func (p *AdmifaceClient) Register(ctx context.Context, ab *AuthBean) (_r *AdmAck, _err error) {
-	var _args76 AdmifaceRegisterArgs
-	_args76.Ab = ab
-	var _result78 AdmifaceRegisterResult
-	var _meta77 thrift.ResponseMeta
-	_meta77, _err = p.Client_().Call(ctx, "Register", &_args76, &_result78)
-	p.SetLastResponseMeta_(_meta77)
+	var _args78 AdmifaceRegisterArgs
+	_args78.Ab = ab
+	var _result80 AdmifaceRegisterResult
+	var _meta79 thrift.ResponseMeta
+	_meta79, _err = p.Client_().Call(ctx, "Register", &_args78, &_result80)
+	p.SetLastResponseMeta_(_meta79)
 	if _err != nil {
 		return
 	}
-	if _ret79 := _result78.GetSuccess(); _ret79 != nil {
-		return _ret79, nil
+	if _ret81 := _result80.GetSuccess(); _ret81 != nil {
+		return _ret81, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "Register failed: unknown result")
 }
@@ -7924,17 +8009,17 @@ func (p *AdmifaceClient) Register(ctx context.Context, ab *AuthBean) (_r *AdmAck
 //  - Amui
 // 
 func (p *AdmifaceClient) ModifyUserInfo(ctx context.Context, amui *AdmModifyUserInfo) (_r *AdmAck, _err error) {
-	var _args80 AdmifaceModifyUserInfoArgs
-	_args80.Amui = amui
-	var _result82 AdmifaceModifyUserInfoResult
-	var _meta81 thrift.ResponseMeta
-	_meta81, _err = p.Client_().Call(ctx, "ModifyUserInfo", &_args80, &_result82)
-	p.SetLastResponseMeta_(_meta81)
+	var _args82 AdmifaceModifyUserInfoArgs
+	_args82.Amui = amui
+	var _result84 AdmifaceModifyUserInfoResult
+	var _meta83 thrift.ResponseMeta
+	_meta83, _err = p.Client_().Call(ctx, "ModifyUserInfo", &_args82, &_result84)
+	p.SetLastResponseMeta_(_meta83)
 	if _err != nil {
 		return
 	}
-	if _ret83 := _result82.GetSuccess(); _ret83 != nil {
-		return _ret83, nil
+	if _ret85 := _result84.GetSuccess(); _ret85 != nil {
+		return _ret85, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "ModifyUserInfo failed: unknown result")
 }
@@ -7943,17 +8028,17 @@ func (p *AdmifaceClient) ModifyUserInfo(ctx context.Context, amui *AdmModifyUser
 //  - Arb
 // 
 func (p *AdmifaceClient) ModifyRoomInfo(ctx context.Context, arb *AdmRoomBean) (_r *AdmAck, _err error) {
-	var _args84 AdmifaceModifyRoomInfoArgs
-	_args84.Arb = arb
-	var _result86 AdmifaceModifyRoomInfoResult
-	var _meta85 thrift.ResponseMeta
-	_meta85, _err = p.Client_().Call(ctx, "ModifyRoomInfo", &_args84, &_result86)
-	p.SetLastResponseMeta_(_meta85)
+	var _args86 AdmifaceModifyRoomInfoArgs
+	_args86.Arb = arb
+	var _result88 AdmifaceModifyRoomInfoResult
+	var _meta87 thrift.ResponseMeta
+	_meta87, _err = p.Client_().Call(ctx, "ModifyRoomInfo", &_args86, &_result88)
+	p.SetLastResponseMeta_(_meta87)
 	if _err != nil {
 		return
 	}
-	if _ret87 := _result86.GetSuccess(); _ret87 != nil {
-		return _ret87, nil
+	if _ret89 := _result88.GetSuccess(); _ret89 != nil {
+		return _ret89, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "ModifyRoomInfo failed: unknown result")
 }
@@ -7962,51 +8047,36 @@ func (p *AdmifaceClient) ModifyRoomInfo(ctx context.Context, arb *AdmRoomBean) (
 //  - Abu
 // 
 func (p *AdmifaceClient) SysBlockUser(ctx context.Context, abu *AdmSysBlockUser) (_r *AdmAck, _err error) {
-	var _args88 AdmifaceSysBlockUserArgs
-	_args88.Abu = abu
-	var _result90 AdmifaceSysBlockUserResult
-	var _meta89 thrift.ResponseMeta
-	_meta89, _err = p.Client_().Call(ctx, "SysBlockUser", &_args88, &_result90)
-	p.SetLastResponseMeta_(_meta89)
+	var _args90 AdmifaceSysBlockUserArgs
+	_args90.Abu = abu
+	var _result92 AdmifaceSysBlockUserResult
+	var _meta91 thrift.ResponseMeta
+	_meta91, _err = p.Client_().Call(ctx, "SysBlockUser", &_args90, &_result92)
+	p.SetLastResponseMeta_(_meta91)
 	if _err != nil {
 		return
 	}
-	if _ret91 := _result90.GetSuccess(); _ret91 != nil {
-		return _ret91, nil
+	if _ret93 := _result92.GetSuccess(); _ret93 != nil {
+		return _ret93, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "SysBlockUser failed: unknown result")
-}
-
-func (p *AdmifaceClient) SysBlockList(ctx context.Context) (_r *AdmSysBlockList, _err error) {
-	var _args92 AdmifaceSysBlockListArgs
-	var _result94 AdmifaceSysBlockListResult
-	var _meta93 thrift.ResponseMeta
-	_meta93, _err = p.Client_().Call(ctx, "SysBlockList", &_args92, &_result94)
-	p.SetLastResponseMeta_(_meta93)
-	if _err != nil {
-		return
-	}
-	if _ret95 := _result94.GetSuccess(); _ret95 != nil {
-		return _ret95, nil
-	}
-	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "SysBlockList failed: unknown result")
 }
 
 // Parameters:
 //  - Au
 // 
 func (p *AdmifaceClient) OnlineUser(ctx context.Context, au *AdmOnlineUser) (_r *AdmTidList, _err error) {
-	var _args96 AdmifaceOnlineUserArgs
-	_args96.Au = au
-	var _result98 AdmifaceOnlineUserResult
-	var _meta97 thrift.ResponseMeta
-	_meta97, _err = p.Client_().Call(ctx, "OnlineUser", &_args96, &_result98)
-	p.SetLastResponseMeta_(_meta97)
+	var _args94 AdmifaceOnlineUserArgs
+	_args94.Au = au
+	var _result96 AdmifaceOnlineUserResult
+	var _meta95 thrift.ResponseMeta
+	_meta95, _err = p.Client_().Call(ctx, "OnlineUser", &_args94, &_result96)
+	p.SetLastResponseMeta_(_meta95)
 	if _err != nil {
 		return
 	}
-	if _ret99 := _result98.GetSuccess(); _ret99 != nil {
-		return _ret99, nil
+	if _ret97 := _result96.GetSuccess(); _ret97 != nil {
+		return _ret97, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "OnlineUser failed: unknown result")
 }
@@ -8015,17 +8085,17 @@ func (p *AdmifaceClient) OnlineUser(ctx context.Context, au *AdmOnlineUser) (_r 
 //  - Avb
 // 
 func (p *AdmifaceClient) Vroom(ctx context.Context, avb *AdmVroomBean) (_r *AdmAck, _err error) {
-	var _args100 AdmifaceVroomArgs
-	_args100.Avb = avb
-	var _result102 AdmifaceVroomResult
-	var _meta101 thrift.ResponseMeta
-	_meta101, _err = p.Client_().Call(ctx, "Vroom", &_args100, &_result102)
-	p.SetLastResponseMeta_(_meta101)
+	var _args98 AdmifaceVroomArgs
+	_args98.Avb = avb
+	var _result100 AdmifaceVroomResult
+	var _meta99 thrift.ResponseMeta
+	_meta99, _err = p.Client_().Call(ctx, "Vroom", &_args98, &_result100)
+	p.SetLastResponseMeta_(_meta99)
 	if _err != nil {
 		return
 	}
-	if _ret103 := _result102.GetSuccess(); _ret103 != nil {
-		return _ret103, nil
+	if _ret101 := _result100.GetSuccess(); _ret101 != nil {
+		return _ret101, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "Vroom failed: unknown result")
 }
@@ -8034,17 +8104,17 @@ func (p *AdmifaceClient) Vroom(ctx context.Context, avb *AdmVroomBean) (_r *AdmA
 //  - Adb
 // 
 func (p *AdmifaceClient) Detect(ctx context.Context, adb *AdmDetectBean) (_r *AdmAck, _err error) {
-	var _args104 AdmifaceDetectArgs
-	_args104.Adb = adb
-	var _result106 AdmifaceDetectResult
-	var _meta105 thrift.ResponseMeta
-	_meta105, _err = p.Client_().Call(ctx, "Detect", &_args104, &_result106)
-	p.SetLastResponseMeta_(_meta105)
+	var _args102 AdmifaceDetectArgs
+	_args102.Adb = adb
+	var _result104 AdmifaceDetectResult
+	var _meta103 thrift.ResponseMeta
+	_meta103, _err = p.Client_().Call(ctx, "Detect", &_args102, &_result104)
+	p.SetLastResponseMeta_(_meta103)
 	if _err != nil {
 		return
 	}
-	if _ret107 := _result106.GetSuccess(); _ret107 != nil {
-		return _ret107, nil
+	if _ret105 := _result104.GetSuccess(); _ret105 != nil {
+		return _ret105, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "Detect failed: unknown result")
 }
@@ -8054,18 +8124,18 @@ func (p *AdmifaceClient) Detect(ctx context.Context, adb *AdmDetectBean) (_r *Ad
 //  - Domain
 // 
 func (p *AdmifaceClient) Roster(ctx context.Context, fromnode string, domain string) (_r *AdmNodeList, _err error) {
-	var _args108 AdmifaceRosterArgs
-	_args108.Fromnode = fromnode
-	_args108.Domain = domain
-	var _result110 AdmifaceRosterResult
-	var _meta109 thrift.ResponseMeta
-	_meta109, _err = p.Client_().Call(ctx, "Roster", &_args108, &_result110)
-	p.SetLastResponseMeta_(_meta109)
+	var _args106 AdmifaceRosterArgs
+	_args106.Fromnode = fromnode
+	_args106.Domain = domain
+	var _result108 AdmifaceRosterResult
+	var _meta107 thrift.ResponseMeta
+	_meta107, _err = p.Client_().Call(ctx, "Roster", &_args106, &_result108)
+	p.SetLastResponseMeta_(_meta107)
 	if _err != nil {
 		return
 	}
-	if _ret111 := _result110.GetSuccess(); _ret111 != nil {
-		return _ret111, nil
+	if _ret109 := _result108.GetSuccess(); _ret109 != nil {
+		return _ret109, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "Roster failed: unknown result")
 }
@@ -8077,20 +8147,20 @@ func (p *AdmifaceClient) Roster(ctx context.Context, fromnode string, domain str
 //  - Msg
 // 
 func (p *AdmifaceClient) Addroster(ctx context.Context, fromnode string, domain string, tonode string, msg string) (_r *AdmAck, _err error) {
-	var _args112 AdmifaceAddrosterArgs
-	_args112.Fromnode = fromnode
-	_args112.Domain = domain
-	_args112.Tonode = tonode
-	_args112.Msg = msg
-	var _result114 AdmifaceAddrosterResult
-	var _meta113 thrift.ResponseMeta
-	_meta113, _err = p.Client_().Call(ctx, "Addroster", &_args112, &_result114)
-	p.SetLastResponseMeta_(_meta113)
+	var _args110 AdmifaceAddrosterArgs
+	_args110.Fromnode = fromnode
+	_args110.Domain = domain
+	_args110.Tonode = tonode
+	_args110.Msg = msg
+	var _result112 AdmifaceAddrosterResult
+	var _meta111 thrift.ResponseMeta
+	_meta111, _err = p.Client_().Call(ctx, "Addroster", &_args110, &_result112)
+	p.SetLastResponseMeta_(_meta111)
 	if _err != nil {
 		return
 	}
-	if _ret115 := _result114.GetSuccess(); _ret115 != nil {
-		return _ret115, nil
+	if _ret113 := _result112.GetSuccess(); _ret113 != nil {
+		return _ret113, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "Addroster failed: unknown result")
 }
@@ -8101,19 +8171,19 @@ func (p *AdmifaceClient) Addroster(ctx context.Context, fromnode string, domain 
 //  - Tonode
 // 
 func (p *AdmifaceClient) Rmroster(ctx context.Context, fromnode string, domain string, tonode string) (_r *AdmAck, _err error) {
-	var _args116 AdmifaceRmrosterArgs
-	_args116.Fromnode = fromnode
-	_args116.Domain = domain
-	_args116.Tonode = tonode
-	var _result118 AdmifaceRmrosterResult
-	var _meta117 thrift.ResponseMeta
-	_meta117, _err = p.Client_().Call(ctx, "Rmroster", &_args116, &_result118)
-	p.SetLastResponseMeta_(_meta117)
+	var _args114 AdmifaceRmrosterArgs
+	_args114.Fromnode = fromnode
+	_args114.Domain = domain
+	_args114.Tonode = tonode
+	var _result116 AdmifaceRmrosterResult
+	var _meta115 thrift.ResponseMeta
+	_meta115, _err = p.Client_().Call(ctx, "Rmroster", &_args114, &_result116)
+	p.SetLastResponseMeta_(_meta115)
 	if _err != nil {
 		return
 	}
-	if _ret119 := _result118.GetSuccess(); _ret119 != nil {
-		return _ret119, nil
+	if _ret117 := _result116.GetSuccess(); _ret117 != nil {
+		return _ret117, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "Rmroster failed: unknown result")
 }
@@ -8124,19 +8194,19 @@ func (p *AdmifaceClient) Rmroster(ctx context.Context, fromnode string, domain s
 //  - Tonode
 // 
 func (p *AdmifaceClient) Blockroster(ctx context.Context, fromnode string, domain string, tonode string) (_r *AdmAck, _err error) {
-	var _args120 AdmifaceBlockrosterArgs
-	_args120.Fromnode = fromnode
-	_args120.Domain = domain
-	_args120.Tonode = tonode
-	var _result122 AdmifaceBlockrosterResult
-	var _meta121 thrift.ResponseMeta
-	_meta121, _err = p.Client_().Call(ctx, "Blockroster", &_args120, &_result122)
-	p.SetLastResponseMeta_(_meta121)
+	var _args118 AdmifaceBlockrosterArgs
+	_args118.Fromnode = fromnode
+	_args118.Domain = domain
+	_args118.Tonode = tonode
+	var _result120 AdmifaceBlockrosterResult
+	var _meta119 thrift.ResponseMeta
+	_meta119, _err = p.Client_().Call(ctx, "Blockroster", &_args118, &_result120)
+	p.SetLastResponseMeta_(_meta119)
 	if _err != nil {
 		return
 	}
-	if _ret123 := _result122.GetSuccess(); _ret123 != nil {
-		return _ret123, nil
+	if _ret121 := _result120.GetSuccess(); _ret121 != nil {
+		return _ret121, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "Blockroster failed: unknown result")
 }
@@ -8149,21 +8219,21 @@ func (p *AdmifaceClient) Blockroster(ctx context.Context, fromnode string, domai
 //  - Limit
 // 
 func (p *AdmifaceClient) PullUserMessage(ctx context.Context, fromnode string, domain string, tonode string, mid int64, limit int64) (_r *AdmMessageList, _err error) {
-	var _args124 AdmifacePullUserMessageArgs
-	_args124.Fromnode = fromnode
-	_args124.Domain = domain
-	_args124.Tonode = tonode
-	_args124.Mid = mid
-	_args124.Limit = limit
-	var _result126 AdmifacePullUserMessageResult
-	var _meta125 thrift.ResponseMeta
-	_meta125, _err = p.Client_().Call(ctx, "PullUserMessage", &_args124, &_result126)
-	p.SetLastResponseMeta_(_meta125)
+	var _args122 AdmifacePullUserMessageArgs
+	_args122.Fromnode = fromnode
+	_args122.Domain = domain
+	_args122.Tonode = tonode
+	_args122.Mid = mid
+	_args122.Limit = limit
+	var _result124 AdmifacePullUserMessageResult
+	var _meta123 thrift.ResponseMeta
+	_meta123, _err = p.Client_().Call(ctx, "PullUserMessage", &_args122, &_result124)
+	p.SetLastResponseMeta_(_meta123)
 	if _err != nil {
 		return
 	}
-	if _ret127 := _result126.GetSuccess(); _ret127 != nil {
-		return _ret127, nil
+	if _ret125 := _result124.GetSuccess(); _ret125 != nil {
+		return _ret125, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "PullUserMessage failed: unknown result")
 }
@@ -8176,21 +8246,21 @@ func (p *AdmifaceClient) PullUserMessage(ctx context.Context, fromnode string, d
 //  - Limit
 // 
 func (p *AdmifaceClient) PullRoomMessage(ctx context.Context, fromnode string, domain string, tonode string, mid int64, limit int64) (_r *AdmMessageList, _err error) {
-	var _args128 AdmifacePullRoomMessageArgs
-	_args128.Fromnode = fromnode
-	_args128.Domain = domain
-	_args128.Tonode = tonode
-	_args128.Mid = mid
-	_args128.Limit = limit
-	var _result130 AdmifacePullRoomMessageResult
-	var _meta129 thrift.ResponseMeta
-	_meta129, _err = p.Client_().Call(ctx, "PullRoomMessage", &_args128, &_result130)
-	p.SetLastResponseMeta_(_meta129)
+	var _args126 AdmifacePullRoomMessageArgs
+	_args126.Fromnode = fromnode
+	_args126.Domain = domain
+	_args126.Tonode = tonode
+	_args126.Mid = mid
+	_args126.Limit = limit
+	var _result128 AdmifacePullRoomMessageResult
+	var _meta127 thrift.ResponseMeta
+	_meta127, _err = p.Client_().Call(ctx, "PullRoomMessage", &_args126, &_result128)
+	p.SetLastResponseMeta_(_meta127)
 	if _err != nil {
 		return
 	}
-	if _ret131 := _result130.GetSuccess(); _ret131 != nil {
-		return _ret131, nil
+	if _ret129 := _result128.GetSuccess(); _ret129 != nil {
+		return _ret129, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "PullRoomMessage failed: unknown result")
 }
@@ -8201,19 +8271,19 @@ func (p *AdmifaceClient) PullRoomMessage(ctx context.Context, fromnode string, d
 //  - Limit
 // 
 func (p *AdmifaceClient) OfflineMsg(ctx context.Context, fromnode string, domain string, limit int64) (_r *AdmMessageList, _err error) {
-	var _args132 AdmifaceOfflineMsgArgs
-	_args132.Fromnode = fromnode
-	_args132.Domain = domain
-	_args132.Limit = limit
-	var _result134 AdmifaceOfflineMsgResult
-	var _meta133 thrift.ResponseMeta
-	_meta133, _err = p.Client_().Call(ctx, "OfflineMsg", &_args132, &_result134)
-	p.SetLastResponseMeta_(_meta133)
+	var _args130 AdmifaceOfflineMsgArgs
+	_args130.Fromnode = fromnode
+	_args130.Domain = domain
+	_args130.Limit = limit
+	var _result132 AdmifaceOfflineMsgResult
+	var _meta131 thrift.ResponseMeta
+	_meta131, _err = p.Client_().Call(ctx, "OfflineMsg", &_args130, &_result132)
+	p.SetLastResponseMeta_(_meta131)
 	if _err != nil {
 		return
 	}
-	if _ret135 := _result134.GetSuccess(); _ret135 != nil {
-		return _ret135, nil
+	if _ret133 := _result132.GetSuccess(); _ret133 != nil {
+		return _ret133, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "OfflineMsg failed: unknown result")
 }
@@ -8221,22 +8291,22 @@ func (p *AdmifaceClient) OfflineMsg(ctx context.Context, fromnode string, domain
 // Parameters:
 //  - Fromnode
 //  - Domain
-//  - ids
+//  - Ids
 // 
 func (p *AdmifaceClient) DelOfflineMsg(ctx context.Context, fromnode string, domain string, ids []int64) (_r *AdmAck, _err error) {
-	var _args136 AdmifaceDelOfflineMsgArgs
-	_args136.Fromnode = fromnode
-	_args136.Domain = domain
-	_args136.Ids = ids
-	var _result138 AdmifaceDelOfflineMsgResult
-	var _meta137 thrift.ResponseMeta
-	_meta137, _err = p.Client_().Call(ctx, "DelOfflineMsg", &_args136, &_result138)
-	p.SetLastResponseMeta_(_meta137)
+	var _args134 AdmifaceDelOfflineMsgArgs
+	_args134.Fromnode = fromnode
+	_args134.Domain = domain
+	_args134.Ids = ids
+	var _result136 AdmifaceDelOfflineMsgResult
+	var _meta135 thrift.ResponseMeta
+	_meta135, _err = p.Client_().Call(ctx, "DelOfflineMsg", &_args134, &_result136)
+	p.SetLastResponseMeta_(_meta135)
 	if _err != nil {
 		return
 	}
-	if _ret139 := _result138.GetSuccess(); _ret139 != nil {
-		return _ret139, nil
+	if _ret137 := _result136.GetSuccess(); _ret137 != nil {
+		return _ret137, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "DelOfflineMsg failed: unknown result")
 }
@@ -8246,18 +8316,18 @@ func (p *AdmifaceClient) DelOfflineMsg(ctx context.Context, fromnode string, dom
 //  - Domain
 // 
 func (p *AdmifaceClient) UserRoom(ctx context.Context, fromnode string, domain string) (_r *AdmNodeList, _err error) {
-	var _args140 AdmifaceUserRoomArgs
-	_args140.Fromnode = fromnode
-	_args140.Domain = domain
-	var _result142 AdmifaceUserRoomResult
-	var _meta141 thrift.ResponseMeta
-	_meta141, _err = p.Client_().Call(ctx, "UserRoom", &_args140, &_result142)
-	p.SetLastResponseMeta_(_meta141)
+	var _args138 AdmifaceUserRoomArgs
+	_args138.Fromnode = fromnode
+	_args138.Domain = domain
+	var _result140 AdmifaceUserRoomResult
+	var _meta139 thrift.ResponseMeta
+	_meta139, _err = p.Client_().Call(ctx, "UserRoom", &_args138, &_result140)
+	p.SetLastResponseMeta_(_meta139)
 	if _err != nil {
 		return
 	}
-	if _ret143 := _result142.GetSuccess(); _ret143 != nil {
-		return _ret143, nil
+	if _ret141 := _result140.GetSuccess(); _ret141 != nil {
+		return _ret141, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "UserRoom failed: unknown result")
 }
@@ -8267,18 +8337,18 @@ func (p *AdmifaceClient) UserRoom(ctx context.Context, fromnode string, domain s
 //  - Domain
 // 
 func (p *AdmifaceClient) RoomUsers(ctx context.Context, fromnode string, domain string) (_r *AdmNodeList, _err error) {
-	var _args144 AdmifaceRoomUsersArgs
-	_args144.Fromnode = fromnode
-	_args144.Domain = domain
-	var _result146 AdmifaceRoomUsersResult
-	var _meta145 thrift.ResponseMeta
-	_meta145, _err = p.Client_().Call(ctx, "RoomUsers", &_args144, &_result146)
-	p.SetLastResponseMeta_(_meta145)
+	var _args142 AdmifaceRoomUsersArgs
+	_args142.Fromnode = fromnode
+	_args142.Domain = domain
+	var _result144 AdmifaceRoomUsersResult
+	var _meta143 thrift.ResponseMeta
+	_meta143, _err = p.Client_().Call(ctx, "RoomUsers", &_args142, &_result144)
+	p.SetLastResponseMeta_(_meta143)
 	if _err != nil {
 		return
 	}
-	if _ret147 := _result146.GetSuccess(); _ret147 != nil {
-		return _ret147, nil
+	if _ret145 := _result144.GetSuccess(); _ret145 != nil {
+		return _ret145, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "RoomUsers failed: unknown result")
 }
@@ -8290,20 +8360,20 @@ func (p *AdmifaceClient) RoomUsers(ctx context.Context, fromnode string, domain 
 //  - Gtype
 // 
 func (p *AdmifaceClient) CreateRoom(ctx context.Context, fromnode string, domain string, topic string, gtype int8) (_r *AdmAck, _err error) {
-	var _args148 AdmifaceCreateRoomArgs
-	_args148.Fromnode = fromnode
-	_args148.Domain = domain
-	_args148.Topic = topic
-	_args148.Gtype = gtype
-	var _result150 AdmifaceCreateRoomResult
-	var _meta149 thrift.ResponseMeta
-	_meta149, _err = p.Client_().Call(ctx, "CreateRoom", &_args148, &_result150)
-	p.SetLastResponseMeta_(_meta149)
+	var _args146 AdmifaceCreateRoomArgs
+	_args146.Fromnode = fromnode
+	_args146.Domain = domain
+	_args146.Topic = topic
+	_args146.Gtype = gtype
+	var _result148 AdmifaceCreateRoomResult
+	var _meta147 thrift.ResponseMeta
+	_meta147, _err = p.Client_().Call(ctx, "CreateRoom", &_args146, &_result148)
+	p.SetLastResponseMeta_(_meta147)
 	if _err != nil {
 		return
 	}
-	if _ret151 := _result150.GetSuccess(); _ret151 != nil {
-		return _ret151, nil
+	if _ret149 := _result148.GetSuccess(); _ret149 != nil {
+		return _ret149, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "CreateRoom failed: unknown result")
 }
@@ -8315,20 +8385,20 @@ func (p *AdmifaceClient) CreateRoom(ctx context.Context, fromnode string, domain
 //  - Msg
 // 
 func (p *AdmifaceClient) AddRoom(ctx context.Context, fromnode string, domain string, roomNode string, msg string) (_r *AdmAck, _err error) {
-	var _args152 AdmifaceAddRoomArgs
-	_args152.Fromnode = fromnode
-	_args152.Domain = domain
-	_args152.RoomNode = roomNode
-	_args152.Msg = msg
-	var _result154 AdmifaceAddRoomResult
-	var _meta153 thrift.ResponseMeta
-	_meta153, _err = p.Client_().Call(ctx, "AddRoom", &_args152, &_result154)
-	p.SetLastResponseMeta_(_meta153)
+	var _args150 AdmifaceAddRoomArgs
+	_args150.Fromnode = fromnode
+	_args150.Domain = domain
+	_args150.RoomNode = roomNode
+	_args150.Msg = msg
+	var _result152 AdmifaceAddRoomResult
+	var _meta151 thrift.ResponseMeta
+	_meta151, _err = p.Client_().Call(ctx, "AddRoom", &_args150, &_result152)
+	p.SetLastResponseMeta_(_meta151)
 	if _err != nil {
 		return
 	}
-	if _ret155 := _result154.GetSuccess(); _ret155 != nil {
-		return _ret155, nil
+	if _ret153 := _result152.GetSuccess(); _ret153 != nil {
+		return _ret153, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "AddRoom failed: unknown result")
 }
@@ -8340,20 +8410,20 @@ func (p *AdmifaceClient) AddRoom(ctx context.Context, fromnode string, domain st
 //  - ToNode
 // 
 func (p *AdmifaceClient) PullInRoom(ctx context.Context, fromnode string, domain string, roomNode string, toNode string) (_r *AdmAck, _err error) {
-	var _args156 AdmifacePullInRoomArgs
-	_args156.Fromnode = fromnode
-	_args156.Domain = domain
-	_args156.RoomNode = roomNode
-	_args156.ToNode = toNode
-	var _result158 AdmifacePullInRoomResult
-	var _meta157 thrift.ResponseMeta
-	_meta157, _err = p.Client_().Call(ctx, "PullInRoom", &_args156, &_result158)
-	p.SetLastResponseMeta_(_meta157)
+	var _args154 AdmifacePullInRoomArgs
+	_args154.Fromnode = fromnode
+	_args154.Domain = domain
+	_args154.RoomNode = roomNode
+	_args154.ToNode = toNode
+	var _result156 AdmifacePullInRoomResult
+	var _meta155 thrift.ResponseMeta
+	_meta155, _err = p.Client_().Call(ctx, "PullInRoom", &_args154, &_result156)
+	p.SetLastResponseMeta_(_meta155)
 	if _err != nil {
 		return
 	}
-	if _ret159 := _result158.GetSuccess(); _ret159 != nil {
-		return _ret159, nil
+	if _ret157 := _result156.GetSuccess(); _ret157 != nil {
+		return _ret157, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "PullInRoom failed: unknown result")
 }
@@ -8366,21 +8436,21 @@ func (p *AdmifaceClient) PullInRoom(ctx context.Context, fromnode string, domain
 //  - Msg
 // 
 func (p *AdmifaceClient) RejectRoom(ctx context.Context, fromnode string, domain string, roomNode string, toNode string, msg string) (_r *AdmAck, _err error) {
-	var _args160 AdmifaceRejectRoomArgs
-	_args160.Fromnode = fromnode
-	_args160.Domain = domain
-	_args160.RoomNode = roomNode
-	_args160.ToNode = toNode
-	_args160.Msg = msg
-	var _result162 AdmifaceRejectRoomResult
-	var _meta161 thrift.ResponseMeta
-	_meta161, _err = p.Client_().Call(ctx, "RejectRoom", &_args160, &_result162)
-	p.SetLastResponseMeta_(_meta161)
+	var _args158 AdmifaceRejectRoomArgs
+	_args158.Fromnode = fromnode
+	_args158.Domain = domain
+	_args158.RoomNode = roomNode
+	_args158.ToNode = toNode
+	_args158.Msg = msg
+	var _result160 AdmifaceRejectRoomResult
+	var _meta159 thrift.ResponseMeta
+	_meta159, _err = p.Client_().Call(ctx, "RejectRoom", &_args158, &_result160)
+	p.SetLastResponseMeta_(_meta159)
 	if _err != nil {
 		return
 	}
-	if _ret163 := _result162.GetSuccess(); _ret163 != nil {
-		return _ret163, nil
+	if _ret161 := _result160.GetSuccess(); _ret161 != nil {
+		return _ret161, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "RejectRoom failed: unknown result")
 }
@@ -8392,20 +8462,20 @@ func (p *AdmifaceClient) RejectRoom(ctx context.Context, fromnode string, domain
 //  - ToNode
 // 
 func (p *AdmifaceClient) KickRoom(ctx context.Context, fromnode string, domain string, roomNode string, toNode string) (_r *AdmAck, _err error) {
-	var _args164 AdmifaceKickRoomArgs
-	_args164.Fromnode = fromnode
-	_args164.Domain = domain
-	_args164.RoomNode = roomNode
-	_args164.ToNode = toNode
-	var _result166 AdmifaceKickRoomResult
-	var _meta165 thrift.ResponseMeta
-	_meta165, _err = p.Client_().Call(ctx, "KickRoom", &_args164, &_result166)
-	p.SetLastResponseMeta_(_meta165)
+	var _args162 AdmifaceKickRoomArgs
+	_args162.Fromnode = fromnode
+	_args162.Domain = domain
+	_args162.RoomNode = roomNode
+	_args162.ToNode = toNode
+	var _result164 AdmifaceKickRoomResult
+	var _meta163 thrift.ResponseMeta
+	_meta163, _err = p.Client_().Call(ctx, "KickRoom", &_args162, &_result164)
+	p.SetLastResponseMeta_(_meta163)
 	if _err != nil {
 		return
 	}
-	if _ret167 := _result166.GetSuccess(); _ret167 != nil {
-		return _ret167, nil
+	if _ret165 := _result164.GetSuccess(); _ret165 != nil {
+		return _ret165, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "KickRoom failed: unknown result")
 }
@@ -8416,19 +8486,19 @@ func (p *AdmifaceClient) KickRoom(ctx context.Context, fromnode string, domain s
 //  - RoomNode
 // 
 func (p *AdmifaceClient) LeaveRoom(ctx context.Context, fromnode string, domain string, roomNode string) (_r *AdmAck, _err error) {
-	var _args168 AdmifaceLeaveRoomArgs
-	_args168.Fromnode = fromnode
-	_args168.Domain = domain
-	_args168.RoomNode = roomNode
-	var _result170 AdmifaceLeaveRoomResult
-	var _meta169 thrift.ResponseMeta
-	_meta169, _err = p.Client_().Call(ctx, "LeaveRoom", &_args168, &_result170)
-	p.SetLastResponseMeta_(_meta169)
+	var _args166 AdmifaceLeaveRoomArgs
+	_args166.Fromnode = fromnode
+	_args166.Domain = domain
+	_args166.RoomNode = roomNode
+	var _result168 AdmifaceLeaveRoomResult
+	var _meta167 thrift.ResponseMeta
+	_meta167, _err = p.Client_().Call(ctx, "LeaveRoom", &_args166, &_result168)
+	p.SetLastResponseMeta_(_meta167)
 	if _err != nil {
 		return
 	}
-	if _ret171 := _result170.GetSuccess(); _ret171 != nil {
-		return _ret171, nil
+	if _ret169 := _result168.GetSuccess(); _ret169 != nil {
+		return _ret169, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "LeaveRoom failed: unknown result")
 }
@@ -8439,19 +8509,19 @@ func (p *AdmifaceClient) LeaveRoom(ctx context.Context, fromnode string, domain 
 //  - RoomNode
 // 
 func (p *AdmifaceClient) CancelRoom(ctx context.Context, fromnode string, domain string, roomNode string) (_r *AdmAck, _err error) {
-	var _args172 AdmifaceCancelRoomArgs
-	_args172.Fromnode = fromnode
-	_args172.Domain = domain
-	_args172.RoomNode = roomNode
-	var _result174 AdmifaceCancelRoomResult
-	var _meta173 thrift.ResponseMeta
-	_meta173, _err = p.Client_().Call(ctx, "CancelRoom", &_args172, &_result174)
-	p.SetLastResponseMeta_(_meta173)
+	var _args170 AdmifaceCancelRoomArgs
+	_args170.Fromnode = fromnode
+	_args170.Domain = domain
+	_args170.RoomNode = roomNode
+	var _result172 AdmifaceCancelRoomResult
+	var _meta171 thrift.ResponseMeta
+	_meta171, _err = p.Client_().Call(ctx, "CancelRoom", &_args170, &_result172)
+	p.SetLastResponseMeta_(_meta171)
 	if _err != nil {
 		return
 	}
-	if _ret175 := _result174.GetSuccess(); _ret175 != nil {
-		return _ret175, nil
+	if _ret173 := _result172.GetSuccess(); _ret173 != nil {
+		return _ret173, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "CancelRoom failed: unknown result")
 }
@@ -8462,19 +8532,19 @@ func (p *AdmifaceClient) CancelRoom(ctx context.Context, fromnode string, domain
 //  - RoomNode
 // 
 func (p *AdmifaceClient) BlockRoom(ctx context.Context, fromnode string, domain string, roomNode string) (_r *AdmAck, _err error) {
-	var _args176 AdmifaceBlockRoomArgs
-	_args176.Fromnode = fromnode
-	_args176.Domain = domain
-	_args176.RoomNode = roomNode
-	var _result178 AdmifaceBlockRoomResult
-	var _meta177 thrift.ResponseMeta
-	_meta177, _err = p.Client_().Call(ctx, "BlockRoom", &_args176, &_result178)
-	p.SetLastResponseMeta_(_meta177)
+	var _args174 AdmifaceBlockRoomArgs
+	_args174.Fromnode = fromnode
+	_args174.Domain = domain
+	_args174.RoomNode = roomNode
+	var _result176 AdmifaceBlockRoomResult
+	var _meta175 thrift.ResponseMeta
+	_meta175, _err = p.Client_().Call(ctx, "BlockRoom", &_args174, &_result176)
+	p.SetLastResponseMeta_(_meta175)
 	if _err != nil {
 		return
 	}
-	if _ret179 := _result178.GetSuccess(); _ret179 != nil {
-		return _ret179, nil
+	if _ret177 := _result176.GetSuccess(); _ret177 != nil {
+		return _ret177, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "BlockRoom failed: unknown result")
 }
@@ -8486,20 +8556,20 @@ func (p *AdmifaceClient) BlockRoom(ctx context.Context, fromnode string, domain 
 //  - ToNode
 // 
 func (p *AdmifaceClient) BlockRoomMember(ctx context.Context, fromnode string, domain string, roomNode string, toNode string) (_r *AdmAck, _err error) {
-	var _args180 AdmifaceBlockRoomMemberArgs
-	_args180.Fromnode = fromnode
-	_args180.Domain = domain
-	_args180.RoomNode = roomNode
-	_args180.ToNode = toNode
-	var _result182 AdmifaceBlockRoomMemberResult
-	var _meta181 thrift.ResponseMeta
-	_meta181, _err = p.Client_().Call(ctx, "BlockRoomMember", &_args180, &_result182)
-	p.SetLastResponseMeta_(_meta181)
+	var _args178 AdmifaceBlockRoomMemberArgs
+	_args178.Fromnode = fromnode
+	_args178.Domain = domain
+	_args178.RoomNode = roomNode
+	_args178.ToNode = toNode
+	var _result180 AdmifaceBlockRoomMemberResult
+	var _meta179 thrift.ResponseMeta
+	_meta179, _err = p.Client_().Call(ctx, "BlockRoomMember", &_args178, &_result180)
+	p.SetLastResponseMeta_(_meta179)
 	if _err != nil {
 		return
 	}
-	if _ret183 := _result182.GetSuccess(); _ret183 != nil {
-		return _ret183, nil
+	if _ret181 := _result180.GetSuccess(); _ret181 != nil {
+		return _ret181, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "BlockRoomMember failed: unknown result")
 }
@@ -8509,18 +8579,18 @@ func (p *AdmifaceClient) BlockRoomMember(ctx context.Context, fromnode string, d
 //  - Domain
 // 
 func (p *AdmifaceClient) BlockRosterList(ctx context.Context, fromnode string, domain string) (_r *AdmNodeList, _err error) {
-	var _args184 AdmifaceBlockRosterListArgs
-	_args184.Fromnode = fromnode
-	_args184.Domain = domain
-	var _result186 AdmifaceBlockRosterListResult
-	var _meta185 thrift.ResponseMeta
-	_meta185, _err = p.Client_().Call(ctx, "BlockRosterList", &_args184, &_result186)
-	p.SetLastResponseMeta_(_meta185)
+	var _args182 AdmifaceBlockRosterListArgs
+	_args182.Fromnode = fromnode
+	_args182.Domain = domain
+	var _result184 AdmifaceBlockRosterListResult
+	var _meta183 thrift.ResponseMeta
+	_meta183, _err = p.Client_().Call(ctx, "BlockRosterList", &_args182, &_result184)
+	p.SetLastResponseMeta_(_meta183)
 	if _err != nil {
 		return
 	}
-	if _ret187 := _result186.GetSuccess(); _ret187 != nil {
-		return _ret187, nil
+	if _ret185 := _result184.GetSuccess(); _ret185 != nil {
+		return _ret185, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "BlockRosterList failed: unknown result")
 }
@@ -8530,18 +8600,18 @@ func (p *AdmifaceClient) BlockRosterList(ctx context.Context, fromnode string, d
 //  - Domain
 // 
 func (p *AdmifaceClient) BlockRoomList(ctx context.Context, fromnode string, domain string) (_r *AdmNodeList, _err error) {
-	var _args188 AdmifaceBlockRoomListArgs
-	_args188.Fromnode = fromnode
-	_args188.Domain = domain
-	var _result190 AdmifaceBlockRoomListResult
-	var _meta189 thrift.ResponseMeta
-	_meta189, _err = p.Client_().Call(ctx, "BlockRoomList", &_args188, &_result190)
-	p.SetLastResponseMeta_(_meta189)
+	var _args186 AdmifaceBlockRoomListArgs
+	_args186.Fromnode = fromnode
+	_args186.Domain = domain
+	var _result188 AdmifaceBlockRoomListResult
+	var _meta187 thrift.ResponseMeta
+	_meta187, _err = p.Client_().Call(ctx, "BlockRoomList", &_args186, &_result188)
+	p.SetLastResponseMeta_(_meta187)
 	if _err != nil {
 		return
 	}
-	if _ret191 := _result190.GetSuccess(); _ret191 != nil {
-		return _ret191, nil
+	if _ret189 := _result188.GetSuccess(); _ret189 != nil {
+		return _ret189, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "BlockRoomList failed: unknown result")
 }
@@ -8552,19 +8622,19 @@ func (p *AdmifaceClient) BlockRoomList(ctx context.Context, fromnode string, dom
 //  - RoomNode
 // 
 func (p *AdmifaceClient) BlockRoomMemberlist(ctx context.Context, fromnode string, domain string, roomNode string) (_r *AdmNodeList, _err error) {
-	var _args192 AdmifaceBlockRoomMemberlistArgs
-	_args192.Fromnode = fromnode
-	_args192.Domain = domain
-	_args192.RoomNode = roomNode
-	var _result194 AdmifaceBlockRoomMemberlistResult
-	var _meta193 thrift.ResponseMeta
-	_meta193, _err = p.Client_().Call(ctx, "BlockRoomMemberlist", &_args192, &_result194)
-	p.SetLastResponseMeta_(_meta193)
+	var _args190 AdmifaceBlockRoomMemberlistArgs
+	_args190.Fromnode = fromnode
+	_args190.Domain = domain
+	_args190.RoomNode = roomNode
+	var _result192 AdmifaceBlockRoomMemberlistResult
+	var _meta191 thrift.ResponseMeta
+	_meta191, _err = p.Client_().Call(ctx, "BlockRoomMemberlist", &_args190, &_result192)
+	p.SetLastResponseMeta_(_meta191)
 	if _err != nil {
 		return
 	}
-	if _ret195 := _result194.GetSuccess(); _ret195 != nil {
-		return _ret195, nil
+	if _ret193 := _result192.GetSuccess(); _ret193 != nil {
+		return _ret193, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "BlockRoomMemberlist failed: unknown result")
 }
@@ -8574,18 +8644,18 @@ func (p *AdmifaceClient) BlockRoomMemberlist(ctx context.Context, fromnode strin
 //  - Domain
 // 
 func (p *AdmifaceClient) VirtualroomRegister(ctx context.Context, fromnode string, domain string) (_r *AdmAck, _err error) {
-	var _args196 AdmifaceVirtualroomRegisterArgs
-	_args196.Fromnode = fromnode
-	_args196.Domain = domain
-	var _result198 AdmifaceVirtualroomRegisterResult
-	var _meta197 thrift.ResponseMeta
-	_meta197, _err = p.Client_().Call(ctx, "VirtualroomRegister", &_args196, &_result198)
-	p.SetLastResponseMeta_(_meta197)
+	var _args194 AdmifaceVirtualroomRegisterArgs
+	_args194.Fromnode = fromnode
+	_args194.Domain = domain
+	var _result196 AdmifaceVirtualroomRegisterResult
+	var _meta195 thrift.ResponseMeta
+	_meta195, _err = p.Client_().Call(ctx, "VirtualroomRegister", &_args194, &_result196)
+	p.SetLastResponseMeta_(_meta195)
 	if _err != nil {
 		return
 	}
-	if _ret199 := _result198.GetSuccess(); _ret199 != nil {
-		return _ret199, nil
+	if _ret197 := _result196.GetSuccess(); _ret197 != nil {
+		return _ret197, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "VirtualroomRegister failed: unknown result")
 }
@@ -8596,19 +8666,19 @@ func (p *AdmifaceClient) VirtualroomRegister(ctx context.Context, fromnode strin
 //  - VNode
 // 
 func (p *AdmifaceClient) VirtualroomRemove(ctx context.Context, fromnode string, domain string, vNode string) (_r *AdmAck, _err error) {
-	var _args200 AdmifaceVirtualroomRemoveArgs
-	_args200.Fromnode = fromnode
-	_args200.Domain = domain
-	_args200.VNode = vNode
-	var _result202 AdmifaceVirtualroomRemoveResult
-	var _meta201 thrift.ResponseMeta
-	_meta201, _err = p.Client_().Call(ctx, "VirtualroomRemove", &_args200, &_result202)
-	p.SetLastResponseMeta_(_meta201)
+	var _args198 AdmifaceVirtualroomRemoveArgs
+	_args198.Fromnode = fromnode
+	_args198.Domain = domain
+	_args198.VNode = vNode
+	var _result200 AdmifaceVirtualroomRemoveResult
+	var _meta199 thrift.ResponseMeta
+	_meta199, _err = p.Client_().Call(ctx, "VirtualroomRemove", &_args198, &_result200)
+	p.SetLastResponseMeta_(_meta199)
 	if _err != nil {
 		return
 	}
-	if _ret203 := _result202.GetSuccess(); _ret203 != nil {
-		return _ret203, nil
+	if _ret201 := _result200.GetSuccess(); _ret201 != nil {
+		return _ret201, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "VirtualroomRemove failed: unknown result")
 }
@@ -8620,20 +8690,20 @@ func (p *AdmifaceClient) VirtualroomRemove(ctx context.Context, fromnode string,
 //  - ToNode
 // 
 func (p *AdmifaceClient) VirtualroomAddAuth(ctx context.Context, fromnode string, domain string, vNode string, toNode string) (_r *AdmAck, _err error) {
-	var _args204 AdmifaceVirtualroomAddAuthArgs
-	_args204.Fromnode = fromnode
-	_args204.Domain = domain
-	_args204.VNode = vNode
-	_args204.ToNode = toNode
-	var _result206 AdmifaceVirtualroomAddAuthResult
-	var _meta205 thrift.ResponseMeta
-	_meta205, _err = p.Client_().Call(ctx, "VirtualroomAddAuth", &_args204, &_result206)
-	p.SetLastResponseMeta_(_meta205)
+	var _args202 AdmifaceVirtualroomAddAuthArgs
+	_args202.Fromnode = fromnode
+	_args202.Domain = domain
+	_args202.VNode = vNode
+	_args202.ToNode = toNode
+	var _result204 AdmifaceVirtualroomAddAuthResult
+	var _meta203 thrift.ResponseMeta
+	_meta203, _err = p.Client_().Call(ctx, "VirtualroomAddAuth", &_args202, &_result204)
+	p.SetLastResponseMeta_(_meta203)
 	if _err != nil {
 		return
 	}
-	if _ret207 := _result206.GetSuccess(); _ret207 != nil {
-		return _ret207, nil
+	if _ret205 := _result204.GetSuccess(); _ret205 != nil {
+		return _ret205, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "VirtualroomAddAuth failed: unknown result")
 }
@@ -8645,20 +8715,20 @@ func (p *AdmifaceClient) VirtualroomAddAuth(ctx context.Context, fromnode string
 //  - ToNode
 // 
 func (p *AdmifaceClient) VirtualroomDelAuth(ctx context.Context, fromnode string, domain string, vNode string, toNode string) (_r *AdmAck, _err error) {
-	var _args208 AdmifaceVirtualroomDelAuthArgs
-	_args208.Fromnode = fromnode
-	_args208.Domain = domain
-	_args208.VNode = vNode
-	_args208.ToNode = toNode
-	var _result210 AdmifaceVirtualroomDelAuthResult
-	var _meta209 thrift.ResponseMeta
-	_meta209, _err = p.Client_().Call(ctx, "VirtualroomDelAuth", &_args208, &_result210)
-	p.SetLastResponseMeta_(_meta209)
+	var _args206 AdmifaceVirtualroomDelAuthArgs
+	_args206.Fromnode = fromnode
+	_args206.Domain = domain
+	_args206.VNode = vNode
+	_args206.ToNode = toNode
+	var _result208 AdmifaceVirtualroomDelAuthResult
+	var _meta207 thrift.ResponseMeta
+	_meta207, _err = p.Client_().Call(ctx, "VirtualroomDelAuth", &_args206, &_result208)
+	p.SetLastResponseMeta_(_meta207)
 	if _err != nil {
 		return
 	}
-	if _ret211 := _result210.GetSuccess(); _ret211 != nil {
-		return _ret211, nil
+	if _ret209 := _result208.GetSuccess(); _ret209 != nil {
+		return _ret209, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "VirtualroomDelAuth failed: unknown result")
 }
@@ -8671,21 +8741,21 @@ func (p *AdmifaceClient) VirtualroomDelAuth(ctx context.Context, fromnode string
 //  - SubType
 // 
 func (p *AdmifaceClient) VirtualroomSub(ctx context.Context, wsid int64, fromnode string, domain string, vNode string, subType int8) (_r *AdmAck, _err error) {
-	var _args212 AdmifaceVirtualroomSubArgs
-	_args212.Wsid = wsid
-	_args212.Fromnode = fromnode
-	_args212.Domain = domain
-	_args212.VNode = vNode
-	_args212.SubType = subType
-	var _result214 AdmifaceVirtualroomSubResult
-	var _meta213 thrift.ResponseMeta
-	_meta213, _err = p.Client_().Call(ctx, "VirtualroomSub", &_args212, &_result214)
-	p.SetLastResponseMeta_(_meta213)
+	var _args210 AdmifaceVirtualroomSubArgs
+	_args210.Wsid = wsid
+	_args210.Fromnode = fromnode
+	_args210.Domain = domain
+	_args210.VNode = vNode
+	_args210.SubType = subType
+	var _result212 AdmifaceVirtualroomSubResult
+	var _meta211 thrift.ResponseMeta
+	_meta211, _err = p.Client_().Call(ctx, "VirtualroomSub", &_args210, &_result212)
+	p.SetLastResponseMeta_(_meta211)
 	if _err != nil {
 		return
 	}
-	if _ret215 := _result214.GetSuccess(); _ret215 != nil {
-		return _ret215, nil
+	if _ret213 := _result212.GetSuccess(); _ret213 != nil {
+		return _ret213, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "VirtualroomSub failed: unknown result")
 }
@@ -8697,22 +8767,68 @@ func (p *AdmifaceClient) VirtualroomSub(ctx context.Context, wsid int64, fromnod
 //  - VNode
 // 
 func (p *AdmifaceClient) VirtualroomUnSub(ctx context.Context, wsid int64, fromnode string, domain string, vNode string) (_r *AdmAck, _err error) {
-	var _args216 AdmifaceVirtualroomUnSubArgs
-	_args216.Wsid = wsid
-	_args216.Fromnode = fromnode
-	_args216.Domain = domain
-	_args216.VNode = vNode
-	var _result218 AdmifaceVirtualroomUnSubResult
-	var _meta217 thrift.ResponseMeta
-	_meta217, _err = p.Client_().Call(ctx, "VirtualroomUnSub", &_args216, &_result218)
-	p.SetLastResponseMeta_(_meta217)
+	var _args214 AdmifaceVirtualroomUnSubArgs
+	_args214.Wsid = wsid
+	_args214.Fromnode = fromnode
+	_args214.Domain = domain
+	_args214.VNode = vNode
+	var _result216 AdmifaceVirtualroomUnSubResult
+	var _meta215 thrift.ResponseMeta
+	_meta215, _err = p.Client_().Call(ctx, "VirtualroomUnSub", &_args214, &_result216)
+	p.SetLastResponseMeta_(_meta215)
 	if _err != nil {
 		return
 	}
-	if _ret219 := _result218.GetSuccess(); _ret219 != nil {
-		return _ret219, nil
+	if _ret217 := _result216.GetSuccess(); _ret217 != nil {
+		return _ret217, nil
 	}
 	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "VirtualroomUnSub failed: unknown result")
+}
+
+// Parameters:
+//  - Fromnode
+//  - Domain
+//  - Tonode
+// 
+func (p *AdmifaceClient) Authroster(ctx context.Context, fromnode string, domain string, tonode string) (_r *AdmAck, _err error) {
+	var _args218 AdmifaceAuthrosterArgs
+	_args218.Fromnode = fromnode
+	_args218.Domain = domain
+	_args218.Tonode = tonode
+	var _result220 AdmifaceAuthrosterResult
+	var _meta219 thrift.ResponseMeta
+	_meta219, _err = p.Client_().Call(ctx, "Authroster", &_args218, &_result220)
+	p.SetLastResponseMeta_(_meta219)
+	if _err != nil {
+		return
+	}
+	if _ret221 := _result220.GetSuccess(); _ret221 != nil {
+		return _ret221, nil
+	}
+	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "Authroster failed: unknown result")
+}
+
+// Parameters:
+//  - Fromnode
+//  - Domain
+//  - RoomNode
+// 
+func (p *AdmifaceClient) Authgroupuser(ctx context.Context, fromnode string, domain string, roomNode string) (_r *AdmAck, _err error) {
+	var _args222 AdmifaceAuthgroupuserArgs
+	_args222.Fromnode = fromnode
+	_args222.Domain = domain
+	_args222.RoomNode = roomNode
+	var _result224 AdmifaceAuthgroupuserResult
+	var _meta223 thrift.ResponseMeta
+	_meta223, _err = p.Client_().Call(ctx, "Authgroupuser", &_args222, &_result224)
+	p.SetLastResponseMeta_(_meta223)
+	if _err != nil {
+		return
+	}
+	if _ret225 := _result224.GetSuccess(); _ret225 != nil {
+		return _ret225, nil
+	}
+	return nil, thrift.NewTApplicationException(thrift.MISSING_RESULT, "Authgroupuser failed: unknown result")
 }
 
 type AdmifaceProcessor struct {
@@ -8735,51 +8851,52 @@ func (p *AdmifaceProcessor) ProcessorMap() map[string]thrift.TProcessorFunction 
 
 func NewAdmifaceProcessor(handler Admiface) *AdmifaceProcessor {
 
-	self220 := &AdmifaceProcessor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction)}
-	self220.processorMap["Auth"] = &admifaceProcessorAuth{handler:handler}
-	self220.processorMap["ModifyPwd"] = &admifaceProcessorModifyPwd{handler:handler}
-	self220.processorMap["Ping"] = &admifaceProcessorPing{handler:handler}
-	self220.processorMap["Token"] = &admifaceProcessorToken{handler:handler}
-	self220.processorMap["TimMessageBroadcast"] = &admifaceProcessorTimMessageBroadcast{handler:handler}
-	self220.processorMap["TimPresenceBroadcast"] = &admifaceProcessorTimPresenceBroadcast{handler:handler}
-	self220.processorMap["ProxyMessage"] = &admifaceProcessorProxyMessage{handler:handler}
-	self220.processorMap["Register"] = &admifaceProcessorRegister{handler:handler}
-	self220.processorMap["ModifyUserInfo"] = &admifaceProcessorModifyUserInfo{handler:handler}
-	self220.processorMap["ModifyRoomInfo"] = &admifaceProcessorModifyRoomInfo{handler:handler}
-	self220.processorMap["SysBlockUser"] = &admifaceProcessorSysBlockUser{handler:handler}
-	self220.processorMap["SysBlockList"] = &admifaceProcessorSysBlockList{handler:handler}
-	self220.processorMap["OnlineUser"] = &admifaceProcessorOnlineUser{handler:handler}
-	self220.processorMap["Vroom"] = &admifaceProcessorVroom{handler:handler}
-	self220.processorMap["Detect"] = &admifaceProcessorDetect{handler:handler}
-	self220.processorMap["Roster"] = &admifaceProcessorRoster{handler:handler}
-	self220.processorMap["Addroster"] = &admifaceProcessorAddroster{handler:handler}
-	self220.processorMap["Rmroster"] = &admifaceProcessorRmroster{handler:handler}
-	self220.processorMap["Blockroster"] = &admifaceProcessorBlockroster{handler:handler}
-	self220.processorMap["PullUserMessage"] = &admifaceProcessorPullUserMessage{handler:handler}
-	self220.processorMap["PullRoomMessage"] = &admifaceProcessorPullRoomMessage{handler:handler}
-	self220.processorMap["OfflineMsg"] = &admifaceProcessorOfflineMsg{handler:handler}
-	self220.processorMap["DelOfflineMsg"] = &admifaceProcessorDelOfflineMsg{handler:handler}
-	self220.processorMap["UserRoom"] = &admifaceProcessorUserRoom{handler:handler}
-	self220.processorMap["RoomUsers"] = &admifaceProcessorRoomUsers{handler:handler}
-	self220.processorMap["CreateRoom"] = &admifaceProcessorCreateRoom{handler:handler}
-	self220.processorMap["AddRoom"] = &admifaceProcessorAddRoom{handler:handler}
-	self220.processorMap["PullInRoom"] = &admifaceProcessorPullInRoom{handler:handler}
-	self220.processorMap["RejectRoom"] = &admifaceProcessorRejectRoom{handler:handler}
-	self220.processorMap["KickRoom"] = &admifaceProcessorKickRoom{handler:handler}
-	self220.processorMap["LeaveRoom"] = &admifaceProcessorLeaveRoom{handler:handler}
-	self220.processorMap["CancelRoom"] = &admifaceProcessorCancelRoom{handler:handler}
-	self220.processorMap["BlockRoom"] = &admifaceProcessorBlockRoom{handler:handler}
-	self220.processorMap["BlockRoomMember"] = &admifaceProcessorBlockRoomMember{handler:handler}
-	self220.processorMap["BlockRosterList"] = &admifaceProcessorBlockRosterList{handler:handler}
-	self220.processorMap["BlockRoomList"] = &admifaceProcessorBlockRoomList{handler:handler}
-	self220.processorMap["BlockRoomMemberlist"] = &admifaceProcessorBlockRoomMemberlist{handler:handler}
-	self220.processorMap["VirtualroomRegister"] = &admifaceProcessorVirtualroomRegister{handler:handler}
-	self220.processorMap["VirtualroomRemove"] = &admifaceProcessorVirtualroomRemove{handler:handler}
-	self220.processorMap["VirtualroomAddAuth"] = &admifaceProcessorVirtualroomAddAuth{handler:handler}
-	self220.processorMap["VirtualroomDelAuth"] = &admifaceProcessorVirtualroomDelAuth{handler:handler}
-	self220.processorMap["VirtualroomSub"] = &admifaceProcessorVirtualroomSub{handler:handler}
-	self220.processorMap["VirtualroomUnSub"] = &admifaceProcessorVirtualroomUnSub{handler:handler}
-	return self220
+	self226 := &AdmifaceProcessor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction)}
+	self226.processorMap["Auth"] = &admifaceProcessorAuth{handler:handler}
+	self226.processorMap["ModifyPwd"] = &admifaceProcessorModifyPwd{handler:handler}
+	self226.processorMap["Ping"] = &admifaceProcessorPing{handler:handler}
+	self226.processorMap["Token"] = &admifaceProcessorToken{handler:handler}
+	self226.processorMap["TimMessageBroadcast"] = &admifaceProcessorTimMessageBroadcast{handler:handler}
+	self226.processorMap["TimPresenceBroadcast"] = &admifaceProcessorTimPresenceBroadcast{handler:handler}
+	self226.processorMap["ProxyMessage"] = &admifaceProcessorProxyMessage{handler:handler}
+	self226.processorMap["Register"] = &admifaceProcessorRegister{handler:handler}
+	self226.processorMap["ModifyUserInfo"] = &admifaceProcessorModifyUserInfo{handler:handler}
+	self226.processorMap["ModifyRoomInfo"] = &admifaceProcessorModifyRoomInfo{handler:handler}
+	self226.processorMap["SysBlockUser"] = &admifaceProcessorSysBlockUser{handler:handler}
+	self226.processorMap["OnlineUser"] = &admifaceProcessorOnlineUser{handler:handler}
+	self226.processorMap["Vroom"] = &admifaceProcessorVroom{handler:handler}
+	self226.processorMap["Detect"] = &admifaceProcessorDetect{handler:handler}
+	self226.processorMap["Roster"] = &admifaceProcessorRoster{handler:handler}
+	self226.processorMap["Addroster"] = &admifaceProcessorAddroster{handler:handler}
+	self226.processorMap["Rmroster"] = &admifaceProcessorRmroster{handler:handler}
+	self226.processorMap["Blockroster"] = &admifaceProcessorBlockroster{handler:handler}
+	self226.processorMap["PullUserMessage"] = &admifaceProcessorPullUserMessage{handler:handler}
+	self226.processorMap["PullRoomMessage"] = &admifaceProcessorPullRoomMessage{handler:handler}
+	self226.processorMap["OfflineMsg"] = &admifaceProcessorOfflineMsg{handler:handler}
+	self226.processorMap["DelOfflineMsg"] = &admifaceProcessorDelOfflineMsg{handler:handler}
+	self226.processorMap["UserRoom"] = &admifaceProcessorUserRoom{handler:handler}
+	self226.processorMap["RoomUsers"] = &admifaceProcessorRoomUsers{handler:handler}
+	self226.processorMap["CreateRoom"] = &admifaceProcessorCreateRoom{handler:handler}
+	self226.processorMap["AddRoom"] = &admifaceProcessorAddRoom{handler:handler}
+	self226.processorMap["PullInRoom"] = &admifaceProcessorPullInRoom{handler:handler}
+	self226.processorMap["RejectRoom"] = &admifaceProcessorRejectRoom{handler:handler}
+	self226.processorMap["KickRoom"] = &admifaceProcessorKickRoom{handler:handler}
+	self226.processorMap["LeaveRoom"] = &admifaceProcessorLeaveRoom{handler:handler}
+	self226.processorMap["CancelRoom"] = &admifaceProcessorCancelRoom{handler:handler}
+	self226.processorMap["BlockRoom"] = &admifaceProcessorBlockRoom{handler:handler}
+	self226.processorMap["BlockRoomMember"] = &admifaceProcessorBlockRoomMember{handler:handler}
+	self226.processorMap["BlockRosterList"] = &admifaceProcessorBlockRosterList{handler:handler}
+	self226.processorMap["BlockRoomList"] = &admifaceProcessorBlockRoomList{handler:handler}
+	self226.processorMap["BlockRoomMemberlist"] = &admifaceProcessorBlockRoomMemberlist{handler:handler}
+	self226.processorMap["VirtualroomRegister"] = &admifaceProcessorVirtualroomRegister{handler:handler}
+	self226.processorMap["VirtualroomRemove"] = &admifaceProcessorVirtualroomRemove{handler:handler}
+	self226.processorMap["VirtualroomAddAuth"] = &admifaceProcessorVirtualroomAddAuth{handler:handler}
+	self226.processorMap["VirtualroomDelAuth"] = &admifaceProcessorVirtualroomDelAuth{handler:handler}
+	self226.processorMap["VirtualroomSub"] = &admifaceProcessorVirtualroomSub{handler:handler}
+	self226.processorMap["VirtualroomUnSub"] = &admifaceProcessorVirtualroomUnSub{handler:handler}
+	self226.processorMap["Authroster"] = &admifaceProcessorAuthroster{handler:handler}
+	self226.processorMap["Authgroupuser"] = &admifaceProcessorAuthgroupuser{handler:handler}
+	return self226
 }
 
 func (p *AdmifaceProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
@@ -8790,12 +8907,12 @@ func (p *AdmifaceProcessor) Process(ctx context.Context, iprot, oprot thrift.TPr
 	}
 	iprot.Skip(ctx, thrift.STRUCT)
 	iprot.ReadMessageEnd(ctx)
-	x221 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function " + name)
+	x227 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function " + name)
 	oprot.WriteMessageBegin(ctx, name, thrift.EXCEPTION, seqId)
-	x221.Write(ctx, oprot)
+	x227.Write(ctx, oprot)
 	oprot.WriteMessageEnd(ctx)
 	oprot.Flush(ctx)
-	return false, x221
+	return false, x227
 }
 
 type admifaceProcessorAuth struct {
@@ -8803,7 +8920,7 @@ type admifaceProcessorAuth struct {
 }
 
 func (p *admifaceProcessorAuth) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err222 error
+	var _write_err228 error
 	args := AdmifaceAuthArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -8854,21 +8971,21 @@ func (p *admifaceProcessorAuth) Process(ctx context.Context, seqId int32, iprot,
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc223 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Auth: " + err2.Error())
+		_exc229 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Auth: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "Auth", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err222 = thrift.WrapTException(err2)
+			_write_err228 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc223.Write(ctx, oprot); _write_err222 == nil && err2 != nil {
-			_write_err222 = thrift.WrapTException(err2)
+		if err2 := _exc229.Write(ctx, oprot); _write_err228 == nil && err2 != nil {
+			_write_err228 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err222 == nil && err2 != nil {
-			_write_err222 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err228 == nil && err2 != nil {
+			_write_err228 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err222 == nil && err2 != nil {
-			_write_err222 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err228 == nil && err2 != nil {
+			_write_err228 = thrift.WrapTException(err2)
 		}
-		if _write_err222 != nil {
-			return false, thrift.WrapTException(_write_err222)
+		if _write_err228 != nil {
+			return false, thrift.WrapTException(_write_err228)
 		}
 		return true, err
 	} else {
@@ -8876,19 +8993,19 @@ func (p *admifaceProcessorAuth) Process(ctx context.Context, seqId int32, iprot,
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "Auth", thrift.REPLY, seqId); err2 != nil {
-		_write_err222 = thrift.WrapTException(err2)
+		_write_err228 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err222 == nil && err2 != nil {
-		_write_err222 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err228 == nil && err2 != nil {
+		_write_err228 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err222 == nil && err2 != nil {
-		_write_err222 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err228 == nil && err2 != nil {
+		_write_err228 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err222 == nil && err2 != nil {
-		_write_err222 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err228 == nil && err2 != nil {
+		_write_err228 = thrift.WrapTException(err2)
 	}
-	if _write_err222 != nil {
-		return false, thrift.WrapTException(_write_err222)
+	if _write_err228 != nil {
+		return false, thrift.WrapTException(_write_err228)
 	}
 	return true, err
 }
@@ -8898,7 +9015,7 @@ type admifaceProcessorModifyPwd struct {
 }
 
 func (p *admifaceProcessorModifyPwd) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err224 error
+	var _write_err230 error
 	args := AdmifaceModifyPwdArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -8949,21 +9066,21 @@ func (p *admifaceProcessorModifyPwd) Process(ctx context.Context, seqId int32, i
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc225 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing ModifyPwd: " + err2.Error())
+		_exc231 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing ModifyPwd: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "ModifyPwd", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err224 = thrift.WrapTException(err2)
+			_write_err230 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc225.Write(ctx, oprot); _write_err224 == nil && err2 != nil {
-			_write_err224 = thrift.WrapTException(err2)
+		if err2 := _exc231.Write(ctx, oprot); _write_err230 == nil && err2 != nil {
+			_write_err230 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err224 == nil && err2 != nil {
-			_write_err224 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err230 == nil && err2 != nil {
+			_write_err230 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err224 == nil && err2 != nil {
-			_write_err224 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err230 == nil && err2 != nil {
+			_write_err230 = thrift.WrapTException(err2)
 		}
-		if _write_err224 != nil {
-			return false, thrift.WrapTException(_write_err224)
+		if _write_err230 != nil {
+			return false, thrift.WrapTException(_write_err230)
 		}
 		return true, err
 	} else {
@@ -8971,19 +9088,19 @@ func (p *admifaceProcessorModifyPwd) Process(ctx context.Context, seqId int32, i
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "ModifyPwd", thrift.REPLY, seqId); err2 != nil {
-		_write_err224 = thrift.WrapTException(err2)
+		_write_err230 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err224 == nil && err2 != nil {
-		_write_err224 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err230 == nil && err2 != nil {
+		_write_err230 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err224 == nil && err2 != nil {
-		_write_err224 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err230 == nil && err2 != nil {
+		_write_err230 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err224 == nil && err2 != nil {
-		_write_err224 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err230 == nil && err2 != nil {
+		_write_err230 = thrift.WrapTException(err2)
 	}
-	if _write_err224 != nil {
-		return false, thrift.WrapTException(_write_err224)
+	if _write_err230 != nil {
+		return false, thrift.WrapTException(_write_err230)
 	}
 	return true, err
 }
@@ -8993,7 +9110,7 @@ type admifaceProcessorPing struct {
 }
 
 func (p *admifaceProcessorPing) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err226 error
+	var _write_err232 error
 	args := AdmifacePingArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -9044,21 +9161,21 @@ func (p *admifaceProcessorPing) Process(ctx context.Context, seqId int32, iprot,
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc227 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Ping: " + err2.Error())
+		_exc233 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Ping: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "Ping", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err226 = thrift.WrapTException(err2)
+			_write_err232 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc227.Write(ctx, oprot); _write_err226 == nil && err2 != nil {
-			_write_err226 = thrift.WrapTException(err2)
+		if err2 := _exc233.Write(ctx, oprot); _write_err232 == nil && err2 != nil {
+			_write_err232 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err226 == nil && err2 != nil {
-			_write_err226 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err232 == nil && err2 != nil {
+			_write_err232 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err226 == nil && err2 != nil {
-			_write_err226 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err232 == nil && err2 != nil {
+			_write_err232 = thrift.WrapTException(err2)
 		}
-		if _write_err226 != nil {
-			return false, thrift.WrapTException(_write_err226)
+		if _write_err232 != nil {
+			return false, thrift.WrapTException(_write_err232)
 		}
 		return true, err
 	} else {
@@ -9066,19 +9183,19 @@ func (p *admifaceProcessorPing) Process(ctx context.Context, seqId int32, iprot,
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "Ping", thrift.REPLY, seqId); err2 != nil {
-		_write_err226 = thrift.WrapTException(err2)
+		_write_err232 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err226 == nil && err2 != nil {
-		_write_err226 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err232 == nil && err2 != nil {
+		_write_err232 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err226 == nil && err2 != nil {
-		_write_err226 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err232 == nil && err2 != nil {
+		_write_err232 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err226 == nil && err2 != nil {
-		_write_err226 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err232 == nil && err2 != nil {
+		_write_err232 = thrift.WrapTException(err2)
 	}
-	if _write_err226 != nil {
-		return false, thrift.WrapTException(_write_err226)
+	if _write_err232 != nil {
+		return false, thrift.WrapTException(_write_err232)
 	}
 	return true, err
 }
@@ -9088,7 +9205,7 @@ type admifaceProcessorToken struct {
 }
 
 func (p *admifaceProcessorToken) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err228 error
+	var _write_err234 error
 	args := AdmifaceTokenArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -9139,21 +9256,21 @@ func (p *admifaceProcessorToken) Process(ctx context.Context, seqId int32, iprot
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc229 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Token: " + err2.Error())
+		_exc235 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Token: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "Token", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err228 = thrift.WrapTException(err2)
+			_write_err234 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc229.Write(ctx, oprot); _write_err228 == nil && err2 != nil {
-			_write_err228 = thrift.WrapTException(err2)
+		if err2 := _exc235.Write(ctx, oprot); _write_err234 == nil && err2 != nil {
+			_write_err234 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err228 == nil && err2 != nil {
-			_write_err228 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err234 == nil && err2 != nil {
+			_write_err234 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err228 == nil && err2 != nil {
-			_write_err228 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err234 == nil && err2 != nil {
+			_write_err234 = thrift.WrapTException(err2)
 		}
-		if _write_err228 != nil {
-			return false, thrift.WrapTException(_write_err228)
+		if _write_err234 != nil {
+			return false, thrift.WrapTException(_write_err234)
 		}
 		return true, err
 	} else {
@@ -9161,19 +9278,19 @@ func (p *admifaceProcessorToken) Process(ctx context.Context, seqId int32, iprot
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "Token", thrift.REPLY, seqId); err2 != nil {
-		_write_err228 = thrift.WrapTException(err2)
+		_write_err234 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err228 == nil && err2 != nil {
-		_write_err228 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err234 == nil && err2 != nil {
+		_write_err234 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err228 == nil && err2 != nil {
-		_write_err228 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err234 == nil && err2 != nil {
+		_write_err234 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err228 == nil && err2 != nil {
-		_write_err228 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err234 == nil && err2 != nil {
+		_write_err234 = thrift.WrapTException(err2)
 	}
-	if _write_err228 != nil {
-		return false, thrift.WrapTException(_write_err228)
+	if _write_err234 != nil {
+		return false, thrift.WrapTException(_write_err234)
 	}
 	return true, err
 }
@@ -9183,7 +9300,7 @@ type admifaceProcessorTimMessageBroadcast struct {
 }
 
 func (p *admifaceProcessorTimMessageBroadcast) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err230 error
+	var _write_err236 error
 	args := AdmifaceTimMessageBroadcastArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -9234,21 +9351,21 @@ func (p *admifaceProcessorTimMessageBroadcast) Process(ctx context.Context, seqI
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc231 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing TimMessageBroadcast: " + err2.Error())
+		_exc237 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing TimMessageBroadcast: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "TimMessageBroadcast", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err230 = thrift.WrapTException(err2)
+			_write_err236 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc231.Write(ctx, oprot); _write_err230 == nil && err2 != nil {
-			_write_err230 = thrift.WrapTException(err2)
+		if err2 := _exc237.Write(ctx, oprot); _write_err236 == nil && err2 != nil {
+			_write_err236 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err230 == nil && err2 != nil {
-			_write_err230 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err236 == nil && err2 != nil {
+			_write_err236 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err230 == nil && err2 != nil {
-			_write_err230 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err236 == nil && err2 != nil {
+			_write_err236 = thrift.WrapTException(err2)
 		}
-		if _write_err230 != nil {
-			return false, thrift.WrapTException(_write_err230)
+		if _write_err236 != nil {
+			return false, thrift.WrapTException(_write_err236)
 		}
 		return true, err
 	} else {
@@ -9256,19 +9373,19 @@ func (p *admifaceProcessorTimMessageBroadcast) Process(ctx context.Context, seqI
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "TimMessageBroadcast", thrift.REPLY, seqId); err2 != nil {
-		_write_err230 = thrift.WrapTException(err2)
+		_write_err236 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err230 == nil && err2 != nil {
-		_write_err230 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err236 == nil && err2 != nil {
+		_write_err236 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err230 == nil && err2 != nil {
-		_write_err230 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err236 == nil && err2 != nil {
+		_write_err236 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err230 == nil && err2 != nil {
-		_write_err230 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err236 == nil && err2 != nil {
+		_write_err236 = thrift.WrapTException(err2)
 	}
-	if _write_err230 != nil {
-		return false, thrift.WrapTException(_write_err230)
+	if _write_err236 != nil {
+		return false, thrift.WrapTException(_write_err236)
 	}
 	return true, err
 }
@@ -9278,7 +9395,7 @@ type admifaceProcessorTimPresenceBroadcast struct {
 }
 
 func (p *admifaceProcessorTimPresenceBroadcast) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err232 error
+	var _write_err238 error
 	args := AdmifaceTimPresenceBroadcastArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -9329,21 +9446,21 @@ func (p *admifaceProcessorTimPresenceBroadcast) Process(ctx context.Context, seq
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc233 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing TimPresenceBroadcast: " + err2.Error())
+		_exc239 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing TimPresenceBroadcast: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "TimPresenceBroadcast", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err232 = thrift.WrapTException(err2)
+			_write_err238 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc233.Write(ctx, oprot); _write_err232 == nil && err2 != nil {
-			_write_err232 = thrift.WrapTException(err2)
+		if err2 := _exc239.Write(ctx, oprot); _write_err238 == nil && err2 != nil {
+			_write_err238 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err232 == nil && err2 != nil {
-			_write_err232 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err238 == nil && err2 != nil {
+			_write_err238 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err232 == nil && err2 != nil {
-			_write_err232 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err238 == nil && err2 != nil {
+			_write_err238 = thrift.WrapTException(err2)
 		}
-		if _write_err232 != nil {
-			return false, thrift.WrapTException(_write_err232)
+		if _write_err238 != nil {
+			return false, thrift.WrapTException(_write_err238)
 		}
 		return true, err
 	} else {
@@ -9351,19 +9468,19 @@ func (p *admifaceProcessorTimPresenceBroadcast) Process(ctx context.Context, seq
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "TimPresenceBroadcast", thrift.REPLY, seqId); err2 != nil {
-		_write_err232 = thrift.WrapTException(err2)
+		_write_err238 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err232 == nil && err2 != nil {
-		_write_err232 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err238 == nil && err2 != nil {
+		_write_err238 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err232 == nil && err2 != nil {
-		_write_err232 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err238 == nil && err2 != nil {
+		_write_err238 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err232 == nil && err2 != nil {
-		_write_err232 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err238 == nil && err2 != nil {
+		_write_err238 = thrift.WrapTException(err2)
 	}
-	if _write_err232 != nil {
-		return false, thrift.WrapTException(_write_err232)
+	if _write_err238 != nil {
+		return false, thrift.WrapTException(_write_err238)
 	}
 	return true, err
 }
@@ -9373,7 +9490,7 @@ type admifaceProcessorProxyMessage struct {
 }
 
 func (p *admifaceProcessorProxyMessage) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err234 error
+	var _write_err240 error
 	args := AdmifaceProxyMessageArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -9424,21 +9541,21 @@ func (p *admifaceProcessorProxyMessage) Process(ctx context.Context, seqId int32
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc235 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing ProxyMessage: " + err2.Error())
+		_exc241 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing ProxyMessage: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "ProxyMessage", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err234 = thrift.WrapTException(err2)
+			_write_err240 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc235.Write(ctx, oprot); _write_err234 == nil && err2 != nil {
-			_write_err234 = thrift.WrapTException(err2)
+		if err2 := _exc241.Write(ctx, oprot); _write_err240 == nil && err2 != nil {
+			_write_err240 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err234 == nil && err2 != nil {
-			_write_err234 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err240 == nil && err2 != nil {
+			_write_err240 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err234 == nil && err2 != nil {
-			_write_err234 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err240 == nil && err2 != nil {
+			_write_err240 = thrift.WrapTException(err2)
 		}
-		if _write_err234 != nil {
-			return false, thrift.WrapTException(_write_err234)
+		if _write_err240 != nil {
+			return false, thrift.WrapTException(_write_err240)
 		}
 		return true, err
 	} else {
@@ -9446,19 +9563,19 @@ func (p *admifaceProcessorProxyMessage) Process(ctx context.Context, seqId int32
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "ProxyMessage", thrift.REPLY, seqId); err2 != nil {
-		_write_err234 = thrift.WrapTException(err2)
+		_write_err240 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err234 == nil && err2 != nil {
-		_write_err234 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err240 == nil && err2 != nil {
+		_write_err240 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err234 == nil && err2 != nil {
-		_write_err234 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err240 == nil && err2 != nil {
+		_write_err240 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err234 == nil && err2 != nil {
-		_write_err234 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err240 == nil && err2 != nil {
+		_write_err240 = thrift.WrapTException(err2)
 	}
-	if _write_err234 != nil {
-		return false, thrift.WrapTException(_write_err234)
+	if _write_err240 != nil {
+		return false, thrift.WrapTException(_write_err240)
 	}
 	return true, err
 }
@@ -9468,7 +9585,7 @@ type admifaceProcessorRegister struct {
 }
 
 func (p *admifaceProcessorRegister) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err236 error
+	var _write_err242 error
 	args := AdmifaceRegisterArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -9519,21 +9636,21 @@ func (p *admifaceProcessorRegister) Process(ctx context.Context, seqId int32, ip
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc237 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Register: " + err2.Error())
+		_exc243 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Register: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "Register", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err236 = thrift.WrapTException(err2)
+			_write_err242 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc237.Write(ctx, oprot); _write_err236 == nil && err2 != nil {
-			_write_err236 = thrift.WrapTException(err2)
+		if err2 := _exc243.Write(ctx, oprot); _write_err242 == nil && err2 != nil {
+			_write_err242 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err236 == nil && err2 != nil {
-			_write_err236 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err242 == nil && err2 != nil {
+			_write_err242 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err236 == nil && err2 != nil {
-			_write_err236 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err242 == nil && err2 != nil {
+			_write_err242 = thrift.WrapTException(err2)
 		}
-		if _write_err236 != nil {
-			return false, thrift.WrapTException(_write_err236)
+		if _write_err242 != nil {
+			return false, thrift.WrapTException(_write_err242)
 		}
 		return true, err
 	} else {
@@ -9541,19 +9658,19 @@ func (p *admifaceProcessorRegister) Process(ctx context.Context, seqId int32, ip
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "Register", thrift.REPLY, seqId); err2 != nil {
-		_write_err236 = thrift.WrapTException(err2)
+		_write_err242 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err236 == nil && err2 != nil {
-		_write_err236 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err242 == nil && err2 != nil {
+		_write_err242 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err236 == nil && err2 != nil {
-		_write_err236 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err242 == nil && err2 != nil {
+		_write_err242 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err236 == nil && err2 != nil {
-		_write_err236 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err242 == nil && err2 != nil {
+		_write_err242 = thrift.WrapTException(err2)
 	}
-	if _write_err236 != nil {
-		return false, thrift.WrapTException(_write_err236)
+	if _write_err242 != nil {
+		return false, thrift.WrapTException(_write_err242)
 	}
 	return true, err
 }
@@ -9563,7 +9680,7 @@ type admifaceProcessorModifyUserInfo struct {
 }
 
 func (p *admifaceProcessorModifyUserInfo) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err238 error
+	var _write_err244 error
 	args := AdmifaceModifyUserInfoArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -9614,21 +9731,21 @@ func (p *admifaceProcessorModifyUserInfo) Process(ctx context.Context, seqId int
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc239 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing ModifyUserInfo: " + err2.Error())
+		_exc245 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing ModifyUserInfo: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "ModifyUserInfo", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err238 = thrift.WrapTException(err2)
+			_write_err244 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc239.Write(ctx, oprot); _write_err238 == nil && err2 != nil {
-			_write_err238 = thrift.WrapTException(err2)
+		if err2 := _exc245.Write(ctx, oprot); _write_err244 == nil && err2 != nil {
+			_write_err244 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err238 == nil && err2 != nil {
-			_write_err238 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err244 == nil && err2 != nil {
+			_write_err244 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err238 == nil && err2 != nil {
-			_write_err238 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err244 == nil && err2 != nil {
+			_write_err244 = thrift.WrapTException(err2)
 		}
-		if _write_err238 != nil {
-			return false, thrift.WrapTException(_write_err238)
+		if _write_err244 != nil {
+			return false, thrift.WrapTException(_write_err244)
 		}
 		return true, err
 	} else {
@@ -9636,19 +9753,19 @@ func (p *admifaceProcessorModifyUserInfo) Process(ctx context.Context, seqId int
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "ModifyUserInfo", thrift.REPLY, seqId); err2 != nil {
-		_write_err238 = thrift.WrapTException(err2)
+		_write_err244 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err238 == nil && err2 != nil {
-		_write_err238 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err244 == nil && err2 != nil {
+		_write_err244 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err238 == nil && err2 != nil {
-		_write_err238 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err244 == nil && err2 != nil {
+		_write_err244 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err238 == nil && err2 != nil {
-		_write_err238 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err244 == nil && err2 != nil {
+		_write_err244 = thrift.WrapTException(err2)
 	}
-	if _write_err238 != nil {
-		return false, thrift.WrapTException(_write_err238)
+	if _write_err244 != nil {
+		return false, thrift.WrapTException(_write_err244)
 	}
 	return true, err
 }
@@ -9658,7 +9775,7 @@ type admifaceProcessorModifyRoomInfo struct {
 }
 
 func (p *admifaceProcessorModifyRoomInfo) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err240 error
+	var _write_err246 error
 	args := AdmifaceModifyRoomInfoArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -9709,21 +9826,21 @@ func (p *admifaceProcessorModifyRoomInfo) Process(ctx context.Context, seqId int
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc241 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing ModifyRoomInfo: " + err2.Error())
+		_exc247 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing ModifyRoomInfo: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "ModifyRoomInfo", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err240 = thrift.WrapTException(err2)
+			_write_err246 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc241.Write(ctx, oprot); _write_err240 == nil && err2 != nil {
-			_write_err240 = thrift.WrapTException(err2)
+		if err2 := _exc247.Write(ctx, oprot); _write_err246 == nil && err2 != nil {
+			_write_err246 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err240 == nil && err2 != nil {
-			_write_err240 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err246 == nil && err2 != nil {
+			_write_err246 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err240 == nil && err2 != nil {
-			_write_err240 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err246 == nil && err2 != nil {
+			_write_err246 = thrift.WrapTException(err2)
 		}
-		if _write_err240 != nil {
-			return false, thrift.WrapTException(_write_err240)
+		if _write_err246 != nil {
+			return false, thrift.WrapTException(_write_err246)
 		}
 		return true, err
 	} else {
@@ -9731,19 +9848,19 @@ func (p *admifaceProcessorModifyRoomInfo) Process(ctx context.Context, seqId int
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "ModifyRoomInfo", thrift.REPLY, seqId); err2 != nil {
-		_write_err240 = thrift.WrapTException(err2)
+		_write_err246 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err240 == nil && err2 != nil {
-		_write_err240 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err246 == nil && err2 != nil {
+		_write_err246 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err240 == nil && err2 != nil {
-		_write_err240 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err246 == nil && err2 != nil {
+		_write_err246 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err240 == nil && err2 != nil {
-		_write_err240 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err246 == nil && err2 != nil {
+		_write_err246 = thrift.WrapTException(err2)
 	}
-	if _write_err240 != nil {
-		return false, thrift.WrapTException(_write_err240)
+	if _write_err246 != nil {
+		return false, thrift.WrapTException(_write_err246)
 	}
 	return true, err
 }
@@ -9753,7 +9870,7 @@ type admifaceProcessorSysBlockUser struct {
 }
 
 func (p *admifaceProcessorSysBlockUser) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err242 error
+	var _write_err248 error
 	args := AdmifaceSysBlockUserArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -9804,21 +9921,21 @@ func (p *admifaceProcessorSysBlockUser) Process(ctx context.Context, seqId int32
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc243 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing SysBlockUser: " + err2.Error())
+		_exc249 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing SysBlockUser: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "SysBlockUser", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err242 = thrift.WrapTException(err2)
+			_write_err248 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc243.Write(ctx, oprot); _write_err242 == nil && err2 != nil {
-			_write_err242 = thrift.WrapTException(err2)
+		if err2 := _exc249.Write(ctx, oprot); _write_err248 == nil && err2 != nil {
+			_write_err248 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err242 == nil && err2 != nil {
-			_write_err242 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err248 == nil && err2 != nil {
+			_write_err248 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err242 == nil && err2 != nil {
-			_write_err242 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err248 == nil && err2 != nil {
+			_write_err248 = thrift.WrapTException(err2)
 		}
-		if _write_err242 != nil {
-			return false, thrift.WrapTException(_write_err242)
+		if _write_err248 != nil {
+			return false, thrift.WrapTException(_write_err248)
 		}
 		return true, err
 	} else {
@@ -9826,114 +9943,19 @@ func (p *admifaceProcessorSysBlockUser) Process(ctx context.Context, seqId int32
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "SysBlockUser", thrift.REPLY, seqId); err2 != nil {
-		_write_err242 = thrift.WrapTException(err2)
+		_write_err248 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err242 == nil && err2 != nil {
-		_write_err242 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err248 == nil && err2 != nil {
+		_write_err248 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err242 == nil && err2 != nil {
-		_write_err242 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err248 == nil && err2 != nil {
+		_write_err248 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err242 == nil && err2 != nil {
-		_write_err242 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err248 == nil && err2 != nil {
+		_write_err248 = thrift.WrapTException(err2)
 	}
-	if _write_err242 != nil {
-		return false, thrift.WrapTException(_write_err242)
-	}
-	return true, err
-}
-
-type admifaceProcessorSysBlockList struct {
-	handler Admiface
-}
-
-func (p *admifaceProcessorSysBlockList) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err244 error
-	args := AdmifaceSysBlockListArgs{}
-	if err2 := args.Read(ctx, iprot); err2 != nil {
-		iprot.ReadMessageEnd(ctx)
-		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err2.Error())
-		oprot.WriteMessageBegin(ctx, "SysBlockList", thrift.EXCEPTION, seqId)
-		x.Write(ctx, oprot)
-		oprot.WriteMessageEnd(ctx)
-		oprot.Flush(ctx)
-		return false, thrift.WrapTException(err2)
-	}
-	iprot.ReadMessageEnd(ctx)
-
-	tickerCancel := func() {}
-	// Start a goroutine to do server side connectivity check.
-	if thrift.ServerConnectivityCheckInterval > 0 {
-		var cancel context.CancelCauseFunc
-		ctx, cancel = context.WithCancelCause(ctx)
-		defer cancel(nil)
-		var tickerCtx context.Context
-		tickerCtx, tickerCancel = context.WithCancel(context.Background())
-		defer tickerCancel()
-		go func(ctx context.Context, cancel context.CancelCauseFunc) {
-			ticker := time.NewTicker(thrift.ServerConnectivityCheckInterval)
-			defer ticker.Stop()
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-ticker.C:
-					if !iprot.Transport().IsOpen() {
-						cancel(thrift.ErrAbandonRequest)
-						return
-					}
-				}
-			}
-		}(tickerCtx, cancel)
-	}
-
-	result := AdmifaceSysBlockListResult{}
-	if retval, err2 := p.handler.SysBlockList(ctx); err2 != nil {
-		tickerCancel()
-		err = thrift.WrapTException(err2)
-		if errors.Is(err2, thrift.ErrAbandonRequest) {
-			return false, thrift.WrapTException(err2)
-		}
-		if errors.Is(err2, context.Canceled) {
-			if err := context.Cause(ctx); errors.Is(err, thrift.ErrAbandonRequest) {
-				return false, thrift.WrapTException(err)
-			}
-		}
-		_exc245 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing SysBlockList: " + err2.Error())
-		if err2 := oprot.WriteMessageBegin(ctx, "SysBlockList", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err244 = thrift.WrapTException(err2)
-		}
-		if err2 := _exc245.Write(ctx, oprot); _write_err244 == nil && err2 != nil {
-			_write_err244 = thrift.WrapTException(err2)
-		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err244 == nil && err2 != nil {
-			_write_err244 = thrift.WrapTException(err2)
-		}
-		if err2 := oprot.Flush(ctx); _write_err244 == nil && err2 != nil {
-			_write_err244 = thrift.WrapTException(err2)
-		}
-		if _write_err244 != nil {
-			return false, thrift.WrapTException(_write_err244)
-		}
-		return true, err
-	} else {
-		result.Success = retval
-	}
-	tickerCancel()
-	if err2 := oprot.WriteMessageBegin(ctx, "SysBlockList", thrift.REPLY, seqId); err2 != nil {
-		_write_err244 = thrift.WrapTException(err2)
-	}
-	if err2 := result.Write(ctx, oprot); _write_err244 == nil && err2 != nil {
-		_write_err244 = thrift.WrapTException(err2)
-	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err244 == nil && err2 != nil {
-		_write_err244 = thrift.WrapTException(err2)
-	}
-	if err2 := oprot.Flush(ctx); _write_err244 == nil && err2 != nil {
-		_write_err244 = thrift.WrapTException(err2)
-	}
-	if _write_err244 != nil {
-		return false, thrift.WrapTException(_write_err244)
+	if _write_err248 != nil {
+		return false, thrift.WrapTException(_write_err248)
 	}
 	return true, err
 }
@@ -9943,7 +9965,7 @@ type admifaceProcessorOnlineUser struct {
 }
 
 func (p *admifaceProcessorOnlineUser) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err246 error
+	var _write_err250 error
 	args := AdmifaceOnlineUserArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -9994,21 +10016,21 @@ func (p *admifaceProcessorOnlineUser) Process(ctx context.Context, seqId int32, 
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc247 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing OnlineUser: " + err2.Error())
+		_exc251 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing OnlineUser: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "OnlineUser", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err246 = thrift.WrapTException(err2)
+			_write_err250 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc247.Write(ctx, oprot); _write_err246 == nil && err2 != nil {
-			_write_err246 = thrift.WrapTException(err2)
+		if err2 := _exc251.Write(ctx, oprot); _write_err250 == nil && err2 != nil {
+			_write_err250 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err246 == nil && err2 != nil {
-			_write_err246 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err250 == nil && err2 != nil {
+			_write_err250 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err246 == nil && err2 != nil {
-			_write_err246 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err250 == nil && err2 != nil {
+			_write_err250 = thrift.WrapTException(err2)
 		}
-		if _write_err246 != nil {
-			return false, thrift.WrapTException(_write_err246)
+		if _write_err250 != nil {
+			return false, thrift.WrapTException(_write_err250)
 		}
 		return true, err
 	} else {
@@ -10016,19 +10038,19 @@ func (p *admifaceProcessorOnlineUser) Process(ctx context.Context, seqId int32, 
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "OnlineUser", thrift.REPLY, seqId); err2 != nil {
-		_write_err246 = thrift.WrapTException(err2)
+		_write_err250 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err246 == nil && err2 != nil {
-		_write_err246 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err250 == nil && err2 != nil {
+		_write_err250 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err246 == nil && err2 != nil {
-		_write_err246 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err250 == nil && err2 != nil {
+		_write_err250 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err246 == nil && err2 != nil {
-		_write_err246 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err250 == nil && err2 != nil {
+		_write_err250 = thrift.WrapTException(err2)
 	}
-	if _write_err246 != nil {
-		return false, thrift.WrapTException(_write_err246)
+	if _write_err250 != nil {
+		return false, thrift.WrapTException(_write_err250)
 	}
 	return true, err
 }
@@ -10038,7 +10060,7 @@ type admifaceProcessorVroom struct {
 }
 
 func (p *admifaceProcessorVroom) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err248 error
+	var _write_err252 error
 	args := AdmifaceVroomArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -10089,21 +10111,21 @@ func (p *admifaceProcessorVroom) Process(ctx context.Context, seqId int32, iprot
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc249 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Vroom: " + err2.Error())
+		_exc253 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Vroom: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "Vroom", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err248 = thrift.WrapTException(err2)
+			_write_err252 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc249.Write(ctx, oprot); _write_err248 == nil && err2 != nil {
-			_write_err248 = thrift.WrapTException(err2)
+		if err2 := _exc253.Write(ctx, oprot); _write_err252 == nil && err2 != nil {
+			_write_err252 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err248 == nil && err2 != nil {
-			_write_err248 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err252 == nil && err2 != nil {
+			_write_err252 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err248 == nil && err2 != nil {
-			_write_err248 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err252 == nil && err2 != nil {
+			_write_err252 = thrift.WrapTException(err2)
 		}
-		if _write_err248 != nil {
-			return false, thrift.WrapTException(_write_err248)
+		if _write_err252 != nil {
+			return false, thrift.WrapTException(_write_err252)
 		}
 		return true, err
 	} else {
@@ -10111,19 +10133,19 @@ func (p *admifaceProcessorVroom) Process(ctx context.Context, seqId int32, iprot
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "Vroom", thrift.REPLY, seqId); err2 != nil {
-		_write_err248 = thrift.WrapTException(err2)
+		_write_err252 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err248 == nil && err2 != nil {
-		_write_err248 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err252 == nil && err2 != nil {
+		_write_err252 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err248 == nil && err2 != nil {
-		_write_err248 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err252 == nil && err2 != nil {
+		_write_err252 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err248 == nil && err2 != nil {
-		_write_err248 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err252 == nil && err2 != nil {
+		_write_err252 = thrift.WrapTException(err2)
 	}
-	if _write_err248 != nil {
-		return false, thrift.WrapTException(_write_err248)
+	if _write_err252 != nil {
+		return false, thrift.WrapTException(_write_err252)
 	}
 	return true, err
 }
@@ -10133,7 +10155,7 @@ type admifaceProcessorDetect struct {
 }
 
 func (p *admifaceProcessorDetect) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err250 error
+	var _write_err254 error
 	args := AdmifaceDetectArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -10184,21 +10206,21 @@ func (p *admifaceProcessorDetect) Process(ctx context.Context, seqId int32, ipro
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc251 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Detect: " + err2.Error())
+		_exc255 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Detect: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "Detect", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err250 = thrift.WrapTException(err2)
+			_write_err254 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc251.Write(ctx, oprot); _write_err250 == nil && err2 != nil {
-			_write_err250 = thrift.WrapTException(err2)
+		if err2 := _exc255.Write(ctx, oprot); _write_err254 == nil && err2 != nil {
+			_write_err254 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err250 == nil && err2 != nil {
-			_write_err250 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err254 == nil && err2 != nil {
+			_write_err254 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err250 == nil && err2 != nil {
-			_write_err250 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err254 == nil && err2 != nil {
+			_write_err254 = thrift.WrapTException(err2)
 		}
-		if _write_err250 != nil {
-			return false, thrift.WrapTException(_write_err250)
+		if _write_err254 != nil {
+			return false, thrift.WrapTException(_write_err254)
 		}
 		return true, err
 	} else {
@@ -10206,19 +10228,19 @@ func (p *admifaceProcessorDetect) Process(ctx context.Context, seqId int32, ipro
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "Detect", thrift.REPLY, seqId); err2 != nil {
-		_write_err250 = thrift.WrapTException(err2)
+		_write_err254 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err250 == nil && err2 != nil {
-		_write_err250 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err254 == nil && err2 != nil {
+		_write_err254 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err250 == nil && err2 != nil {
-		_write_err250 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err254 == nil && err2 != nil {
+		_write_err254 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err250 == nil && err2 != nil {
-		_write_err250 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err254 == nil && err2 != nil {
+		_write_err254 = thrift.WrapTException(err2)
 	}
-	if _write_err250 != nil {
-		return false, thrift.WrapTException(_write_err250)
+	if _write_err254 != nil {
+		return false, thrift.WrapTException(_write_err254)
 	}
 	return true, err
 }
@@ -10228,7 +10250,7 @@ type admifaceProcessorRoster struct {
 }
 
 func (p *admifaceProcessorRoster) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err252 error
+	var _write_err256 error
 	args := AdmifaceRosterArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -10279,21 +10301,21 @@ func (p *admifaceProcessorRoster) Process(ctx context.Context, seqId int32, ipro
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc253 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Roster: " + err2.Error())
+		_exc257 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Roster: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "Roster", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err252 = thrift.WrapTException(err2)
+			_write_err256 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc253.Write(ctx, oprot); _write_err252 == nil && err2 != nil {
-			_write_err252 = thrift.WrapTException(err2)
+		if err2 := _exc257.Write(ctx, oprot); _write_err256 == nil && err2 != nil {
+			_write_err256 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err252 == nil && err2 != nil {
-			_write_err252 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err256 == nil && err2 != nil {
+			_write_err256 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err252 == nil && err2 != nil {
-			_write_err252 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err256 == nil && err2 != nil {
+			_write_err256 = thrift.WrapTException(err2)
 		}
-		if _write_err252 != nil {
-			return false, thrift.WrapTException(_write_err252)
+		if _write_err256 != nil {
+			return false, thrift.WrapTException(_write_err256)
 		}
 		return true, err
 	} else {
@@ -10301,19 +10323,19 @@ func (p *admifaceProcessorRoster) Process(ctx context.Context, seqId int32, ipro
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "Roster", thrift.REPLY, seqId); err2 != nil {
-		_write_err252 = thrift.WrapTException(err2)
+		_write_err256 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err252 == nil && err2 != nil {
-		_write_err252 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err256 == nil && err2 != nil {
+		_write_err256 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err252 == nil && err2 != nil {
-		_write_err252 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err256 == nil && err2 != nil {
+		_write_err256 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err252 == nil && err2 != nil {
-		_write_err252 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err256 == nil && err2 != nil {
+		_write_err256 = thrift.WrapTException(err2)
 	}
-	if _write_err252 != nil {
-		return false, thrift.WrapTException(_write_err252)
+	if _write_err256 != nil {
+		return false, thrift.WrapTException(_write_err256)
 	}
 	return true, err
 }
@@ -10323,7 +10345,7 @@ type admifaceProcessorAddroster struct {
 }
 
 func (p *admifaceProcessorAddroster) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err254 error
+	var _write_err258 error
 	args := AdmifaceAddrosterArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -10374,21 +10396,21 @@ func (p *admifaceProcessorAddroster) Process(ctx context.Context, seqId int32, i
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc255 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Addroster: " + err2.Error())
+		_exc259 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Addroster: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "Addroster", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err254 = thrift.WrapTException(err2)
+			_write_err258 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc255.Write(ctx, oprot); _write_err254 == nil && err2 != nil {
-			_write_err254 = thrift.WrapTException(err2)
+		if err2 := _exc259.Write(ctx, oprot); _write_err258 == nil && err2 != nil {
+			_write_err258 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err254 == nil && err2 != nil {
-			_write_err254 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err258 == nil && err2 != nil {
+			_write_err258 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err254 == nil && err2 != nil {
-			_write_err254 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err258 == nil && err2 != nil {
+			_write_err258 = thrift.WrapTException(err2)
 		}
-		if _write_err254 != nil {
-			return false, thrift.WrapTException(_write_err254)
+		if _write_err258 != nil {
+			return false, thrift.WrapTException(_write_err258)
 		}
 		return true, err
 	} else {
@@ -10396,19 +10418,19 @@ func (p *admifaceProcessorAddroster) Process(ctx context.Context, seqId int32, i
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "Addroster", thrift.REPLY, seqId); err2 != nil {
-		_write_err254 = thrift.WrapTException(err2)
+		_write_err258 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err254 == nil && err2 != nil {
-		_write_err254 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err258 == nil && err2 != nil {
+		_write_err258 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err254 == nil && err2 != nil {
-		_write_err254 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err258 == nil && err2 != nil {
+		_write_err258 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err254 == nil && err2 != nil {
-		_write_err254 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err258 == nil && err2 != nil {
+		_write_err258 = thrift.WrapTException(err2)
 	}
-	if _write_err254 != nil {
-		return false, thrift.WrapTException(_write_err254)
+	if _write_err258 != nil {
+		return false, thrift.WrapTException(_write_err258)
 	}
 	return true, err
 }
@@ -10418,7 +10440,7 @@ type admifaceProcessorRmroster struct {
 }
 
 func (p *admifaceProcessorRmroster) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err256 error
+	var _write_err260 error
 	args := AdmifaceRmrosterArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -10469,21 +10491,21 @@ func (p *admifaceProcessorRmroster) Process(ctx context.Context, seqId int32, ip
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc257 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Rmroster: " + err2.Error())
+		_exc261 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Rmroster: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "Rmroster", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err256 = thrift.WrapTException(err2)
+			_write_err260 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc257.Write(ctx, oprot); _write_err256 == nil && err2 != nil {
-			_write_err256 = thrift.WrapTException(err2)
+		if err2 := _exc261.Write(ctx, oprot); _write_err260 == nil && err2 != nil {
+			_write_err260 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err256 == nil && err2 != nil {
-			_write_err256 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err260 == nil && err2 != nil {
+			_write_err260 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err256 == nil && err2 != nil {
-			_write_err256 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err260 == nil && err2 != nil {
+			_write_err260 = thrift.WrapTException(err2)
 		}
-		if _write_err256 != nil {
-			return false, thrift.WrapTException(_write_err256)
+		if _write_err260 != nil {
+			return false, thrift.WrapTException(_write_err260)
 		}
 		return true, err
 	} else {
@@ -10491,19 +10513,19 @@ func (p *admifaceProcessorRmroster) Process(ctx context.Context, seqId int32, ip
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "Rmroster", thrift.REPLY, seqId); err2 != nil {
-		_write_err256 = thrift.WrapTException(err2)
+		_write_err260 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err256 == nil && err2 != nil {
-		_write_err256 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err260 == nil && err2 != nil {
+		_write_err260 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err256 == nil && err2 != nil {
-		_write_err256 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err260 == nil && err2 != nil {
+		_write_err260 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err256 == nil && err2 != nil {
-		_write_err256 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err260 == nil && err2 != nil {
+		_write_err260 = thrift.WrapTException(err2)
 	}
-	if _write_err256 != nil {
-		return false, thrift.WrapTException(_write_err256)
+	if _write_err260 != nil {
+		return false, thrift.WrapTException(_write_err260)
 	}
 	return true, err
 }
@@ -10513,7 +10535,7 @@ type admifaceProcessorBlockroster struct {
 }
 
 func (p *admifaceProcessorBlockroster) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err258 error
+	var _write_err262 error
 	args := AdmifaceBlockrosterArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -10564,21 +10586,21 @@ func (p *admifaceProcessorBlockroster) Process(ctx context.Context, seqId int32,
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc259 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Blockroster: " + err2.Error())
+		_exc263 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Blockroster: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "Blockroster", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err258 = thrift.WrapTException(err2)
+			_write_err262 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc259.Write(ctx, oprot); _write_err258 == nil && err2 != nil {
-			_write_err258 = thrift.WrapTException(err2)
+		if err2 := _exc263.Write(ctx, oprot); _write_err262 == nil && err2 != nil {
+			_write_err262 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err258 == nil && err2 != nil {
-			_write_err258 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err262 == nil && err2 != nil {
+			_write_err262 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err258 == nil && err2 != nil {
-			_write_err258 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err262 == nil && err2 != nil {
+			_write_err262 = thrift.WrapTException(err2)
 		}
-		if _write_err258 != nil {
-			return false, thrift.WrapTException(_write_err258)
+		if _write_err262 != nil {
+			return false, thrift.WrapTException(_write_err262)
 		}
 		return true, err
 	} else {
@@ -10586,19 +10608,19 @@ func (p *admifaceProcessorBlockroster) Process(ctx context.Context, seqId int32,
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "Blockroster", thrift.REPLY, seqId); err2 != nil {
-		_write_err258 = thrift.WrapTException(err2)
+		_write_err262 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err258 == nil && err2 != nil {
-		_write_err258 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err262 == nil && err2 != nil {
+		_write_err262 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err258 == nil && err2 != nil {
-		_write_err258 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err262 == nil && err2 != nil {
+		_write_err262 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err258 == nil && err2 != nil {
-		_write_err258 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err262 == nil && err2 != nil {
+		_write_err262 = thrift.WrapTException(err2)
 	}
-	if _write_err258 != nil {
-		return false, thrift.WrapTException(_write_err258)
+	if _write_err262 != nil {
+		return false, thrift.WrapTException(_write_err262)
 	}
 	return true, err
 }
@@ -10608,7 +10630,7 @@ type admifaceProcessorPullUserMessage struct {
 }
 
 func (p *admifaceProcessorPullUserMessage) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err260 error
+	var _write_err264 error
 	args := AdmifacePullUserMessageArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -10659,21 +10681,21 @@ func (p *admifaceProcessorPullUserMessage) Process(ctx context.Context, seqId in
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc261 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing PullUserMessage: " + err2.Error())
+		_exc265 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing PullUserMessage: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "PullUserMessage", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err260 = thrift.WrapTException(err2)
+			_write_err264 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc261.Write(ctx, oprot); _write_err260 == nil && err2 != nil {
-			_write_err260 = thrift.WrapTException(err2)
+		if err2 := _exc265.Write(ctx, oprot); _write_err264 == nil && err2 != nil {
+			_write_err264 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err260 == nil && err2 != nil {
-			_write_err260 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err264 == nil && err2 != nil {
+			_write_err264 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err260 == nil && err2 != nil {
-			_write_err260 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err264 == nil && err2 != nil {
+			_write_err264 = thrift.WrapTException(err2)
 		}
-		if _write_err260 != nil {
-			return false, thrift.WrapTException(_write_err260)
+		if _write_err264 != nil {
+			return false, thrift.WrapTException(_write_err264)
 		}
 		return true, err
 	} else {
@@ -10681,19 +10703,19 @@ func (p *admifaceProcessorPullUserMessage) Process(ctx context.Context, seqId in
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "PullUserMessage", thrift.REPLY, seqId); err2 != nil {
-		_write_err260 = thrift.WrapTException(err2)
+		_write_err264 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err260 == nil && err2 != nil {
-		_write_err260 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err264 == nil && err2 != nil {
+		_write_err264 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err260 == nil && err2 != nil {
-		_write_err260 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err264 == nil && err2 != nil {
+		_write_err264 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err260 == nil && err2 != nil {
-		_write_err260 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err264 == nil && err2 != nil {
+		_write_err264 = thrift.WrapTException(err2)
 	}
-	if _write_err260 != nil {
-		return false, thrift.WrapTException(_write_err260)
+	if _write_err264 != nil {
+		return false, thrift.WrapTException(_write_err264)
 	}
 	return true, err
 }
@@ -10703,7 +10725,7 @@ type admifaceProcessorPullRoomMessage struct {
 }
 
 func (p *admifaceProcessorPullRoomMessage) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err262 error
+	var _write_err266 error
 	args := AdmifacePullRoomMessageArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -10754,21 +10776,21 @@ func (p *admifaceProcessorPullRoomMessage) Process(ctx context.Context, seqId in
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc263 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing PullRoomMessage: " + err2.Error())
+		_exc267 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing PullRoomMessage: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "PullRoomMessage", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err262 = thrift.WrapTException(err2)
+			_write_err266 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc263.Write(ctx, oprot); _write_err262 == nil && err2 != nil {
-			_write_err262 = thrift.WrapTException(err2)
+		if err2 := _exc267.Write(ctx, oprot); _write_err266 == nil && err2 != nil {
+			_write_err266 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err262 == nil && err2 != nil {
-			_write_err262 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err266 == nil && err2 != nil {
+			_write_err266 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err262 == nil && err2 != nil {
-			_write_err262 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err266 == nil && err2 != nil {
+			_write_err266 = thrift.WrapTException(err2)
 		}
-		if _write_err262 != nil {
-			return false, thrift.WrapTException(_write_err262)
+		if _write_err266 != nil {
+			return false, thrift.WrapTException(_write_err266)
 		}
 		return true, err
 	} else {
@@ -10776,19 +10798,19 @@ func (p *admifaceProcessorPullRoomMessage) Process(ctx context.Context, seqId in
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "PullRoomMessage", thrift.REPLY, seqId); err2 != nil {
-		_write_err262 = thrift.WrapTException(err2)
+		_write_err266 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err262 == nil && err2 != nil {
-		_write_err262 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err266 == nil && err2 != nil {
+		_write_err266 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err262 == nil && err2 != nil {
-		_write_err262 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err266 == nil && err2 != nil {
+		_write_err266 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err262 == nil && err2 != nil {
-		_write_err262 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err266 == nil && err2 != nil {
+		_write_err266 = thrift.WrapTException(err2)
 	}
-	if _write_err262 != nil {
-		return false, thrift.WrapTException(_write_err262)
+	if _write_err266 != nil {
+		return false, thrift.WrapTException(_write_err266)
 	}
 	return true, err
 }
@@ -10798,7 +10820,7 @@ type admifaceProcessorOfflineMsg struct {
 }
 
 func (p *admifaceProcessorOfflineMsg) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err264 error
+	var _write_err268 error
 	args := AdmifaceOfflineMsgArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -10849,21 +10871,21 @@ func (p *admifaceProcessorOfflineMsg) Process(ctx context.Context, seqId int32, 
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc265 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing OfflineMsg: " + err2.Error())
+		_exc269 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing OfflineMsg: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "OfflineMsg", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err264 = thrift.WrapTException(err2)
+			_write_err268 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc265.Write(ctx, oprot); _write_err264 == nil && err2 != nil {
-			_write_err264 = thrift.WrapTException(err2)
+		if err2 := _exc269.Write(ctx, oprot); _write_err268 == nil && err2 != nil {
+			_write_err268 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err264 == nil && err2 != nil {
-			_write_err264 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err268 == nil && err2 != nil {
+			_write_err268 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err264 == nil && err2 != nil {
-			_write_err264 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err268 == nil && err2 != nil {
+			_write_err268 = thrift.WrapTException(err2)
 		}
-		if _write_err264 != nil {
-			return false, thrift.WrapTException(_write_err264)
+		if _write_err268 != nil {
+			return false, thrift.WrapTException(_write_err268)
 		}
 		return true, err
 	} else {
@@ -10871,19 +10893,19 @@ func (p *admifaceProcessorOfflineMsg) Process(ctx context.Context, seqId int32, 
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "OfflineMsg", thrift.REPLY, seqId); err2 != nil {
-		_write_err264 = thrift.WrapTException(err2)
+		_write_err268 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err264 == nil && err2 != nil {
-		_write_err264 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err268 == nil && err2 != nil {
+		_write_err268 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err264 == nil && err2 != nil {
-		_write_err264 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err268 == nil && err2 != nil {
+		_write_err268 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err264 == nil && err2 != nil {
-		_write_err264 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err268 == nil && err2 != nil {
+		_write_err268 = thrift.WrapTException(err2)
 	}
-	if _write_err264 != nil {
-		return false, thrift.WrapTException(_write_err264)
+	if _write_err268 != nil {
+		return false, thrift.WrapTException(_write_err268)
 	}
 	return true, err
 }
@@ -10893,7 +10915,7 @@ type admifaceProcessorDelOfflineMsg struct {
 }
 
 func (p *admifaceProcessorDelOfflineMsg) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err266 error
+	var _write_err270 error
 	args := AdmifaceDelOfflineMsgArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -10944,21 +10966,21 @@ func (p *admifaceProcessorDelOfflineMsg) Process(ctx context.Context, seqId int3
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc267 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing DelOfflineMsg: " + err2.Error())
+		_exc271 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing DelOfflineMsg: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "DelOfflineMsg", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err266 = thrift.WrapTException(err2)
+			_write_err270 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc267.Write(ctx, oprot); _write_err266 == nil && err2 != nil {
-			_write_err266 = thrift.WrapTException(err2)
+		if err2 := _exc271.Write(ctx, oprot); _write_err270 == nil && err2 != nil {
+			_write_err270 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err266 == nil && err2 != nil {
-			_write_err266 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err270 == nil && err2 != nil {
+			_write_err270 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err266 == nil && err2 != nil {
-			_write_err266 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err270 == nil && err2 != nil {
+			_write_err270 = thrift.WrapTException(err2)
 		}
-		if _write_err266 != nil {
-			return false, thrift.WrapTException(_write_err266)
+		if _write_err270 != nil {
+			return false, thrift.WrapTException(_write_err270)
 		}
 		return true, err
 	} else {
@@ -10966,19 +10988,19 @@ func (p *admifaceProcessorDelOfflineMsg) Process(ctx context.Context, seqId int3
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "DelOfflineMsg", thrift.REPLY, seqId); err2 != nil {
-		_write_err266 = thrift.WrapTException(err2)
+		_write_err270 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err266 == nil && err2 != nil {
-		_write_err266 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err270 == nil && err2 != nil {
+		_write_err270 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err266 == nil && err2 != nil {
-		_write_err266 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err270 == nil && err2 != nil {
+		_write_err270 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err266 == nil && err2 != nil {
-		_write_err266 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err270 == nil && err2 != nil {
+		_write_err270 = thrift.WrapTException(err2)
 	}
-	if _write_err266 != nil {
-		return false, thrift.WrapTException(_write_err266)
+	if _write_err270 != nil {
+		return false, thrift.WrapTException(_write_err270)
 	}
 	return true, err
 }
@@ -10988,7 +11010,7 @@ type admifaceProcessorUserRoom struct {
 }
 
 func (p *admifaceProcessorUserRoom) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err268 error
+	var _write_err272 error
 	args := AdmifaceUserRoomArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -11039,21 +11061,21 @@ func (p *admifaceProcessorUserRoom) Process(ctx context.Context, seqId int32, ip
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc269 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing UserRoom: " + err2.Error())
+		_exc273 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing UserRoom: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "UserRoom", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err268 = thrift.WrapTException(err2)
+			_write_err272 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc269.Write(ctx, oprot); _write_err268 == nil && err2 != nil {
-			_write_err268 = thrift.WrapTException(err2)
+		if err2 := _exc273.Write(ctx, oprot); _write_err272 == nil && err2 != nil {
+			_write_err272 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err268 == nil && err2 != nil {
-			_write_err268 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err272 == nil && err2 != nil {
+			_write_err272 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err268 == nil && err2 != nil {
-			_write_err268 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err272 == nil && err2 != nil {
+			_write_err272 = thrift.WrapTException(err2)
 		}
-		if _write_err268 != nil {
-			return false, thrift.WrapTException(_write_err268)
+		if _write_err272 != nil {
+			return false, thrift.WrapTException(_write_err272)
 		}
 		return true, err
 	} else {
@@ -11061,19 +11083,19 @@ func (p *admifaceProcessorUserRoom) Process(ctx context.Context, seqId int32, ip
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "UserRoom", thrift.REPLY, seqId); err2 != nil {
-		_write_err268 = thrift.WrapTException(err2)
+		_write_err272 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err268 == nil && err2 != nil {
-		_write_err268 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err272 == nil && err2 != nil {
+		_write_err272 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err268 == nil && err2 != nil {
-		_write_err268 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err272 == nil && err2 != nil {
+		_write_err272 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err268 == nil && err2 != nil {
-		_write_err268 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err272 == nil && err2 != nil {
+		_write_err272 = thrift.WrapTException(err2)
 	}
-	if _write_err268 != nil {
-		return false, thrift.WrapTException(_write_err268)
+	if _write_err272 != nil {
+		return false, thrift.WrapTException(_write_err272)
 	}
 	return true, err
 }
@@ -11083,7 +11105,7 @@ type admifaceProcessorRoomUsers struct {
 }
 
 func (p *admifaceProcessorRoomUsers) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err270 error
+	var _write_err274 error
 	args := AdmifaceRoomUsersArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -11134,21 +11156,21 @@ func (p *admifaceProcessorRoomUsers) Process(ctx context.Context, seqId int32, i
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc271 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing RoomUsers: " + err2.Error())
+		_exc275 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing RoomUsers: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "RoomUsers", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err270 = thrift.WrapTException(err2)
+			_write_err274 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc271.Write(ctx, oprot); _write_err270 == nil && err2 != nil {
-			_write_err270 = thrift.WrapTException(err2)
+		if err2 := _exc275.Write(ctx, oprot); _write_err274 == nil && err2 != nil {
+			_write_err274 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err270 == nil && err2 != nil {
-			_write_err270 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err274 == nil && err2 != nil {
+			_write_err274 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err270 == nil && err2 != nil {
-			_write_err270 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err274 == nil && err2 != nil {
+			_write_err274 = thrift.WrapTException(err2)
 		}
-		if _write_err270 != nil {
-			return false, thrift.WrapTException(_write_err270)
+		if _write_err274 != nil {
+			return false, thrift.WrapTException(_write_err274)
 		}
 		return true, err
 	} else {
@@ -11156,19 +11178,19 @@ func (p *admifaceProcessorRoomUsers) Process(ctx context.Context, seqId int32, i
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "RoomUsers", thrift.REPLY, seqId); err2 != nil {
-		_write_err270 = thrift.WrapTException(err2)
+		_write_err274 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err270 == nil && err2 != nil {
-		_write_err270 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err274 == nil && err2 != nil {
+		_write_err274 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err270 == nil && err2 != nil {
-		_write_err270 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err274 == nil && err2 != nil {
+		_write_err274 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err270 == nil && err2 != nil {
-		_write_err270 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err274 == nil && err2 != nil {
+		_write_err274 = thrift.WrapTException(err2)
 	}
-	if _write_err270 != nil {
-		return false, thrift.WrapTException(_write_err270)
+	if _write_err274 != nil {
+		return false, thrift.WrapTException(_write_err274)
 	}
 	return true, err
 }
@@ -11178,7 +11200,7 @@ type admifaceProcessorCreateRoom struct {
 }
 
 func (p *admifaceProcessorCreateRoom) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err272 error
+	var _write_err276 error
 	args := AdmifaceCreateRoomArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -11229,21 +11251,21 @@ func (p *admifaceProcessorCreateRoom) Process(ctx context.Context, seqId int32, 
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc273 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing CreateRoom: " + err2.Error())
+		_exc277 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing CreateRoom: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "CreateRoom", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err272 = thrift.WrapTException(err2)
+			_write_err276 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc273.Write(ctx, oprot); _write_err272 == nil && err2 != nil {
-			_write_err272 = thrift.WrapTException(err2)
+		if err2 := _exc277.Write(ctx, oprot); _write_err276 == nil && err2 != nil {
+			_write_err276 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err272 == nil && err2 != nil {
-			_write_err272 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err276 == nil && err2 != nil {
+			_write_err276 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err272 == nil && err2 != nil {
-			_write_err272 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err276 == nil && err2 != nil {
+			_write_err276 = thrift.WrapTException(err2)
 		}
-		if _write_err272 != nil {
-			return false, thrift.WrapTException(_write_err272)
+		if _write_err276 != nil {
+			return false, thrift.WrapTException(_write_err276)
 		}
 		return true, err
 	} else {
@@ -11251,19 +11273,19 @@ func (p *admifaceProcessorCreateRoom) Process(ctx context.Context, seqId int32, 
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "CreateRoom", thrift.REPLY, seqId); err2 != nil {
-		_write_err272 = thrift.WrapTException(err2)
+		_write_err276 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err272 == nil && err2 != nil {
-		_write_err272 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err276 == nil && err2 != nil {
+		_write_err276 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err272 == nil && err2 != nil {
-		_write_err272 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err276 == nil && err2 != nil {
+		_write_err276 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err272 == nil && err2 != nil {
-		_write_err272 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err276 == nil && err2 != nil {
+		_write_err276 = thrift.WrapTException(err2)
 	}
-	if _write_err272 != nil {
-		return false, thrift.WrapTException(_write_err272)
+	if _write_err276 != nil {
+		return false, thrift.WrapTException(_write_err276)
 	}
 	return true, err
 }
@@ -11273,7 +11295,7 @@ type admifaceProcessorAddRoom struct {
 }
 
 func (p *admifaceProcessorAddRoom) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err274 error
+	var _write_err278 error
 	args := AdmifaceAddRoomArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -11324,21 +11346,21 @@ func (p *admifaceProcessorAddRoom) Process(ctx context.Context, seqId int32, ipr
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc275 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing AddRoom: " + err2.Error())
+		_exc279 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing AddRoom: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "AddRoom", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err274 = thrift.WrapTException(err2)
+			_write_err278 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc275.Write(ctx, oprot); _write_err274 == nil && err2 != nil {
-			_write_err274 = thrift.WrapTException(err2)
+		if err2 := _exc279.Write(ctx, oprot); _write_err278 == nil && err2 != nil {
+			_write_err278 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err274 == nil && err2 != nil {
-			_write_err274 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err278 == nil && err2 != nil {
+			_write_err278 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err274 == nil && err2 != nil {
-			_write_err274 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err278 == nil && err2 != nil {
+			_write_err278 = thrift.WrapTException(err2)
 		}
-		if _write_err274 != nil {
-			return false, thrift.WrapTException(_write_err274)
+		if _write_err278 != nil {
+			return false, thrift.WrapTException(_write_err278)
 		}
 		return true, err
 	} else {
@@ -11346,19 +11368,19 @@ func (p *admifaceProcessorAddRoom) Process(ctx context.Context, seqId int32, ipr
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "AddRoom", thrift.REPLY, seqId); err2 != nil {
-		_write_err274 = thrift.WrapTException(err2)
+		_write_err278 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err274 == nil && err2 != nil {
-		_write_err274 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err278 == nil && err2 != nil {
+		_write_err278 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err274 == nil && err2 != nil {
-		_write_err274 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err278 == nil && err2 != nil {
+		_write_err278 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err274 == nil && err2 != nil {
-		_write_err274 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err278 == nil && err2 != nil {
+		_write_err278 = thrift.WrapTException(err2)
 	}
-	if _write_err274 != nil {
-		return false, thrift.WrapTException(_write_err274)
+	if _write_err278 != nil {
+		return false, thrift.WrapTException(_write_err278)
 	}
 	return true, err
 }
@@ -11368,7 +11390,7 @@ type admifaceProcessorPullInRoom struct {
 }
 
 func (p *admifaceProcessorPullInRoom) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err276 error
+	var _write_err280 error
 	args := AdmifacePullInRoomArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -11419,21 +11441,21 @@ func (p *admifaceProcessorPullInRoom) Process(ctx context.Context, seqId int32, 
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc277 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing PullInRoom: " + err2.Error())
+		_exc281 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing PullInRoom: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "PullInRoom", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err276 = thrift.WrapTException(err2)
+			_write_err280 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc277.Write(ctx, oprot); _write_err276 == nil && err2 != nil {
-			_write_err276 = thrift.WrapTException(err2)
+		if err2 := _exc281.Write(ctx, oprot); _write_err280 == nil && err2 != nil {
+			_write_err280 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err276 == nil && err2 != nil {
-			_write_err276 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err280 == nil && err2 != nil {
+			_write_err280 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err276 == nil && err2 != nil {
-			_write_err276 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err280 == nil && err2 != nil {
+			_write_err280 = thrift.WrapTException(err2)
 		}
-		if _write_err276 != nil {
-			return false, thrift.WrapTException(_write_err276)
+		if _write_err280 != nil {
+			return false, thrift.WrapTException(_write_err280)
 		}
 		return true, err
 	} else {
@@ -11441,19 +11463,19 @@ func (p *admifaceProcessorPullInRoom) Process(ctx context.Context, seqId int32, 
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "PullInRoom", thrift.REPLY, seqId); err2 != nil {
-		_write_err276 = thrift.WrapTException(err2)
+		_write_err280 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err276 == nil && err2 != nil {
-		_write_err276 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err280 == nil && err2 != nil {
+		_write_err280 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err276 == nil && err2 != nil {
-		_write_err276 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err280 == nil && err2 != nil {
+		_write_err280 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err276 == nil && err2 != nil {
-		_write_err276 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err280 == nil && err2 != nil {
+		_write_err280 = thrift.WrapTException(err2)
 	}
-	if _write_err276 != nil {
-		return false, thrift.WrapTException(_write_err276)
+	if _write_err280 != nil {
+		return false, thrift.WrapTException(_write_err280)
 	}
 	return true, err
 }
@@ -11463,7 +11485,7 @@ type admifaceProcessorRejectRoom struct {
 }
 
 func (p *admifaceProcessorRejectRoom) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err278 error
+	var _write_err282 error
 	args := AdmifaceRejectRoomArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -11514,21 +11536,21 @@ func (p *admifaceProcessorRejectRoom) Process(ctx context.Context, seqId int32, 
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc279 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing RejectRoom: " + err2.Error())
+		_exc283 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing RejectRoom: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "RejectRoom", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err278 = thrift.WrapTException(err2)
+			_write_err282 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc279.Write(ctx, oprot); _write_err278 == nil && err2 != nil {
-			_write_err278 = thrift.WrapTException(err2)
+		if err2 := _exc283.Write(ctx, oprot); _write_err282 == nil && err2 != nil {
+			_write_err282 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err278 == nil && err2 != nil {
-			_write_err278 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err282 == nil && err2 != nil {
+			_write_err282 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err278 == nil && err2 != nil {
-			_write_err278 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err282 == nil && err2 != nil {
+			_write_err282 = thrift.WrapTException(err2)
 		}
-		if _write_err278 != nil {
-			return false, thrift.WrapTException(_write_err278)
+		if _write_err282 != nil {
+			return false, thrift.WrapTException(_write_err282)
 		}
 		return true, err
 	} else {
@@ -11536,19 +11558,19 @@ func (p *admifaceProcessorRejectRoom) Process(ctx context.Context, seqId int32, 
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "RejectRoom", thrift.REPLY, seqId); err2 != nil {
-		_write_err278 = thrift.WrapTException(err2)
+		_write_err282 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err278 == nil && err2 != nil {
-		_write_err278 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err282 == nil && err2 != nil {
+		_write_err282 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err278 == nil && err2 != nil {
-		_write_err278 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err282 == nil && err2 != nil {
+		_write_err282 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err278 == nil && err2 != nil {
-		_write_err278 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err282 == nil && err2 != nil {
+		_write_err282 = thrift.WrapTException(err2)
 	}
-	if _write_err278 != nil {
-		return false, thrift.WrapTException(_write_err278)
+	if _write_err282 != nil {
+		return false, thrift.WrapTException(_write_err282)
 	}
 	return true, err
 }
@@ -11558,7 +11580,7 @@ type admifaceProcessorKickRoom struct {
 }
 
 func (p *admifaceProcessorKickRoom) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err280 error
+	var _write_err284 error
 	args := AdmifaceKickRoomArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -11609,21 +11631,21 @@ func (p *admifaceProcessorKickRoom) Process(ctx context.Context, seqId int32, ip
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc281 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing KickRoom: " + err2.Error())
+		_exc285 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing KickRoom: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "KickRoom", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err280 = thrift.WrapTException(err2)
+			_write_err284 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc281.Write(ctx, oprot); _write_err280 == nil && err2 != nil {
-			_write_err280 = thrift.WrapTException(err2)
+		if err2 := _exc285.Write(ctx, oprot); _write_err284 == nil && err2 != nil {
+			_write_err284 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err280 == nil && err2 != nil {
-			_write_err280 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err284 == nil && err2 != nil {
+			_write_err284 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err280 == nil && err2 != nil {
-			_write_err280 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err284 == nil && err2 != nil {
+			_write_err284 = thrift.WrapTException(err2)
 		}
-		if _write_err280 != nil {
-			return false, thrift.WrapTException(_write_err280)
+		if _write_err284 != nil {
+			return false, thrift.WrapTException(_write_err284)
 		}
 		return true, err
 	} else {
@@ -11631,19 +11653,19 @@ func (p *admifaceProcessorKickRoom) Process(ctx context.Context, seqId int32, ip
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "KickRoom", thrift.REPLY, seqId); err2 != nil {
-		_write_err280 = thrift.WrapTException(err2)
+		_write_err284 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err280 == nil && err2 != nil {
-		_write_err280 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err284 == nil && err2 != nil {
+		_write_err284 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err280 == nil && err2 != nil {
-		_write_err280 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err284 == nil && err2 != nil {
+		_write_err284 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err280 == nil && err2 != nil {
-		_write_err280 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err284 == nil && err2 != nil {
+		_write_err284 = thrift.WrapTException(err2)
 	}
-	if _write_err280 != nil {
-		return false, thrift.WrapTException(_write_err280)
+	if _write_err284 != nil {
+		return false, thrift.WrapTException(_write_err284)
 	}
 	return true, err
 }
@@ -11653,7 +11675,7 @@ type admifaceProcessorLeaveRoom struct {
 }
 
 func (p *admifaceProcessorLeaveRoom) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err282 error
+	var _write_err286 error
 	args := AdmifaceLeaveRoomArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -11704,21 +11726,21 @@ func (p *admifaceProcessorLeaveRoom) Process(ctx context.Context, seqId int32, i
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc283 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing LeaveRoom: " + err2.Error())
+		_exc287 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing LeaveRoom: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "LeaveRoom", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err282 = thrift.WrapTException(err2)
+			_write_err286 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc283.Write(ctx, oprot); _write_err282 == nil && err2 != nil {
-			_write_err282 = thrift.WrapTException(err2)
+		if err2 := _exc287.Write(ctx, oprot); _write_err286 == nil && err2 != nil {
+			_write_err286 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err282 == nil && err2 != nil {
-			_write_err282 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err286 == nil && err2 != nil {
+			_write_err286 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err282 == nil && err2 != nil {
-			_write_err282 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err286 == nil && err2 != nil {
+			_write_err286 = thrift.WrapTException(err2)
 		}
-		if _write_err282 != nil {
-			return false, thrift.WrapTException(_write_err282)
+		if _write_err286 != nil {
+			return false, thrift.WrapTException(_write_err286)
 		}
 		return true, err
 	} else {
@@ -11726,19 +11748,19 @@ func (p *admifaceProcessorLeaveRoom) Process(ctx context.Context, seqId int32, i
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "LeaveRoom", thrift.REPLY, seqId); err2 != nil {
-		_write_err282 = thrift.WrapTException(err2)
+		_write_err286 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err282 == nil && err2 != nil {
-		_write_err282 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err286 == nil && err2 != nil {
+		_write_err286 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err282 == nil && err2 != nil {
-		_write_err282 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err286 == nil && err2 != nil {
+		_write_err286 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err282 == nil && err2 != nil {
-		_write_err282 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err286 == nil && err2 != nil {
+		_write_err286 = thrift.WrapTException(err2)
 	}
-	if _write_err282 != nil {
-		return false, thrift.WrapTException(_write_err282)
+	if _write_err286 != nil {
+		return false, thrift.WrapTException(_write_err286)
 	}
 	return true, err
 }
@@ -11748,7 +11770,7 @@ type admifaceProcessorCancelRoom struct {
 }
 
 func (p *admifaceProcessorCancelRoom) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err284 error
+	var _write_err288 error
 	args := AdmifaceCancelRoomArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -11799,21 +11821,21 @@ func (p *admifaceProcessorCancelRoom) Process(ctx context.Context, seqId int32, 
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc285 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing CancelRoom: " + err2.Error())
+		_exc289 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing CancelRoom: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "CancelRoom", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err284 = thrift.WrapTException(err2)
+			_write_err288 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc285.Write(ctx, oprot); _write_err284 == nil && err2 != nil {
-			_write_err284 = thrift.WrapTException(err2)
+		if err2 := _exc289.Write(ctx, oprot); _write_err288 == nil && err2 != nil {
+			_write_err288 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err284 == nil && err2 != nil {
-			_write_err284 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err288 == nil && err2 != nil {
+			_write_err288 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err284 == nil && err2 != nil {
-			_write_err284 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err288 == nil && err2 != nil {
+			_write_err288 = thrift.WrapTException(err2)
 		}
-		if _write_err284 != nil {
-			return false, thrift.WrapTException(_write_err284)
+		if _write_err288 != nil {
+			return false, thrift.WrapTException(_write_err288)
 		}
 		return true, err
 	} else {
@@ -11821,19 +11843,19 @@ func (p *admifaceProcessorCancelRoom) Process(ctx context.Context, seqId int32, 
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "CancelRoom", thrift.REPLY, seqId); err2 != nil {
-		_write_err284 = thrift.WrapTException(err2)
+		_write_err288 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err284 == nil && err2 != nil {
-		_write_err284 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err288 == nil && err2 != nil {
+		_write_err288 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err284 == nil && err2 != nil {
-		_write_err284 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err288 == nil && err2 != nil {
+		_write_err288 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err284 == nil && err2 != nil {
-		_write_err284 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err288 == nil && err2 != nil {
+		_write_err288 = thrift.WrapTException(err2)
 	}
-	if _write_err284 != nil {
-		return false, thrift.WrapTException(_write_err284)
+	if _write_err288 != nil {
+		return false, thrift.WrapTException(_write_err288)
 	}
 	return true, err
 }
@@ -11843,7 +11865,7 @@ type admifaceProcessorBlockRoom struct {
 }
 
 func (p *admifaceProcessorBlockRoom) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err286 error
+	var _write_err290 error
 	args := AdmifaceBlockRoomArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -11894,21 +11916,21 @@ func (p *admifaceProcessorBlockRoom) Process(ctx context.Context, seqId int32, i
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc287 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing BlockRoom: " + err2.Error())
+		_exc291 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing BlockRoom: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "BlockRoom", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err286 = thrift.WrapTException(err2)
+			_write_err290 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc287.Write(ctx, oprot); _write_err286 == nil && err2 != nil {
-			_write_err286 = thrift.WrapTException(err2)
+		if err2 := _exc291.Write(ctx, oprot); _write_err290 == nil && err2 != nil {
+			_write_err290 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err286 == nil && err2 != nil {
-			_write_err286 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err290 == nil && err2 != nil {
+			_write_err290 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err286 == nil && err2 != nil {
-			_write_err286 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err290 == nil && err2 != nil {
+			_write_err290 = thrift.WrapTException(err2)
 		}
-		if _write_err286 != nil {
-			return false, thrift.WrapTException(_write_err286)
+		if _write_err290 != nil {
+			return false, thrift.WrapTException(_write_err290)
 		}
 		return true, err
 	} else {
@@ -11916,19 +11938,19 @@ func (p *admifaceProcessorBlockRoom) Process(ctx context.Context, seqId int32, i
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "BlockRoom", thrift.REPLY, seqId); err2 != nil {
-		_write_err286 = thrift.WrapTException(err2)
+		_write_err290 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err286 == nil && err2 != nil {
-		_write_err286 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err290 == nil && err2 != nil {
+		_write_err290 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err286 == nil && err2 != nil {
-		_write_err286 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err290 == nil && err2 != nil {
+		_write_err290 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err286 == nil && err2 != nil {
-		_write_err286 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err290 == nil && err2 != nil {
+		_write_err290 = thrift.WrapTException(err2)
 	}
-	if _write_err286 != nil {
-		return false, thrift.WrapTException(_write_err286)
+	if _write_err290 != nil {
+		return false, thrift.WrapTException(_write_err290)
 	}
 	return true, err
 }
@@ -11938,7 +11960,7 @@ type admifaceProcessorBlockRoomMember struct {
 }
 
 func (p *admifaceProcessorBlockRoomMember) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err288 error
+	var _write_err292 error
 	args := AdmifaceBlockRoomMemberArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -11989,21 +12011,21 @@ func (p *admifaceProcessorBlockRoomMember) Process(ctx context.Context, seqId in
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc289 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing BlockRoomMember: " + err2.Error())
+		_exc293 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing BlockRoomMember: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "BlockRoomMember", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err288 = thrift.WrapTException(err2)
+			_write_err292 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc289.Write(ctx, oprot); _write_err288 == nil && err2 != nil {
-			_write_err288 = thrift.WrapTException(err2)
+		if err2 := _exc293.Write(ctx, oprot); _write_err292 == nil && err2 != nil {
+			_write_err292 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err288 == nil && err2 != nil {
-			_write_err288 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err292 == nil && err2 != nil {
+			_write_err292 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err288 == nil && err2 != nil {
-			_write_err288 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err292 == nil && err2 != nil {
+			_write_err292 = thrift.WrapTException(err2)
 		}
-		if _write_err288 != nil {
-			return false, thrift.WrapTException(_write_err288)
+		if _write_err292 != nil {
+			return false, thrift.WrapTException(_write_err292)
 		}
 		return true, err
 	} else {
@@ -12011,19 +12033,19 @@ func (p *admifaceProcessorBlockRoomMember) Process(ctx context.Context, seqId in
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "BlockRoomMember", thrift.REPLY, seqId); err2 != nil {
-		_write_err288 = thrift.WrapTException(err2)
+		_write_err292 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err288 == nil && err2 != nil {
-		_write_err288 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err292 == nil && err2 != nil {
+		_write_err292 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err288 == nil && err2 != nil {
-		_write_err288 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err292 == nil && err2 != nil {
+		_write_err292 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err288 == nil && err2 != nil {
-		_write_err288 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err292 == nil && err2 != nil {
+		_write_err292 = thrift.WrapTException(err2)
 	}
-	if _write_err288 != nil {
-		return false, thrift.WrapTException(_write_err288)
+	if _write_err292 != nil {
+		return false, thrift.WrapTException(_write_err292)
 	}
 	return true, err
 }
@@ -12033,7 +12055,7 @@ type admifaceProcessorBlockRosterList struct {
 }
 
 func (p *admifaceProcessorBlockRosterList) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err290 error
+	var _write_err294 error
 	args := AdmifaceBlockRosterListArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -12084,21 +12106,21 @@ func (p *admifaceProcessorBlockRosterList) Process(ctx context.Context, seqId in
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc291 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing BlockRosterList: " + err2.Error())
+		_exc295 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing BlockRosterList: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "BlockRosterList", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err290 = thrift.WrapTException(err2)
+			_write_err294 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc291.Write(ctx, oprot); _write_err290 == nil && err2 != nil {
-			_write_err290 = thrift.WrapTException(err2)
+		if err2 := _exc295.Write(ctx, oprot); _write_err294 == nil && err2 != nil {
+			_write_err294 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err290 == nil && err2 != nil {
-			_write_err290 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err294 == nil && err2 != nil {
+			_write_err294 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err290 == nil && err2 != nil {
-			_write_err290 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err294 == nil && err2 != nil {
+			_write_err294 = thrift.WrapTException(err2)
 		}
-		if _write_err290 != nil {
-			return false, thrift.WrapTException(_write_err290)
+		if _write_err294 != nil {
+			return false, thrift.WrapTException(_write_err294)
 		}
 		return true, err
 	} else {
@@ -12106,19 +12128,19 @@ func (p *admifaceProcessorBlockRosterList) Process(ctx context.Context, seqId in
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "BlockRosterList", thrift.REPLY, seqId); err2 != nil {
-		_write_err290 = thrift.WrapTException(err2)
+		_write_err294 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err290 == nil && err2 != nil {
-		_write_err290 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err294 == nil && err2 != nil {
+		_write_err294 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err290 == nil && err2 != nil {
-		_write_err290 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err294 == nil && err2 != nil {
+		_write_err294 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err290 == nil && err2 != nil {
-		_write_err290 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err294 == nil && err2 != nil {
+		_write_err294 = thrift.WrapTException(err2)
 	}
-	if _write_err290 != nil {
-		return false, thrift.WrapTException(_write_err290)
+	if _write_err294 != nil {
+		return false, thrift.WrapTException(_write_err294)
 	}
 	return true, err
 }
@@ -12128,7 +12150,7 @@ type admifaceProcessorBlockRoomList struct {
 }
 
 func (p *admifaceProcessorBlockRoomList) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err292 error
+	var _write_err296 error
 	args := AdmifaceBlockRoomListArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -12179,21 +12201,21 @@ func (p *admifaceProcessorBlockRoomList) Process(ctx context.Context, seqId int3
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc293 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing BlockRoomList: " + err2.Error())
+		_exc297 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing BlockRoomList: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "BlockRoomList", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err292 = thrift.WrapTException(err2)
+			_write_err296 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc293.Write(ctx, oprot); _write_err292 == nil && err2 != nil {
-			_write_err292 = thrift.WrapTException(err2)
+		if err2 := _exc297.Write(ctx, oprot); _write_err296 == nil && err2 != nil {
+			_write_err296 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err292 == nil && err2 != nil {
-			_write_err292 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err296 == nil && err2 != nil {
+			_write_err296 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err292 == nil && err2 != nil {
-			_write_err292 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err296 == nil && err2 != nil {
+			_write_err296 = thrift.WrapTException(err2)
 		}
-		if _write_err292 != nil {
-			return false, thrift.WrapTException(_write_err292)
+		if _write_err296 != nil {
+			return false, thrift.WrapTException(_write_err296)
 		}
 		return true, err
 	} else {
@@ -12201,19 +12223,19 @@ func (p *admifaceProcessorBlockRoomList) Process(ctx context.Context, seqId int3
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "BlockRoomList", thrift.REPLY, seqId); err2 != nil {
-		_write_err292 = thrift.WrapTException(err2)
+		_write_err296 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err292 == nil && err2 != nil {
-		_write_err292 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err296 == nil && err2 != nil {
+		_write_err296 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err292 == nil && err2 != nil {
-		_write_err292 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err296 == nil && err2 != nil {
+		_write_err296 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err292 == nil && err2 != nil {
-		_write_err292 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err296 == nil && err2 != nil {
+		_write_err296 = thrift.WrapTException(err2)
 	}
-	if _write_err292 != nil {
-		return false, thrift.WrapTException(_write_err292)
+	if _write_err296 != nil {
+		return false, thrift.WrapTException(_write_err296)
 	}
 	return true, err
 }
@@ -12223,7 +12245,7 @@ type admifaceProcessorBlockRoomMemberlist struct {
 }
 
 func (p *admifaceProcessorBlockRoomMemberlist) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err294 error
+	var _write_err298 error
 	args := AdmifaceBlockRoomMemberlistArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -12274,21 +12296,21 @@ func (p *admifaceProcessorBlockRoomMemberlist) Process(ctx context.Context, seqI
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc295 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing BlockRoomMemberlist: " + err2.Error())
+		_exc299 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing BlockRoomMemberlist: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "BlockRoomMemberlist", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err294 = thrift.WrapTException(err2)
+			_write_err298 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc295.Write(ctx, oprot); _write_err294 == nil && err2 != nil {
-			_write_err294 = thrift.WrapTException(err2)
+		if err2 := _exc299.Write(ctx, oprot); _write_err298 == nil && err2 != nil {
+			_write_err298 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err294 == nil && err2 != nil {
-			_write_err294 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err298 == nil && err2 != nil {
+			_write_err298 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err294 == nil && err2 != nil {
-			_write_err294 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err298 == nil && err2 != nil {
+			_write_err298 = thrift.WrapTException(err2)
 		}
-		if _write_err294 != nil {
-			return false, thrift.WrapTException(_write_err294)
+		if _write_err298 != nil {
+			return false, thrift.WrapTException(_write_err298)
 		}
 		return true, err
 	} else {
@@ -12296,19 +12318,19 @@ func (p *admifaceProcessorBlockRoomMemberlist) Process(ctx context.Context, seqI
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "BlockRoomMemberlist", thrift.REPLY, seqId); err2 != nil {
-		_write_err294 = thrift.WrapTException(err2)
+		_write_err298 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err294 == nil && err2 != nil {
-		_write_err294 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err298 == nil && err2 != nil {
+		_write_err298 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err294 == nil && err2 != nil {
-		_write_err294 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err298 == nil && err2 != nil {
+		_write_err298 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err294 == nil && err2 != nil {
-		_write_err294 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err298 == nil && err2 != nil {
+		_write_err298 = thrift.WrapTException(err2)
 	}
-	if _write_err294 != nil {
-		return false, thrift.WrapTException(_write_err294)
+	if _write_err298 != nil {
+		return false, thrift.WrapTException(_write_err298)
 	}
 	return true, err
 }
@@ -12318,7 +12340,7 @@ type admifaceProcessorVirtualroomRegister struct {
 }
 
 func (p *admifaceProcessorVirtualroomRegister) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err296 error
+	var _write_err300 error
 	args := AdmifaceVirtualroomRegisterArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -12369,21 +12391,21 @@ func (p *admifaceProcessorVirtualroomRegister) Process(ctx context.Context, seqI
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc297 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing VirtualroomRegister: " + err2.Error())
+		_exc301 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing VirtualroomRegister: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "VirtualroomRegister", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err296 = thrift.WrapTException(err2)
+			_write_err300 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc297.Write(ctx, oprot); _write_err296 == nil && err2 != nil {
-			_write_err296 = thrift.WrapTException(err2)
+		if err2 := _exc301.Write(ctx, oprot); _write_err300 == nil && err2 != nil {
+			_write_err300 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err296 == nil && err2 != nil {
-			_write_err296 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err300 == nil && err2 != nil {
+			_write_err300 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err296 == nil && err2 != nil {
-			_write_err296 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err300 == nil && err2 != nil {
+			_write_err300 = thrift.WrapTException(err2)
 		}
-		if _write_err296 != nil {
-			return false, thrift.WrapTException(_write_err296)
+		if _write_err300 != nil {
+			return false, thrift.WrapTException(_write_err300)
 		}
 		return true, err
 	} else {
@@ -12391,19 +12413,19 @@ func (p *admifaceProcessorVirtualroomRegister) Process(ctx context.Context, seqI
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "VirtualroomRegister", thrift.REPLY, seqId); err2 != nil {
-		_write_err296 = thrift.WrapTException(err2)
+		_write_err300 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err296 == nil && err2 != nil {
-		_write_err296 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err300 == nil && err2 != nil {
+		_write_err300 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err296 == nil && err2 != nil {
-		_write_err296 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err300 == nil && err2 != nil {
+		_write_err300 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err296 == nil && err2 != nil {
-		_write_err296 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err300 == nil && err2 != nil {
+		_write_err300 = thrift.WrapTException(err2)
 	}
-	if _write_err296 != nil {
-		return false, thrift.WrapTException(_write_err296)
+	if _write_err300 != nil {
+		return false, thrift.WrapTException(_write_err300)
 	}
 	return true, err
 }
@@ -12413,7 +12435,7 @@ type admifaceProcessorVirtualroomRemove struct {
 }
 
 func (p *admifaceProcessorVirtualroomRemove) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err298 error
+	var _write_err302 error
 	args := AdmifaceVirtualroomRemoveArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -12464,21 +12486,21 @@ func (p *admifaceProcessorVirtualroomRemove) Process(ctx context.Context, seqId 
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc299 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing VirtualroomRemove: " + err2.Error())
+		_exc303 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing VirtualroomRemove: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "VirtualroomRemove", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err298 = thrift.WrapTException(err2)
+			_write_err302 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc299.Write(ctx, oprot); _write_err298 == nil && err2 != nil {
-			_write_err298 = thrift.WrapTException(err2)
+		if err2 := _exc303.Write(ctx, oprot); _write_err302 == nil && err2 != nil {
+			_write_err302 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err298 == nil && err2 != nil {
-			_write_err298 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err302 == nil && err2 != nil {
+			_write_err302 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err298 == nil && err2 != nil {
-			_write_err298 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err302 == nil && err2 != nil {
+			_write_err302 = thrift.WrapTException(err2)
 		}
-		if _write_err298 != nil {
-			return false, thrift.WrapTException(_write_err298)
+		if _write_err302 != nil {
+			return false, thrift.WrapTException(_write_err302)
 		}
 		return true, err
 	} else {
@@ -12486,19 +12508,19 @@ func (p *admifaceProcessorVirtualroomRemove) Process(ctx context.Context, seqId 
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "VirtualroomRemove", thrift.REPLY, seqId); err2 != nil {
-		_write_err298 = thrift.WrapTException(err2)
+		_write_err302 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err298 == nil && err2 != nil {
-		_write_err298 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err302 == nil && err2 != nil {
+		_write_err302 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err298 == nil && err2 != nil {
-		_write_err298 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err302 == nil && err2 != nil {
+		_write_err302 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err298 == nil && err2 != nil {
-		_write_err298 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err302 == nil && err2 != nil {
+		_write_err302 = thrift.WrapTException(err2)
 	}
-	if _write_err298 != nil {
-		return false, thrift.WrapTException(_write_err298)
+	if _write_err302 != nil {
+		return false, thrift.WrapTException(_write_err302)
 	}
 	return true, err
 }
@@ -12508,7 +12530,7 @@ type admifaceProcessorVirtualroomAddAuth struct {
 }
 
 func (p *admifaceProcessorVirtualroomAddAuth) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err300 error
+	var _write_err304 error
 	args := AdmifaceVirtualroomAddAuthArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -12559,21 +12581,21 @@ func (p *admifaceProcessorVirtualroomAddAuth) Process(ctx context.Context, seqId
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc301 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing VirtualroomAddAuth: " + err2.Error())
+		_exc305 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing VirtualroomAddAuth: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "VirtualroomAddAuth", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err300 = thrift.WrapTException(err2)
+			_write_err304 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc301.Write(ctx, oprot); _write_err300 == nil && err2 != nil {
-			_write_err300 = thrift.WrapTException(err2)
+		if err2 := _exc305.Write(ctx, oprot); _write_err304 == nil && err2 != nil {
+			_write_err304 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err300 == nil && err2 != nil {
-			_write_err300 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err304 == nil && err2 != nil {
+			_write_err304 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err300 == nil && err2 != nil {
-			_write_err300 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err304 == nil && err2 != nil {
+			_write_err304 = thrift.WrapTException(err2)
 		}
-		if _write_err300 != nil {
-			return false, thrift.WrapTException(_write_err300)
+		if _write_err304 != nil {
+			return false, thrift.WrapTException(_write_err304)
 		}
 		return true, err
 	} else {
@@ -12581,19 +12603,19 @@ func (p *admifaceProcessorVirtualroomAddAuth) Process(ctx context.Context, seqId
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "VirtualroomAddAuth", thrift.REPLY, seqId); err2 != nil {
-		_write_err300 = thrift.WrapTException(err2)
+		_write_err304 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err300 == nil && err2 != nil {
-		_write_err300 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err304 == nil && err2 != nil {
+		_write_err304 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err300 == nil && err2 != nil {
-		_write_err300 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err304 == nil && err2 != nil {
+		_write_err304 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err300 == nil && err2 != nil {
-		_write_err300 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err304 == nil && err2 != nil {
+		_write_err304 = thrift.WrapTException(err2)
 	}
-	if _write_err300 != nil {
-		return false, thrift.WrapTException(_write_err300)
+	if _write_err304 != nil {
+		return false, thrift.WrapTException(_write_err304)
 	}
 	return true, err
 }
@@ -12603,7 +12625,7 @@ type admifaceProcessorVirtualroomDelAuth struct {
 }
 
 func (p *admifaceProcessorVirtualroomDelAuth) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err302 error
+	var _write_err306 error
 	args := AdmifaceVirtualroomDelAuthArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -12654,21 +12676,21 @@ func (p *admifaceProcessorVirtualroomDelAuth) Process(ctx context.Context, seqId
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc303 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing VirtualroomDelAuth: " + err2.Error())
+		_exc307 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing VirtualroomDelAuth: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "VirtualroomDelAuth", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err302 = thrift.WrapTException(err2)
+			_write_err306 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc303.Write(ctx, oprot); _write_err302 == nil && err2 != nil {
-			_write_err302 = thrift.WrapTException(err2)
+		if err2 := _exc307.Write(ctx, oprot); _write_err306 == nil && err2 != nil {
+			_write_err306 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err302 == nil && err2 != nil {
-			_write_err302 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err306 == nil && err2 != nil {
+			_write_err306 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err302 == nil && err2 != nil {
-			_write_err302 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err306 == nil && err2 != nil {
+			_write_err306 = thrift.WrapTException(err2)
 		}
-		if _write_err302 != nil {
-			return false, thrift.WrapTException(_write_err302)
+		if _write_err306 != nil {
+			return false, thrift.WrapTException(_write_err306)
 		}
 		return true, err
 	} else {
@@ -12676,19 +12698,19 @@ func (p *admifaceProcessorVirtualroomDelAuth) Process(ctx context.Context, seqId
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "VirtualroomDelAuth", thrift.REPLY, seqId); err2 != nil {
-		_write_err302 = thrift.WrapTException(err2)
+		_write_err306 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err302 == nil && err2 != nil {
-		_write_err302 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err306 == nil && err2 != nil {
+		_write_err306 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err302 == nil && err2 != nil {
-		_write_err302 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err306 == nil && err2 != nil {
+		_write_err306 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err302 == nil && err2 != nil {
-		_write_err302 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err306 == nil && err2 != nil {
+		_write_err306 = thrift.WrapTException(err2)
 	}
-	if _write_err302 != nil {
-		return false, thrift.WrapTException(_write_err302)
+	if _write_err306 != nil {
+		return false, thrift.WrapTException(_write_err306)
 	}
 	return true, err
 }
@@ -12698,7 +12720,7 @@ type admifaceProcessorVirtualroomSub struct {
 }
 
 func (p *admifaceProcessorVirtualroomSub) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err304 error
+	var _write_err308 error
 	args := AdmifaceVirtualroomSubArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -12749,21 +12771,21 @@ func (p *admifaceProcessorVirtualroomSub) Process(ctx context.Context, seqId int
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc305 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing VirtualroomSub: " + err2.Error())
+		_exc309 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing VirtualroomSub: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "VirtualroomSub", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err304 = thrift.WrapTException(err2)
+			_write_err308 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc305.Write(ctx, oprot); _write_err304 == nil && err2 != nil {
-			_write_err304 = thrift.WrapTException(err2)
+		if err2 := _exc309.Write(ctx, oprot); _write_err308 == nil && err2 != nil {
+			_write_err308 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err304 == nil && err2 != nil {
-			_write_err304 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err308 == nil && err2 != nil {
+			_write_err308 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err304 == nil && err2 != nil {
-			_write_err304 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err308 == nil && err2 != nil {
+			_write_err308 = thrift.WrapTException(err2)
 		}
-		if _write_err304 != nil {
-			return false, thrift.WrapTException(_write_err304)
+		if _write_err308 != nil {
+			return false, thrift.WrapTException(_write_err308)
 		}
 		return true, err
 	} else {
@@ -12771,19 +12793,19 @@ func (p *admifaceProcessorVirtualroomSub) Process(ctx context.Context, seqId int
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "VirtualroomSub", thrift.REPLY, seqId); err2 != nil {
-		_write_err304 = thrift.WrapTException(err2)
+		_write_err308 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err304 == nil && err2 != nil {
-		_write_err304 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err308 == nil && err2 != nil {
+		_write_err308 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err304 == nil && err2 != nil {
-		_write_err304 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err308 == nil && err2 != nil {
+		_write_err308 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err304 == nil && err2 != nil {
-		_write_err304 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err308 == nil && err2 != nil {
+		_write_err308 = thrift.WrapTException(err2)
 	}
-	if _write_err304 != nil {
-		return false, thrift.WrapTException(_write_err304)
+	if _write_err308 != nil {
+		return false, thrift.WrapTException(_write_err308)
 	}
 	return true, err
 }
@@ -12793,7 +12815,7 @@ type admifaceProcessorVirtualroomUnSub struct {
 }
 
 func (p *admifaceProcessorVirtualroomUnSub) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	var _write_err306 error
+	var _write_err310 error
 	args := AdmifaceVirtualroomUnSubArgs{}
 	if err2 := args.Read(ctx, iprot); err2 != nil {
 		iprot.ReadMessageEnd(ctx)
@@ -12844,21 +12866,21 @@ func (p *admifaceProcessorVirtualroomUnSub) Process(ctx context.Context, seqId i
 				return false, thrift.WrapTException(err)
 			}
 		}
-		_exc307 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing VirtualroomUnSub: " + err2.Error())
+		_exc311 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing VirtualroomUnSub: " + err2.Error())
 		if err2 := oprot.WriteMessageBegin(ctx, "VirtualroomUnSub", thrift.EXCEPTION, seqId); err2 != nil {
-			_write_err306 = thrift.WrapTException(err2)
+			_write_err310 = thrift.WrapTException(err2)
 		}
-		if err2 := _exc307.Write(ctx, oprot); _write_err306 == nil && err2 != nil {
-			_write_err306 = thrift.WrapTException(err2)
+		if err2 := _exc311.Write(ctx, oprot); _write_err310 == nil && err2 != nil {
+			_write_err310 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.WriteMessageEnd(ctx); _write_err306 == nil && err2 != nil {
-			_write_err306 = thrift.WrapTException(err2)
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err310 == nil && err2 != nil {
+			_write_err310 = thrift.WrapTException(err2)
 		}
-		if err2 := oprot.Flush(ctx); _write_err306 == nil && err2 != nil {
-			_write_err306 = thrift.WrapTException(err2)
+		if err2 := oprot.Flush(ctx); _write_err310 == nil && err2 != nil {
+			_write_err310 = thrift.WrapTException(err2)
 		}
-		if _write_err306 != nil {
-			return false, thrift.WrapTException(_write_err306)
+		if _write_err310 != nil {
+			return false, thrift.WrapTException(_write_err310)
 		}
 		return true, err
 	} else {
@@ -12866,19 +12888,209 @@ func (p *admifaceProcessorVirtualroomUnSub) Process(ctx context.Context, seqId i
 	}
 	tickerCancel()
 	if err2 := oprot.WriteMessageBegin(ctx, "VirtualroomUnSub", thrift.REPLY, seqId); err2 != nil {
-		_write_err306 = thrift.WrapTException(err2)
+		_write_err310 = thrift.WrapTException(err2)
 	}
-	if err2 := result.Write(ctx, oprot); _write_err306 == nil && err2 != nil {
-		_write_err306 = thrift.WrapTException(err2)
+	if err2 := result.Write(ctx, oprot); _write_err310 == nil && err2 != nil {
+		_write_err310 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.WriteMessageEnd(ctx); _write_err306 == nil && err2 != nil {
-		_write_err306 = thrift.WrapTException(err2)
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err310 == nil && err2 != nil {
+		_write_err310 = thrift.WrapTException(err2)
 	}
-	if err2 := oprot.Flush(ctx); _write_err306 == nil && err2 != nil {
-		_write_err306 = thrift.WrapTException(err2)
+	if err2 := oprot.Flush(ctx); _write_err310 == nil && err2 != nil {
+		_write_err310 = thrift.WrapTException(err2)
 	}
-	if _write_err306 != nil {
-		return false, thrift.WrapTException(_write_err306)
+	if _write_err310 != nil {
+		return false, thrift.WrapTException(_write_err310)
+	}
+	return true, err
+}
+
+type admifaceProcessorAuthroster struct {
+	handler Admiface
+}
+
+func (p *admifaceProcessorAuthroster) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+	var _write_err312 error
+	args := AdmifaceAuthrosterArgs{}
+	if err2 := args.Read(ctx, iprot); err2 != nil {
+		iprot.ReadMessageEnd(ctx)
+		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err2.Error())
+		oprot.WriteMessageBegin(ctx, "Authroster", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
+		oprot.Flush(ctx)
+		return false, thrift.WrapTException(err2)
+	}
+	iprot.ReadMessageEnd(ctx)
+
+	tickerCancel := func() {}
+	// Start a goroutine to do server side connectivity check.
+	if thrift.ServerConnectivityCheckInterval > 0 {
+		var cancel context.CancelCauseFunc
+		ctx, cancel = context.WithCancelCause(ctx)
+		defer cancel(nil)
+		var tickerCtx context.Context
+		tickerCtx, tickerCancel = context.WithCancel(context.Background())
+		defer tickerCancel()
+		go func(ctx context.Context, cancel context.CancelCauseFunc) {
+			ticker := time.NewTicker(thrift.ServerConnectivityCheckInterval)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					if !iprot.Transport().IsOpen() {
+						cancel(thrift.ErrAbandonRequest)
+						return
+					}
+				}
+			}
+		}(tickerCtx, cancel)
+	}
+
+	result := AdmifaceAuthrosterResult{}
+	if retval, err2 := p.handler.Authroster(ctx, args.Fromnode, args.Domain, args.Tonode); err2 != nil {
+		tickerCancel()
+		err = thrift.WrapTException(err2)
+		if errors.Is(err2, thrift.ErrAbandonRequest) {
+			return false, thrift.WrapTException(err2)
+		}
+		if errors.Is(err2, context.Canceled) {
+			if err := context.Cause(ctx); errors.Is(err, thrift.ErrAbandonRequest) {
+				return false, thrift.WrapTException(err)
+			}
+		}
+		_exc313 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Authroster: " + err2.Error())
+		if err2 := oprot.WriteMessageBegin(ctx, "Authroster", thrift.EXCEPTION, seqId); err2 != nil {
+			_write_err312 = thrift.WrapTException(err2)
+		}
+		if err2 := _exc313.Write(ctx, oprot); _write_err312 == nil && err2 != nil {
+			_write_err312 = thrift.WrapTException(err2)
+		}
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err312 == nil && err2 != nil {
+			_write_err312 = thrift.WrapTException(err2)
+		}
+		if err2 := oprot.Flush(ctx); _write_err312 == nil && err2 != nil {
+			_write_err312 = thrift.WrapTException(err2)
+		}
+		if _write_err312 != nil {
+			return false, thrift.WrapTException(_write_err312)
+		}
+		return true, err
+	} else {
+		result.Success = retval
+	}
+	tickerCancel()
+	if err2 := oprot.WriteMessageBegin(ctx, "Authroster", thrift.REPLY, seqId); err2 != nil {
+		_write_err312 = thrift.WrapTException(err2)
+	}
+	if err2 := result.Write(ctx, oprot); _write_err312 == nil && err2 != nil {
+		_write_err312 = thrift.WrapTException(err2)
+	}
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err312 == nil && err2 != nil {
+		_write_err312 = thrift.WrapTException(err2)
+	}
+	if err2 := oprot.Flush(ctx); _write_err312 == nil && err2 != nil {
+		_write_err312 = thrift.WrapTException(err2)
+	}
+	if _write_err312 != nil {
+		return false, thrift.WrapTException(_write_err312)
+	}
+	return true, err
+}
+
+type admifaceProcessorAuthgroupuser struct {
+	handler Admiface
+}
+
+func (p *admifaceProcessorAuthgroupuser) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+	var _write_err314 error
+	args := AdmifaceAuthgroupuserArgs{}
+	if err2 := args.Read(ctx, iprot); err2 != nil {
+		iprot.ReadMessageEnd(ctx)
+		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err2.Error())
+		oprot.WriteMessageBegin(ctx, "Authgroupuser", thrift.EXCEPTION, seqId)
+		x.Write(ctx, oprot)
+		oprot.WriteMessageEnd(ctx)
+		oprot.Flush(ctx)
+		return false, thrift.WrapTException(err2)
+	}
+	iprot.ReadMessageEnd(ctx)
+
+	tickerCancel := func() {}
+	// Start a goroutine to do server side connectivity check.
+	if thrift.ServerConnectivityCheckInterval > 0 {
+		var cancel context.CancelCauseFunc
+		ctx, cancel = context.WithCancelCause(ctx)
+		defer cancel(nil)
+		var tickerCtx context.Context
+		tickerCtx, tickerCancel = context.WithCancel(context.Background())
+		defer tickerCancel()
+		go func(ctx context.Context, cancel context.CancelCauseFunc) {
+			ticker := time.NewTicker(thrift.ServerConnectivityCheckInterval)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					if !iprot.Transport().IsOpen() {
+						cancel(thrift.ErrAbandonRequest)
+						return
+					}
+				}
+			}
+		}(tickerCtx, cancel)
+	}
+
+	result := AdmifaceAuthgroupuserResult{}
+	if retval, err2 := p.handler.Authgroupuser(ctx, args.Fromnode, args.Domain, args.RoomNode); err2 != nil {
+		tickerCancel()
+		err = thrift.WrapTException(err2)
+		if errors.Is(err2, thrift.ErrAbandonRequest) {
+			return false, thrift.WrapTException(err2)
+		}
+		if errors.Is(err2, context.Canceled) {
+			if err := context.Cause(ctx); errors.Is(err, thrift.ErrAbandonRequest) {
+				return false, thrift.WrapTException(err)
+			}
+		}
+		_exc315 := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Authgroupuser: " + err2.Error())
+		if err2 := oprot.WriteMessageBegin(ctx, "Authgroupuser", thrift.EXCEPTION, seqId); err2 != nil {
+			_write_err314 = thrift.WrapTException(err2)
+		}
+		if err2 := _exc315.Write(ctx, oprot); _write_err314 == nil && err2 != nil {
+			_write_err314 = thrift.WrapTException(err2)
+		}
+		if err2 := oprot.WriteMessageEnd(ctx); _write_err314 == nil && err2 != nil {
+			_write_err314 = thrift.WrapTException(err2)
+		}
+		if err2 := oprot.Flush(ctx); _write_err314 == nil && err2 != nil {
+			_write_err314 = thrift.WrapTException(err2)
+		}
+		if _write_err314 != nil {
+			return false, thrift.WrapTException(_write_err314)
+		}
+		return true, err
+	} else {
+		result.Success = retval
+	}
+	tickerCancel()
+	if err2 := oprot.WriteMessageBegin(ctx, "Authgroupuser", thrift.REPLY, seqId); err2 != nil {
+		_write_err314 = thrift.WrapTException(err2)
+	}
+	if err2 := result.Write(ctx, oprot); _write_err314 == nil && err2 != nil {
+		_write_err314 = thrift.WrapTException(err2)
+	}
+	if err2 := oprot.WriteMessageEnd(ctx); _write_err314 == nil && err2 != nil {
+		_write_err314 = thrift.WrapTException(err2)
+	}
+	if err2 := oprot.Flush(ctx); _write_err314 == nil && err2 != nil {
+		_write_err314 = thrift.WrapTException(err2)
+	}
+	if _write_err314 != nil {
+		return false, thrift.WrapTException(_write_err314)
 	}
 	return true, err
 }
@@ -15634,198 +15846,6 @@ func (p *AdmifaceSysBlockUserResult) LogValue() slog.Value {
 }
 
 var _ slog.LogValuer = (*AdmifaceSysBlockUserResult)(nil)
-
-type AdmifaceSysBlockListArgs struct {
-}
-
-func NewAdmifaceSysBlockListArgs() *AdmifaceSysBlockListArgs {
-	return &AdmifaceSysBlockListArgs{}
-}
-
-func (p *AdmifaceSysBlockListArgs) Read(ctx context.Context, iprot thrift.TProtocol) error {
-	if _, err := iprot.ReadStructBegin(ctx); err != nil {
-		return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
-	}
-
-
-	for {
-		_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin(ctx)
-		if err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
-		}
-		if fieldTypeId == thrift.STOP {
-			break
-		}
-		if err := iprot.Skip(ctx, fieldTypeId); err != nil {
-			return err
-		}
-		if err := iprot.ReadFieldEnd(ctx); err != nil {
-			return err
-		}
-	}
-	if err := iprot.ReadStructEnd(ctx); err != nil {
-		return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
-	}
-	return nil
-}
-
-func (p *AdmifaceSysBlockListArgs) Write(ctx context.Context, oprot thrift.TProtocol) error {
-	if err := oprot.WriteStructBegin(ctx, "SysBlockList_args"); err != nil {
-		return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
-	}
-	if p != nil {
-	}
-	if err := oprot.WriteFieldStop(ctx); err != nil {
-		return thrift.PrependError("write field stop error: ", err)
-	}
-	if err := oprot.WriteStructEnd(ctx); err != nil {
-		return thrift.PrependError("write struct stop error: ", err)
-	}
-	return nil
-}
-
-func (p *AdmifaceSysBlockListArgs) String() string {
-	if p == nil {
-		return "<nil>"
-	}
-	return fmt.Sprintf("AdmifaceSysBlockListArgs(%+v)", *p)
-}
-
-func (p *AdmifaceSysBlockListArgs) LogValue() slog.Value {
-	if p == nil {
-		return slog.AnyValue(nil)
-	}
-	v := thrift.SlogTStructWrapper{
-		Type: "*stub.AdmifaceSysBlockListArgs",
-		Value: p,
-	}
-	return slog.AnyValue(v)
-}
-
-var _ slog.LogValuer = (*AdmifaceSysBlockListArgs)(nil)
-
-// Attributes:
-//  - Success
-// 
-type AdmifaceSysBlockListResult struct {
-	Success *AdmSysBlockList `thrift:"success,0" db:"success" json:"success,omitempty"`
-}
-
-func NewAdmifaceSysBlockListResult() *AdmifaceSysBlockListResult {
-	return &AdmifaceSysBlockListResult{}
-}
-
-var AdmifaceSysBlockListResult_Success_DEFAULT *AdmSysBlockList
-
-func (p *AdmifaceSysBlockListResult) GetSuccess() *AdmSysBlockList {
-	if !p.IsSetSuccess() {
-		return AdmifaceSysBlockListResult_Success_DEFAULT
-	}
-	return p.Success
-}
-
-func (p *AdmifaceSysBlockListResult) IsSetSuccess() bool {
-	return p.Success != nil
-}
-
-func (p *AdmifaceSysBlockListResult) Read(ctx context.Context, iprot thrift.TProtocol) error {
-	if _, err := iprot.ReadStructBegin(ctx); err != nil {
-		return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
-	}
-
-
-	for {
-		_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin(ctx)
-		if err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
-		}
-		if fieldTypeId == thrift.STOP {
-			break
-		}
-		switch fieldId {
-		case 0:
-			if fieldTypeId == thrift.STRUCT {
-				if err := p.ReadField0(ctx, iprot); err != nil {
-					return err
-				}
-			} else {
-				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
-					return err
-				}
-			}
-		default:
-			if err := iprot.Skip(ctx, fieldTypeId); err != nil {
-				return err
-			}
-		}
-		if err := iprot.ReadFieldEnd(ctx); err != nil {
-			return err
-		}
-	}
-	if err := iprot.ReadStructEnd(ctx); err != nil {
-		return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
-	}
-	return nil
-}
-
-func (p *AdmifaceSysBlockListResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
-	p.Success = &AdmSysBlockList{}
-	if err := p.Success.Read(ctx, iprot); err != nil {
-		return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
-	}
-	return nil
-}
-
-func (p *AdmifaceSysBlockListResult) Write(ctx context.Context, oprot thrift.TProtocol) error {
-	if err := oprot.WriteStructBegin(ctx, "SysBlockList_result"); err != nil {
-		return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
-	}
-	if p != nil {
-		if err := p.writeField0(ctx, oprot); err != nil { return err }
-	}
-	if err := oprot.WriteFieldStop(ctx); err != nil {
-		return thrift.PrependError("write field stop error: ", err)
-	}
-	if err := oprot.WriteStructEnd(ctx); err != nil {
-		return thrift.PrependError("write struct stop error: ", err)
-	}
-	return nil
-}
-
-func (p *AdmifaceSysBlockListResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
-	if p.IsSetSuccess() {
-		if err := oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err)
-		}
-		if err := p.Success.Write(ctx, oprot); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
-		}
-		if err := oprot.WriteFieldEnd(ctx); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err)
-		}
-	}
-	return err
-}
-
-func (p *AdmifaceSysBlockListResult) String() string {
-	if p == nil {
-		return "<nil>"
-	}
-	return fmt.Sprintf("AdmifaceSysBlockListResult(%+v)", *p)
-}
-
-func (p *AdmifaceSysBlockListResult) LogValue() slog.Value {
-	if p == nil {
-		return slog.AnyValue(nil)
-	}
-	v := thrift.SlogTStructWrapper{
-		Type: "*stub.AdmifaceSysBlockListResult",
-		Value: p,
-	}
-	return slog.AnyValue(v)
-}
-
-var _ slog.LogValuer = (*AdmifaceSysBlockListResult)(nil)
 
 // Attributes:
 //  - Au
@@ -19082,13 +19102,13 @@ func (p *AdmifaceDelOfflineMsgArgs) ReadField3(ctx context.Context, iprot thrift
 	tSlice := make([]int64, 0, size)
 	p.Ids = tSlice
 	for i := 0; i < size; i++ {
-		var _elem308 int64
+		var _elem316 int64
 		if v, err := iprot.ReadI64(ctx); err != nil {
 			return thrift.PrependError("error reading field 0: ", err)
 		} else {
-			_elem308 = v
+			_elem316 = v
 		}
-		p.Ids = append(p.Ids, _elem308)
+		p.Ids = append(p.Ids, _elem316)
 	}
 	if err := iprot.ReadListEnd(ctx); err != nil {
 		return thrift.PrependError("error reading list end: ", err)
@@ -25992,5 +26012,645 @@ func (p *AdmifaceVirtualroomUnSubResult) LogValue() slog.Value {
 }
 
 var _ slog.LogValuer = (*AdmifaceVirtualroomUnSubResult)(nil)
+
+// Attributes:
+//  - Fromnode
+//  - Domain
+//  - Tonode
+// 
+type AdmifaceAuthrosterArgs struct {
+	Fromnode string `thrift:"fromnode,1" db:"fromnode" json:"fromnode"`
+	Domain string `thrift:"domain,2" db:"domain" json:"domain"`
+	Tonode string `thrift:"tonode,3" db:"tonode" json:"tonode"`
+}
+
+func NewAdmifaceAuthrosterArgs() *AdmifaceAuthrosterArgs {
+	return &AdmifaceAuthrosterArgs{}
+}
+
+
+
+func (p *AdmifaceAuthrosterArgs) GetFromnode() string {
+	return p.Fromnode
+}
+
+
+
+func (p *AdmifaceAuthrosterArgs) GetDomain() string {
+	return p.Domain
+}
+
+
+
+func (p *AdmifaceAuthrosterArgs) GetTonode() string {
+	return p.Tonode
+}
+
+func (p *AdmifaceAuthrosterArgs) Read(ctx context.Context, iprot thrift.TProtocol) error {
+	if _, err := iprot.ReadStructBegin(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+	}
+
+
+	for {
+		_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin(ctx)
+		if err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+		switch fieldId {
+		case 1:
+			if fieldTypeId == thrift.STRING {
+				if err := p.ReadField1(ctx, iprot); err != nil {
+					return err
+				}
+			} else {
+				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+					return err
+				}
+			}
+		case 2:
+			if fieldTypeId == thrift.STRING {
+				if err := p.ReadField2(ctx, iprot); err != nil {
+					return err
+				}
+			} else {
+				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+					return err
+				}
+			}
+		case 3:
+			if fieldTypeId == thrift.STRING {
+				if err := p.ReadField3(ctx, iprot); err != nil {
+					return err
+				}
+			} else {
+				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+					return err
+				}
+			}
+		default:
+			if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+				return err
+			}
+		}
+		if err := iprot.ReadFieldEnd(ctx); err != nil {
+			return err
+		}
+	}
+	if err := iprot.ReadStructEnd(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthrosterArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(ctx); err != nil {
+		return thrift.PrependError("error reading field 1: ", err)
+	} else {
+		p.Fromnode = v
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthrosterArgs) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(ctx); err != nil {
+		return thrift.PrependError("error reading field 2: ", err)
+	} else {
+		p.Domain = v
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthrosterArgs) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(ctx); err != nil {
+		return thrift.PrependError("error reading field 3: ", err)
+	} else {
+		p.Tonode = v
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthrosterArgs) Write(ctx context.Context, oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin(ctx, "Authroster_args"); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+	}
+	if p != nil {
+		if err := p.writeField1(ctx, oprot); err != nil { return err }
+		if err := p.writeField2(ctx, oprot); err != nil { return err }
+		if err := p.writeField3(ctx, oprot); err != nil { return err }
+	}
+	if err := oprot.WriteFieldStop(ctx); err != nil {
+		return thrift.PrependError("write field stop error: ", err)
+	}
+	if err := oprot.WriteStructEnd(ctx); err != nil {
+		return thrift.PrependError("write struct stop error: ", err)
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthrosterArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin(ctx, "fromnode", thrift.STRING, 1); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:fromnode: ", p), err)
+	}
+	if err := oprot.WriteString(ctx, string(p.Fromnode)); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T.fromnode (1) field write error: ", p), err)
+	}
+	if err := oprot.WriteFieldEnd(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field end error 1:fromnode: ", p), err)
+	}
+	return err
+}
+
+func (p *AdmifaceAuthrosterArgs) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin(ctx, "domain", thrift.STRING, 2); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field begin error 2:domain: ", p), err)
+	}
+	if err := oprot.WriteString(ctx, string(p.Domain)); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T.domain (2) field write error: ", p), err)
+	}
+	if err := oprot.WriteFieldEnd(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field end error 2:domain: ", p), err)
+	}
+	return err
+}
+
+func (p *AdmifaceAuthrosterArgs) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin(ctx, "tonode", thrift.STRING, 3); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field begin error 3:tonode: ", p), err)
+	}
+	if err := oprot.WriteString(ctx, string(p.Tonode)); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T.tonode (3) field write error: ", p), err)
+	}
+	if err := oprot.WriteFieldEnd(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field end error 3:tonode: ", p), err)
+	}
+	return err
+}
+
+func (p *AdmifaceAuthrosterArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("AdmifaceAuthrosterArgs(%+v)", *p)
+}
+
+func (p *AdmifaceAuthrosterArgs) LogValue() slog.Value {
+	if p == nil {
+		return slog.AnyValue(nil)
+	}
+	v := thrift.SlogTStructWrapper{
+		Type: "*stub.AdmifaceAuthrosterArgs",
+		Value: p,
+	}
+	return slog.AnyValue(v)
+}
+
+var _ slog.LogValuer = (*AdmifaceAuthrosterArgs)(nil)
+
+// Attributes:
+//  - Success
+// 
+type AdmifaceAuthrosterResult struct {
+	Success *AdmAck `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdmifaceAuthrosterResult() *AdmifaceAuthrosterResult {
+	return &AdmifaceAuthrosterResult{}
+}
+
+var AdmifaceAuthrosterResult_Success_DEFAULT *AdmAck
+
+func (p *AdmifaceAuthrosterResult) GetSuccess() *AdmAck {
+	if !p.IsSetSuccess() {
+		return AdmifaceAuthrosterResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+func (p *AdmifaceAuthrosterResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *AdmifaceAuthrosterResult) Read(ctx context.Context, iprot thrift.TProtocol) error {
+	if _, err := iprot.ReadStructBegin(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+	}
+
+
+	for {
+		_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin(ctx)
+		if err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+		switch fieldId {
+		case 0:
+			if fieldTypeId == thrift.STRUCT {
+				if err := p.ReadField0(ctx, iprot); err != nil {
+					return err
+				}
+			} else {
+				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+					return err
+				}
+			}
+		default:
+			if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+				return err
+			}
+		}
+		if err := iprot.ReadFieldEnd(ctx); err != nil {
+			return err
+		}
+	}
+	if err := iprot.ReadStructEnd(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthrosterResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
+	p.Success = &AdmAck{}
+	if err := p.Success.Read(ctx, iprot); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthrosterResult) Write(ctx context.Context, oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin(ctx, "Authroster_result"); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+	}
+	if p != nil {
+		if err := p.writeField0(ctx, oprot); err != nil { return err }
+	}
+	if err := oprot.WriteFieldStop(ctx); err != nil {
+		return thrift.PrependError("write field stop error: ", err)
+	}
+	if err := oprot.WriteStructEnd(ctx); err != nil {
+		return thrift.PrependError("write struct stop error: ", err)
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthrosterResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if p.IsSetSuccess() {
+		if err := oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err)
+		}
+		if err := p.Success.Write(ctx, oprot); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+		}
+		if err := oprot.WriteFieldEnd(ctx); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err)
+		}
+	}
+	return err
+}
+
+func (p *AdmifaceAuthrosterResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("AdmifaceAuthrosterResult(%+v)", *p)
+}
+
+func (p *AdmifaceAuthrosterResult) LogValue() slog.Value {
+	if p == nil {
+		return slog.AnyValue(nil)
+	}
+	v := thrift.SlogTStructWrapper{
+		Type: "*stub.AdmifaceAuthrosterResult",
+		Value: p,
+	}
+	return slog.AnyValue(v)
+}
+
+var _ slog.LogValuer = (*AdmifaceAuthrosterResult)(nil)
+
+// Attributes:
+//  - Fromnode
+//  - Domain
+//  - RoomNode
+// 
+type AdmifaceAuthgroupuserArgs struct {
+	Fromnode string `thrift:"fromnode,1" db:"fromnode" json:"fromnode"`
+	Domain string `thrift:"domain,2" db:"domain" json:"domain"`
+	RoomNode string `thrift:"roomNode,3" db:"roomNode" json:"roomNode"`
+}
+
+func NewAdmifaceAuthgroupuserArgs() *AdmifaceAuthgroupuserArgs {
+	return &AdmifaceAuthgroupuserArgs{}
+}
+
+
+
+func (p *AdmifaceAuthgroupuserArgs) GetFromnode() string {
+	return p.Fromnode
+}
+
+
+
+func (p *AdmifaceAuthgroupuserArgs) GetDomain() string {
+	return p.Domain
+}
+
+
+
+func (p *AdmifaceAuthgroupuserArgs) GetRoomNode() string {
+	return p.RoomNode
+}
+
+func (p *AdmifaceAuthgroupuserArgs) Read(ctx context.Context, iprot thrift.TProtocol) error {
+	if _, err := iprot.ReadStructBegin(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+	}
+
+
+	for {
+		_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin(ctx)
+		if err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+		switch fieldId {
+		case 1:
+			if fieldTypeId == thrift.STRING {
+				if err := p.ReadField1(ctx, iprot); err != nil {
+					return err
+				}
+			} else {
+				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+					return err
+				}
+			}
+		case 2:
+			if fieldTypeId == thrift.STRING {
+				if err := p.ReadField2(ctx, iprot); err != nil {
+					return err
+				}
+			} else {
+				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+					return err
+				}
+			}
+		case 3:
+			if fieldTypeId == thrift.STRING {
+				if err := p.ReadField3(ctx, iprot); err != nil {
+					return err
+				}
+			} else {
+				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+					return err
+				}
+			}
+		default:
+			if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+				return err
+			}
+		}
+		if err := iprot.ReadFieldEnd(ctx); err != nil {
+			return err
+		}
+	}
+	if err := iprot.ReadStructEnd(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthgroupuserArgs) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(ctx); err != nil {
+		return thrift.PrependError("error reading field 1: ", err)
+	} else {
+		p.Fromnode = v
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthgroupuserArgs) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(ctx); err != nil {
+		return thrift.PrependError("error reading field 2: ", err)
+	} else {
+		p.Domain = v
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthgroupuserArgs) ReadField3(ctx context.Context, iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(ctx); err != nil {
+		return thrift.PrependError("error reading field 3: ", err)
+	} else {
+		p.RoomNode = v
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthgroupuserArgs) Write(ctx context.Context, oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin(ctx, "Authgroupuser_args"); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+	}
+	if p != nil {
+		if err := p.writeField1(ctx, oprot); err != nil { return err }
+		if err := p.writeField2(ctx, oprot); err != nil { return err }
+		if err := p.writeField3(ctx, oprot); err != nil { return err }
+	}
+	if err := oprot.WriteFieldStop(ctx); err != nil {
+		return thrift.PrependError("write field stop error: ", err)
+	}
+	if err := oprot.WriteStructEnd(ctx); err != nil {
+		return thrift.PrependError("write struct stop error: ", err)
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthgroupuserArgs) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin(ctx, "fromnode", thrift.STRING, 1); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:fromnode: ", p), err)
+	}
+	if err := oprot.WriteString(ctx, string(p.Fromnode)); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T.fromnode (1) field write error: ", p), err)
+	}
+	if err := oprot.WriteFieldEnd(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field end error 1:fromnode: ", p), err)
+	}
+	return err
+}
+
+func (p *AdmifaceAuthgroupuserArgs) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin(ctx, "domain", thrift.STRING, 2); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field begin error 2:domain: ", p), err)
+	}
+	if err := oprot.WriteString(ctx, string(p.Domain)); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T.domain (2) field write error: ", p), err)
+	}
+	if err := oprot.WriteFieldEnd(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field end error 2:domain: ", p), err)
+	}
+	return err
+}
+
+func (p *AdmifaceAuthgroupuserArgs) writeField3(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin(ctx, "roomNode", thrift.STRING, 3); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field begin error 3:roomNode: ", p), err)
+	}
+	if err := oprot.WriteString(ctx, string(p.RoomNode)); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T.roomNode (3) field write error: ", p), err)
+	}
+	if err := oprot.WriteFieldEnd(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field end error 3:roomNode: ", p), err)
+	}
+	return err
+}
+
+func (p *AdmifaceAuthgroupuserArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("AdmifaceAuthgroupuserArgs(%+v)", *p)
+}
+
+func (p *AdmifaceAuthgroupuserArgs) LogValue() slog.Value {
+	if p == nil {
+		return slog.AnyValue(nil)
+	}
+	v := thrift.SlogTStructWrapper{
+		Type: "*stub.AdmifaceAuthgroupuserArgs",
+		Value: p,
+	}
+	return slog.AnyValue(v)
+}
+
+var _ slog.LogValuer = (*AdmifaceAuthgroupuserArgs)(nil)
+
+// Attributes:
+//  - Success
+// 
+type AdmifaceAuthgroupuserResult struct {
+	Success *AdmAck `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdmifaceAuthgroupuserResult() *AdmifaceAuthgroupuserResult {
+	return &AdmifaceAuthgroupuserResult{}
+}
+
+var AdmifaceAuthgroupuserResult_Success_DEFAULT *AdmAck
+
+func (p *AdmifaceAuthgroupuserResult) GetSuccess() *AdmAck {
+	if !p.IsSetSuccess() {
+		return AdmifaceAuthgroupuserResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+func (p *AdmifaceAuthgroupuserResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *AdmifaceAuthgroupuserResult) Read(ctx context.Context, iprot thrift.TProtocol) error {
+	if _, err := iprot.ReadStructBegin(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+	}
+
+
+	for {
+		_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin(ctx)
+		if err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+		switch fieldId {
+		case 0:
+			if fieldTypeId == thrift.STRUCT {
+				if err := p.ReadField0(ctx, iprot); err != nil {
+					return err
+				}
+			} else {
+				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+					return err
+				}
+			}
+		default:
+			if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+				return err
+			}
+		}
+		if err := iprot.ReadFieldEnd(ctx); err != nil {
+			return err
+		}
+	}
+	if err := iprot.ReadStructEnd(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthgroupuserResult) ReadField0(ctx context.Context, iprot thrift.TProtocol) error {
+	p.Success = &AdmAck{}
+	if err := p.Success.Read(ctx, iprot); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthgroupuserResult) Write(ctx context.Context, oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin(ctx, "Authgroupuser_result"); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+	}
+	if p != nil {
+		if err := p.writeField0(ctx, oprot); err != nil { return err }
+	}
+	if err := oprot.WriteFieldStop(ctx); err != nil {
+		return thrift.PrependError("write field stop error: ", err)
+	}
+	if err := oprot.WriteStructEnd(ctx); err != nil {
+		return thrift.PrependError("write struct stop error: ", err)
+	}
+	return nil
+}
+
+func (p *AdmifaceAuthgroupuserResult) writeField0(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if p.IsSetSuccess() {
+		if err := oprot.WriteFieldBegin(ctx, "success", thrift.STRUCT, 0); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err)
+		}
+		if err := p.Success.Write(ctx, oprot); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+		}
+		if err := oprot.WriteFieldEnd(ctx); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err)
+		}
+	}
+	return err
+}
+
+func (p *AdmifaceAuthgroupuserResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("AdmifaceAuthgroupuserResult(%+v)", *p)
+}
+
+func (p *AdmifaceAuthgroupuserResult) LogValue() slog.Value {
+	if p == nil {
+		return slog.AnyValue(nil)
+	}
+	v := thrift.SlogTStructWrapper{
+		Type: "*stub.AdmifaceAuthgroupuserResult",
+		Value: p,
+	}
+	return slog.AnyValue(v)
+}
+
+var _ slog.LogValuer = (*AdmifaceAuthgroupuserResult)(nil)
 
 
