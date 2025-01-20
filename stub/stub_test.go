@@ -9,32 +9,30 @@
 package stub
 
 import (
+	"github.com/donnie4w/gofer/util"
 	"testing"
-
-	. "github.com/donnie4w/gofer/util"
-	"github.com/donnie4w/simplelog/logging"
 )
 
 func Test_json(t *testing.T) {
 	n, p := "helloworld", "123abc"
 	ta := &TimAuth{Name: &n, Pwd: &p}
-	bs := JsonEncode(ta)
-	logging.Debug(len(bs), ">>", string(bs))
-	logging.Debug(JsonDecode[*TimAuth](bs))
+	bs := util.JsonEncode(ta)
+	t.Log(len(bs), ">>", string(bs))
+	t.Log(util.JsonDecode[*TimAuth](bs))
 }
 
 func Test_tcode(t *testing.T) {
 	n, p := "helloworld", "123abc"
 	ta := &TimAuth{Name: &n, Pwd: &p}
-	bs := TEncode(ta)
-	logging.Debug(len(bs), ">>", string(bs))
-	logging.Debug(TDecode(bs, &TimAuth{}))
+	bs := util.TEncode(ta)
+	t.Log(len(bs), ">>", string(bs))
+	t.Log(util.TDecode(bs, &TimAuth{}))
 }
 
 func Test_tcode2(t *testing.T) {
-	s:="123"
+	s := "123"
 	ta := &TimMessage{DataString: &s}
-	bs := TEncode(ta)
-	logging.Debug(len(bs), ">>", string(bs))
-	logging.Debug(TDecode(bs, &TimMessage{}))
+	bs := util.TEncode(ta)
+	t.Log(len(bs), ">>", string(bs))
+	t.Log(util.TDecode(bs, &TimMessage{}))
 }
