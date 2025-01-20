@@ -8,25 +8,24 @@
 package sys
 
 import (
+	"github.com/donnie4w/tim/log"
 	"os"
 )
 
-type server struct{}
-
-func (s *server) Serve() error {
-	praseflag()
-	blankLine()
-	timlogo()
-	Service.Ascend(func(_ int, s Server) bool {
-		defer func() { recover() }()
-		s.Serve()
-		return true
-	})
-	select {}
+func init() {
+	Service(INIT_SYS, server(0))
 }
 
-func (s *server) Close() (err error) {
-	Service.Descend(func(_ int, s Server) bool {
+type server byte
+
+func (s server) Serve() error {
+	praseflag()
+	log.Info(timlogo)
+	return nil
+}
+
+func (s server) Close() (err error) {
+	service.Descend(func(_ int, s Server) bool {
 		s.Close()
 		return true
 	})
@@ -35,7 +34,8 @@ func (s *server) Close() (err error) {
 }
 
 func AddNode(addr string) (err error) {
-	return Client2Serve(addr)
+	//return Client2Serve(addr)
+	return nil
 }
 
 func UseBuiltInData() bool {
