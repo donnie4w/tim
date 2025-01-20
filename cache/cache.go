@@ -8,13 +8,20 @@
 package cache
 
 import (
-	"github.com/donnie4w/gofer/cache"
+	gocache "github.com/donnie4w/gofer/cache"
 	"github.com/donnie4w/gofer/hashmap"
-	"github.com/donnie4w/tim/stub"
 )
 
-var TokenCache = hashmap.NewLimitHashMap[int64, *stub.Tid](1 << 13)
+var TokenCache = newTokenPool()
 
-var AuthCache = hashmap.NewLimitHashMap[uint64, int64](1 << 14)
+var AuthCache = newAuth()
 
-var AmrCache = cache.NewLruCache[uint64](1 << 20)
+var AccountCache = newAccountPool()
+
+var TokenUsedCache = gocache.NewBloomFilter(1<<19, 0.01)
+
+var BlockUserCache = newBlockPool()
+
+var VnodeCache = hashmap.NewLimitHashMap[uint64, int64](1 << 18)
+
+var CsAccessCache = newCsAccessPool()
