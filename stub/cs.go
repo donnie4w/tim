@@ -676,6 +676,198 @@ func (p *CsVrBean) Validate() error {
 }
 
 // Attributes:
+//  - Node
+//  - TypeList
+// 
+type CsDevice struct {
+	Node *string `thrift:"node,1" db:"node" json:"node,omitempty"`
+	TypeList []byte `thrift:"typeList,2" db:"typeList" json:"typeList,omitempty"`
+}
+
+func NewCsDevice() *CsDevice {
+	return &CsDevice{}
+}
+
+var CsDevice_Node_DEFAULT string
+
+func (p *CsDevice) GetNode() string {
+	if !p.IsSetNode() {
+		return CsDevice_Node_DEFAULT
+	}
+	return *p.Node
+}
+
+var CsDevice_TypeList_DEFAULT []byte
+
+
+func (p *CsDevice) GetTypeList() []byte {
+	return p.TypeList
+}
+
+func (p *CsDevice) IsSetNode() bool {
+	return p.Node != nil
+}
+
+func (p *CsDevice) IsSetTypeList() bool {
+	return p.TypeList != nil
+}
+
+func (p *CsDevice) Read(ctx context.Context, iprot thrift.TProtocol) error {
+	if _, err := iprot.ReadStructBegin(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+	}
+
+
+	for {
+		_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin(ctx)
+		if err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+		switch fieldId {
+		case 1:
+			if fieldTypeId == thrift.STRING {
+				if err := p.ReadField1(ctx, iprot); err != nil {
+					return err
+				}
+			} else {
+				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+					return err
+				}
+			}
+		case 2:
+			if fieldTypeId == thrift.STRING {
+				if err := p.ReadField2(ctx, iprot); err != nil {
+					return err
+				}
+			} else {
+				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+					return err
+				}
+			}
+		default:
+			if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+				return err
+			}
+		}
+		if err := iprot.ReadFieldEnd(ctx); err != nil {
+			return err
+		}
+	}
+	if err := iprot.ReadStructEnd(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+	}
+	return nil
+}
+
+func (p *CsDevice) ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(ctx); err != nil {
+		return thrift.PrependError("error reading field 1: ", err)
+	} else {
+		p.Node = &v
+	}
+	return nil
+}
+
+func (p *CsDevice) ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadBinary(ctx); err != nil {
+		return thrift.PrependError("error reading field 2: ", err)
+	} else {
+		p.TypeList = v
+	}
+	return nil
+}
+
+func (p *CsDevice) Write(ctx context.Context, oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin(ctx, "CsDevice"); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+	}
+	if p != nil {
+		if err := p.writeField1(ctx, oprot); err != nil { return err }
+		if err := p.writeField2(ctx, oprot); err != nil { return err }
+	}
+	if err := oprot.WriteFieldStop(ctx); err != nil {
+		return thrift.PrependError("write field stop error: ", err)
+	}
+	if err := oprot.WriteStructEnd(ctx); err != nil {
+		return thrift.PrependError("write struct stop error: ", err)
+	}
+	return nil
+}
+
+func (p *CsDevice) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if p.IsSetNode() {
+		if err := oprot.WriteFieldBegin(ctx, "node", thrift.STRING, 1); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:node: ", p), err)
+		}
+		if err := oprot.WriteString(ctx, string(*p.Node)); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T.node (1) field write error: ", p), err)
+		}
+		if err := oprot.WriteFieldEnd(ctx); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 1:node: ", p), err)
+		}
+	}
+	return err
+}
+
+func (p *CsDevice) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if p.IsSetTypeList() {
+		if err := oprot.WriteFieldBegin(ctx, "typeList", thrift.STRING, 2); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 2:typeList: ", p), err)
+		}
+		if err := oprot.WriteBinary(ctx, p.TypeList); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T.typeList (2) field write error: ", p), err)
+		}
+		if err := oprot.WriteFieldEnd(ctx); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 2:typeList: ", p), err)
+		}
+	}
+	return err
+}
+
+func (p *CsDevice) Equals(other *CsDevice) bool {
+	if p == other {
+		return true
+	} else if p == nil || other == nil {
+		return false
+	}
+	if p.Node != other.Node {
+		if p.Node == nil || other.Node == nil {
+			return false
+		}
+		if (*p.Node) != (*other.Node) { return false }
+	}
+	if bytes.Compare(p.TypeList, other.TypeList) != 0 { return false }
+	return true
+}
+
+func (p *CsDevice) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("CsDevice(%+v)", *p)
+}
+
+func (p *CsDevice) LogValue() slog.Value {
+	if p == nil {
+		return slog.AnyValue(nil)
+	}
+	v := thrift.SlogTStructWrapper{
+		Type: "*stub.CsDevice",
+		Value: p,
+	}
+	return slog.AnyValue(v)
+}
+
+var _ slog.LogValuer = (*CsDevice)(nil)
+
+func (p *CsDevice) Validate() error {
+	return nil
+}
+
+// Attributes:
 //  - ID
 //  - VNode
 //  - Dtype
