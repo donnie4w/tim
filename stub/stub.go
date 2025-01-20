@@ -3002,7 +3002,7 @@ type TimAuth struct {
 	Domain *string `thrift:"domain,3" db:"domain" json:"domain,omitempty"`
 	Resource *string `thrift:"resource,4" db:"resource" json:"resource,omitempty"`
 	Termtyp *int8 `thrift:"termtyp,5" db:"termtyp" json:"termtyp,omitempty"`
-	Token *int64 `thrift:"token,6" db:"token" json:"token,omitempty"`
+	Token *string `thrift:"token,6" db:"token" json:"token,omitempty"`
 	Extend map[string]string `thrift:"extend,7" db:"extend" json:"extend,omitempty"`
 }
 
@@ -3055,9 +3055,9 @@ func (p *TimAuth) GetTermtyp() int8 {
 	return *p.Termtyp
 }
 
-var TimAuth_Token_DEFAULT int64
+var TimAuth_Token_DEFAULT string
 
-func (p *TimAuth) GetToken() int64 {
+func (p *TimAuth) GetToken() string {
 	if !p.IsSetToken() {
 		return TimAuth_Token_DEFAULT
 	}
@@ -3165,7 +3165,7 @@ func (p *TimAuth) Read(ctx context.Context, iprot thrift.TProtocol) error {
 				}
 			}
 		case 6:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.STRING {
 				if err := p.ReadField6(ctx, iprot); err != nil {
 					return err
 				}
@@ -3246,7 +3246,7 @@ func (p *TimAuth) ReadField5(ctx context.Context, iprot thrift.TProtocol) error 
 }
 
 func (p *TimAuth) ReadField6(ctx context.Context, iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadI64(ctx); err != nil {
+	if v, err := iprot.ReadString(ctx); err != nil {
 		return thrift.PrependError("error reading field 6: ", err)
 	} else {
 		p.Token = &v
@@ -3381,10 +3381,10 @@ func (p *TimAuth) writeField5(ctx context.Context, oprot thrift.TProtocol) (err 
 
 func (p *TimAuth) writeField6(ctx context.Context, oprot thrift.TProtocol) (err error) {
 	if p.IsSetToken() {
-		if err := oprot.WriteFieldBegin(ctx, "token", thrift.I64, 6); err != nil {
+		if err := oprot.WriteFieldBegin(ctx, "token", thrift.STRING, 6); err != nil {
 			return thrift.PrependError(fmt.Sprintf("%T write field begin error 6:token: ", p), err)
 		}
-		if err := oprot.WriteI64(ctx, int64(*p.Token)); err != nil {
+		if err := oprot.WriteString(ctx, string(*p.Token)); err != nil {
 			return thrift.PrependError(fmt.Sprintf("%T.token (6) field write error: ", p), err)
 		}
 		if err := oprot.WriteFieldEnd(ctx); err != nil {
