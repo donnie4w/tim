@@ -751,39 +751,48 @@ func (th *tldbhandle) GetUserInfo(nodes []string) (m map[string]*TimUserBean, er
 	return
 }
 
-func (th *tldbhandle) ModifygroupInfo(node, fnode string, tu *TimRoomBean) (err errs.ERROR) {
+func (th *tldbhandle) ModifygroupInfo(node, fnode string, tu *TimRoomBean, admin bool) (err errs.ERROR) {
 	if guuid := util.NodeToUUID(node); guuid > 0 {
 		if g, _ := SelectByIdxWithInt[timgroup]("UUID", guuid); g != nil {
 			if sys.TIMTYPE(g.Status) == sys.GROUP_STATUS_CANCELLED {
 				return errs.ERR_CANCEL
 			}
 			if tr, _ := TDecode(util.Mask(g.RBean), &TimRoomBean{}); tr != nil {
-				if *tr.Founder == fnode || util.ContainStrings(tr.Managers, fnode) {
+
+				if admin {
+					if tu.Founder != nil {
+						tr.Founder = tu.Founder
+					}
+					if tu.Managers != nil {
+						tr.Managers = tu.Managers
+					}
+				} else if *tr.Founder != fnode && !util.ContainStrings(tr.Managers, fnode) {
+					return errs.ERR_PERM_DENIED
+				}
+				if !admin {
 					if *tr.Founder == fnode && tu.Managers != nil {
 						tr.Managers = tu.Managers
 					}
-					if tu.Cover != nil {
-						tr.Cover = tu.Cover
-					}
-					if tu.Topic != nil {
-						tr.Topic = tu.Topic
-					}
-					if tu.Kind != nil {
-						tr.Kind = tu.Kind
-					}
-					if tu.Label != nil {
-						tr.Label = tu.Label
-					}
-					if tu.Extend != nil {
-						tr.Extend = tu.Extend
-					}
-					if tu.Extra != nil {
-						tr.Extra = tu.Extra
-					}
-					UpdateNonzero(&timgroup{Id: g.Id, UUID: guuid, RBean: util.Mask(TEncode(tr))})
-				} else {
-					return errs.ERR_PERM_DENIED
 				}
+				if tu.Cover != nil {
+					tr.Cover = tu.Cover
+				}
+				if tu.Topic != nil {
+					tr.Topic = tu.Topic
+				}
+				if tu.Kind != nil {
+					tr.Kind = tu.Kind
+				}
+				if tu.Label != nil {
+					tr.Label = tu.Label
+				}
+				if tu.Extend != nil {
+					tr.Extend = tu.Extend
+				}
+				if tu.Extra != nil {
+					tr.Extra = tu.Extra
+				}
+				UpdateNonzero(&timgroup{Id: g.Id, UUID: guuid, RBean: util.Mask(TEncode(tr))})
 			} else {
 				return errs.ERR_UNDEFINED
 			}
