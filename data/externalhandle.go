@@ -8,7 +8,7 @@
 package data
 
 import (
-	. "github.com/donnie4w/gofer/util"
+	goutil "github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/errs"
 	. "github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tim/sys"
@@ -53,7 +53,7 @@ func (this *externalhandle) AuthNode(username, pwd string, domain *string) (node
 func (this *externalhandle) SaveMessage(tm *TimMessage) (err error) {
 	id := *tm.ID
 	tm.ID = nil
-	var chatId uint64
+	var chatId []byte
 	if tm.MsType == sys.SOURCE_ROOM {
 		chatId = util.ChatIdByRoom(tm.RoomTid.Node, tm.FromTid.Domain)
 	} else {
@@ -61,12 +61,12 @@ func (this *externalhandle) SaveMessage(tm *TimMessage) (err error) {
 	}
 	fid := tm.FromTid
 	tm.FromTid = &Tid{Node: fid.Node}
-	stanze := util.Mask(TEncode(tm))
+	stanze := util.Mask(goutil.TEncode(tm))
 	var mid int64
-	mid, err = this.externaldb.saveMessage(chatId, stanze)
+	mid, err = this.externaldb.saveMessage(chatId, int32(goutil.FNVHash32([]byte(fid.Node))), stanze)
 	tm.Mid = &mid
 	if id == 0 {
-		id = UUID64()
+		id = goutil.UUID64()
 	}
 	tm.ID = &id
 	tm.FromTid = fid
@@ -74,7 +74,7 @@ func (this *externalhandle) SaveMessage(tm *TimMessage) (err error) {
 }
 
 func (this *externalhandle) GetMessage(fromNode string, domain *string, rtype int8, to string, mid, limit int64) (tmList []*TimMessage, err error) {
-	chatId := uint64(0)
+	var chatId []byte
 	if rtype == 1 {
 		chatId = util.ChatIdByNode(fromNode, to, domain)
 	} else {
@@ -83,7 +83,7 @@ func (this *externalhandle) GetMessage(fromNode string, domain *string, rtype in
 	if rs, e := this.externaldb.getmessage(chatId, mid, limit); e == nil {
 		tmList = make([]*TimMessage, 0)
 		for k, v := range rs {
-			if tm, err := TDecode(util.Mask(v), &TimMessage{}); err == nil {
+			if tm, err := goutil.TDecode(util.Mask(v), &TimMessage{}); err == nil {
 				tm.Mid = &k
 				tmList = append(tmList, tm)
 			}
@@ -94,20 +94,14 @@ func (this *externalhandle) GetMessage(fromNode string, domain *string, rtype in
 	return
 }
 
-func (this *externalhandle) GetMessageByMid(tid uint64, mid int64) (tm *TimMessage, err error) {
+func (this *externalhandle) GetChatIdByMid(tid []byte, mid int64) ([]byte, int64, error) {
 	if mid <= 0 {
-		err = errs.ERR_PARAMS.Error()
-		return
+		return nil, 0, errs.ERR_PARAMS.Error()
 	}
-	if bs, e := this.externaldb.getMessageById(mid); e == nil {
-		tm, err = TDecode(util.Mask(bs), &TimMessage{})
-	} else {
-		err = e
-	}
-	return
+	return this.externaldb.getChatIdById(mid)
 }
 
-func (this *externalhandle) DelMessageByMid(tid uint64, mid int64) (err error) {
+func (this *externalhandle) DelMessageByMid(tid []byte, mid int64) (err error) {
 	return this.externaldb.delMessageById(mid)
 }
 
@@ -124,7 +118,7 @@ func (this *externalhandle) SaveOfflineMessage(tm *TimMessage) (err error) {
 	if tm.OdType == sys.ORDER_INOF && tm.Mid != nil {
 		mid = *tm.Mid
 	}
-	err = this.externaldb.saveOfflineMessage(node, *tm.ID, util.Mask(TEncode(tm)), mid)
+	err = this.externaldb.saveOfflineMessage(node, *tm.ID, util.Mask(goutil.TEncode(tm)), mid)
 	tm.FromTid = fid
 	return
 }
