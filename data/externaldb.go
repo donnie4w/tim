@@ -102,7 +102,7 @@ func (eh *externaldb) exec(query string, args ...any) (_r int64, err error) {
 }
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
-func (eh *externaldb) getmessage(chatid uint64, id int64, limit int64) (_r map[int64][]byte, err error) {
+func (eh *externaldb) getmessage(chatid []byte, id int64, limit int64) (_r map[int64][]byte, err error) {
 	//var rs [][]any
 	if id <= 0 {
 		id = 1<<63 - 1
@@ -159,18 +159,15 @@ func (eh *externaldb) login(username, pwd string) (_r string, err error) {
 	return
 }
 
-func (eh *externaldb) saveMessage(chatId uint64, stanza []byte) (mid int64, err error) {
-	return eh.insert(sys.Conf.ExternalDB.Tim_sql_savemessage, chatId, stanza)
+func (eh *externaldb) saveMessage(chatId []byte, fid int32, stanza []byte) (mid int64, err error) {
+	return eh.insert(sys.Conf.ExternalDB.Tim_sql_savemessage, chatId, fid, stanza)
 }
 
-func (eh *externaldb) getMessageById(id int64) (bs []byte, err error) {
-	//var rs [][]any
-	//if rs, err = eh.query(sys.Conf.ExternalDB.Tim_sql_getmessage_byid, id); err == nil && len(rs) > 0 {
-	//	bs = data._getBytes(rs[0][0])
-	//}
-	databean := eh.db.ExecuteQueryBean(sys.Conf.ExternalDB.Tim_sql_getmessage_byid, id)
+func (eh *externaldb) getChatIdById(id int64) (bs []byte, fid int64, err error) {
+	databean := eh.db.ExecuteQueryBean(sys.Conf.ExternalDB.Tim_sql_getchatid_byid, id)
 	if err = databean.GetError(); err == nil {
 		bs = databean.FieldByIndex(0).ValueBytes()
+		fid = databean.FieldByIndex(1).ValueInt64()
 	}
 	return
 }
