@@ -126,7 +126,7 @@ func (eh *externalhandle) GetUserInfo(node []string) (m map[string]*TimUserBean,
 	return
 }
 
-func (eh *externalhandle) ModifygroupInfo(node, fnode string, tu *TimRoomBean) (err errs.ERROR) {
+func (eh *externalhandle) ModifygroupInfo(node, fnode string, tu *TimRoomBean, admin bool) (err errs.ERROR) {
 	return
 }
 func (eh *externalhandle) GetGroupInfo(node []string) (m map[string]*TimRoomBean, err errs.ERROR) {
