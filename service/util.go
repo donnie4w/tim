@@ -8,20 +8,20 @@
 package service
 
 import (
+	gocache "github.com/donnie4w/gofer/cache"
+	goutil "github.com/donnie4w/gofer/util"
+	"github.com/donnie4w/gofer/uuid"
+	"github.com/donnie4w/tim/amr"
 	"github.com/donnie4w/tim/cache"
-	"time"
-
-	"github.com/donnie4w/gofer/hashmap"
-	. "github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/data"
 	. "github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
+	"time"
 )
 
-var userCache = hashmap.NewLimitHashMap[uint32, int8](1 << 19)
-var groupCache = hashmap.NewLimitHashMap[uint32, int8](1 << 19)
-var blockm = hashmap.NewMap[string, int64]()
+var userCache = gocache.NewBloomFilter(1<<21, 0.0001)
+var groupCache = gocache.NewBloomFilter(1<<20, 0.0001)
 
 func init() {
 	sys.PingHandle = service.ping
@@ -42,13 +42,16 @@ func init() {
 	sys.BigBinaryHandle = service.bigBinary
 	sys.BigBinaryStreamHandle = service.bigBinaryStreamHandle
 	sys.NodeInfoHandle = service.nodeinfo
+	sys.AuthRoster = authRoster
+	sys.AuthGroupuser = authGroupuser
 	sys.OsModify = service.sysmodify
 	sys.OsMessage = sysMessage
+	sys.OsPresence = sysPresence
 	sys.OsUserBean = service.osuserbean
 	sys.OsRoom = service.osnewgroup
 	sys.OsRoomBean = service.osModifygroupInfo
 	sys.OsVroomprocess = service.osvroomprocess
-	sys.PxMessage = service.pxmessage
+	sys.PxMessage = service.pxMessage
 	sys.TimMessageProcessor = timMessageProcessor
 	sys.TimPresenceProcessor = timPresenceProcessor
 	sys.TimSteamProcessor = timStreamProcessor
@@ -56,109 +59,107 @@ func init() {
 	sys.HasWs = wsware.hasws
 	sys.DelWs = wsware.delws
 	sys.WsById = wsware.wsById
+	sys.WsByNode = wsware.wsByNode
 	sys.WssLen = wsware.wsLen
 	sys.WssList = wsware.wssList
-	sys.WssInfo = wsware.wssInfo
+	sys.DeviceTypeList = wsware.deviceTypeList
 	sys.OsToken = service.ostoken
 	sys.OsRegister = service.osregister
 	sys.SendNode = wsware.SendNode
 	sys.SendWs = wsware.SendWs
-	sys.OsBlockUser = blocku
-	sys.OsBlockList = blocklist
+	sys.OsBlockUser = blockNode
 	sys.Detect = detect
-	go ticker()
 }
 
-// token The effective length is only 32 bits
-func token() (_r int64) {
-	return int64(UUID32())
+func token() (r string) {
+	return util.UUIDToNode(util.CreateUUID(uuid.NewUUID().String(), nil))
 }
 
-func existUser(tid *Tid) (_r bool) {
-	if tid != nil {
-		uuid := util.CreateUUIDByTid(tid)
-		f := CRC32(Int64ToBytes(int64(uuid)))
-		if _r = userCache.Contains(f); !_r {
-			if _r = data.Service.ExistUser(util.UUIDToNode(uuid)); _r {
-				userCache.Put(f, 0)
+func existUser(tid *Tid) (b bool) {
+	if tid == nil {
+		return false
+	}
+	if sys.UseBuiltInData() {
+		if b = userCache.Contains([]byte(tid.GetNode())); !b {
+			if b = data.Service.ExistUser(tid.GetNode()); b {
+				userCache.Add([]byte(tid.GetNode()))
 			}
 		}
 	} else {
-		_r = true
+		b = true
 	}
 	return
 }
 
-func existList(ls []string, domain *string) (_r bool) {
-	if ls != nil {
-		for _, u := range ls {
-			uuid := util.CreateUUID(u, domain)
-			f := CRC32(Int64ToBytes(int64(uuid)))
-			if _r = userCache.Contains(f); !_r {
-				if _r = data.Service.ExistUser(util.UUIDToNode(uuid)); _r {
-					userCache.Put(f, 0)
+func existList(ls []string) (b bool) {
+	if ls == nil {
+		return false
+	}
+	if sys.UseBuiltInData() {
+		for _, node := range ls {
+			if b = userCache.Contains([]byte(node)); !b {
+				if b = data.Service.ExistUser(node); b {
+					userCache.Add([]byte(node))
 				} else {
-					_r = false
-					break
+					return false
 				}
 			}
 		}
-	} else {
-		_r = true
 	}
-	return
+	return true
 }
 
 func existGroup(tid *Tid) (_r bool) {
-	if tid != nil {
-		f := CRC32(append([]byte{1}, Int64ToBytes(int64(util.CreateUUIDByTid(tid)))...))
-		if _r = groupCache.Contains(f); !_r {
-			if _r = data.Service.ExistGroup(tid.Node); _r {
-				groupCache.Put(f, 0)
-			}
+	if tid == nil {
+		return false
+	}
+	if _r = groupCache.Contains([]byte(tid.GetNode())); !_r {
+		if _r = data.Service.ExistGroup(tid.GetNode()); _r {
+			groupCache.Add([]byte(tid.GetNode()))
 		}
-	} else {
-		_r = true
 	}
 	return
 }
 
-func AuthUser(fTid, tTid *Tid, readtime bool) (ok bool) {
-	defer util.Recover()
+func authUser(fTid, tTid *Tid, readtime bool) (ok bool) {
 	if sys.Conf.MessageNoAuth {
 		return true
 	}
+	return authRoster(fTid.Node, tTid.Node, fTid.Domain, false)
+}
+
+func authRoster(fnode, tnode string, domain *string, readtime bool) (ok bool) {
+	defer util.Recover()
 	if sys.Conf.CacheAuthExpire > 0 && !readtime {
-		nano := time.Now().UnixNano()
-		cid := util.ChatIdByNode(fTid.Node, tTid.Node, fTid.Domain)
-		if t, b := cache.AuthCache.Get(cid); !b || t+int64(sys.Conf.CacheAuthExpire*int(time.Second)) < nano {
-			if data.Service.AuthUserAndUser(fTid.Node, tTid.Node, fTid.Domain) {
-				cache.AuthCache.Put(cid, nano)
-			}
+		if cache.AuthCache.Has(fnode, tnode, domain, false) {
+			return true
 		} else {
-			cache.AuthCache.Put(cid, nano)
-			ok = true
+			if ok = data.Service.AuthUserAndUser(fnode, tnode, domain); ok {
+				cache.AuthCache.Put(fnode, tnode, domain, false)
+			}
 		}
 	} else {
-		ok = data.Service.AuthUserAndUser(fTid.Node, tTid.Node, fTid.Domain)
+		ok = data.Service.AuthUserAndUser(fnode, tnode, domain)
 	}
 	return
 }
 
 func AuthGroup(gnode, unode string, domain *string) (ok bool) {
-	defer util.Recover()
 	if sys.Conf.MessageNoAuth {
 		return true
 	}
+	return authGroupuser(gnode, unode, domain)
+}
+
+func authGroupuser(gnode, unode string, domain *string) (ok bool) {
+	defer util.Recover()
 	if sys.Conf.CacheAuthExpire > 0 {
-		rid := util.RelateIdForGroup(gnode, unode, domain)
-		if t, b := cache.AuthCache.Get(rid); !b || t+int64(sys.Conf.CacheAuthExpire*int(time.Second)) < time.Now().UnixNano() {
-			if ok, _ = data.Service.AuthGroupAndUser(gnode, unode, domain); ok {
-				cache.AuthCache.Put(rid, time.Now().UnixNano())
-			}
+		if cache.AuthCache.Has(gnode, unode, domain, true) {
+			return true
 		} else {
-			cache.AuthCache.Put(rid, time.Now().UnixNano())
-			ok = true
+			if ok, _ = data.Service.AuthGroupAndUser(gnode, unode, domain); ok {
+				cache.AuthCache.Put(gnode, unode, domain, true)
+			}
 		}
 	} else {
 		ok, _ = data.Service.AuthGroupAndUser(gnode, unode, domain)
@@ -169,19 +170,24 @@ func AuthGroup(gnode, unode string, domain *string) (ok bool) {
 func newTimMessage(bs []byte) (tm *TimMessage) {
 	var err error
 	if util.JTP(bs[0]) {
-		tm, err = JsonDecode[*TimMessage](bs[1:])
+		tm, err = goutil.JsonDecode[*TimMessage](bs[1:])
 	} else {
-		tm, err = TDecode(bs[1:], &TimMessage{})
+		tm, err = goutil.TDecode(bs[1:], &TimMessage{})
 	}
 	if err == nil {
-		if tm.ID == nil {
-			id := UUID64()
-			tm.ID = &id
-		}
-		t := time.Now().UnixNano()
-		tm.Timestamp = &t
+		fullTimMessage(tm)
 	}
 	return
+}
+
+func fullTimMessage(tm *TimMessage) *TimMessage {
+	if tm.ID == nil {
+		id := goutil.UUID64()
+		tm.ID = &id
+	}
+	t := time.Now().UnixNano()
+	tm.Timestamp = &t
+	return tm
 }
 
 //func shallowCloneTimMessageData(tm *TimMessage) (r *TimMessage) {
@@ -202,13 +208,13 @@ func newTimMessage(bs []byte) (tm *TimMessage) {
 func newTimPresence(bs []byte) (tp *TimPresence) {
 	var err error
 	if util.JTP(bs[0]) {
-		tp, err = JsonDecode[*TimPresence](bs[1:])
+		tp, err = goutil.JsonDecode[*TimPresence](bs[1:])
 	} else {
-		tp, err = TDecode(bs[1:], &TimPresence{})
+		tp, err = goutil.TDecode(bs[1:], &TimPresence{})
 	}
 	if err == nil {
 		if tp.ID == nil {
-			id := UUID64()
+			id := goutil.UUID64()
 			tp.ID = &id
 		}
 		tp.Offline = nil
@@ -253,27 +259,27 @@ func checkList(ls []string) (_r bool) {
 
 func newTimReq(bs []byte) (tr *TimReq) {
 	if util.JTP(bs[0]) {
-		tr, _ = JsonDecode[*TimReq](bs[1:])
+		tr, _ = goutil.JsonDecode[*TimReq](bs[1:])
 	} else {
-		tr, _ = TDecode(bs[1:], &TimReq{})
+		tr, _ = goutil.TDecode(bs[1:], &TimReq{})
 	}
 	return
 }
 
 func newTimNodes(bs []byte) (tr *TimNodes) {
 	if util.JTP(bs[0]) {
-		tr, _ = JsonDecode[*TimNodes](bs[1:])
+		tr, _ = goutil.JsonDecode[*TimNodes](bs[1:])
 	} else {
-		tr, _ = TDecode(bs[1:], &TimNodes{})
+		tr, _ = goutil.TDecode(bs[1:], &TimNodes{})
 	}
 	return
 }
 
 func newAuth(bs []byte) (ta *TimAuth) {
 	if util.JTP(bs[0]) {
-		ta, _ = JsonDecode[*TimAuth](bs[1:])
+		ta, _ = goutil.JsonDecode[*TimAuth](bs[1:])
 	} else {
-		ta, _ = TDecode(bs[1:], &TimAuth{})
+		ta, _ = goutil.TDecode(bs[1:], &TimAuth{})
 	}
 	return
 }
@@ -281,63 +287,32 @@ func newAuth(bs []byte) (ta *TimAuth) {
 func newTimStream(bs []byte) (ts *TimStream) {
 	var err error
 	if util.JTP(bs[0]) {
-		ts, err = JsonDecode[*TimStream](bs[1:])
+		ts, err = goutil.JsonDecode[*TimStream](bs[1:])
 	} else {
-		ts, err = TDecode(bs[1:], &TimStream{})
+		ts, err = goutil.TDecode(bs[1:], &TimStream{})
 	}
 	if err == nil {
-		ts.ID = UUID64()
+		ts.ID = goutil.UUID64()
 	}
 	return
 }
 
-func blocku(node string, t int64) {
+func blockNode(node string, t int64) {
 	if t < 0 {
-		blockm.Del(node)
+		amr.DelBlock(node)
 	} else {
-		blockm.Put(node, time.Now().Unix()+t)
+		amr.PutBlock(node, t)
 		wsware.delnode(node)
 	}
 }
 
 func isblock(node string) bool {
-	if t, ok := blockm.Get(node); ok {
-		return t > time.Now().Unix()
-	}
-	return false
-}
-
-func blocklist() map[string]int64 {
-	m := map[string]int64{}
-	blockm.Range(func(k string, v int64) bool {
-		m[k] = v
-		return true
-	})
-	return m
+	return amr.GetBlock(node) > 0
 }
 
 func detect(nodes []string) {
 	for _, node := range nodes {
 		wsware.detect(node)
-	}
-}
-
-func ticker() {
-	tk := time.NewTicker(time.Second << 4)
-	for {
-		sys.InaccurateTime = time.Now().UnixNano()
-		select {
-		case <-tk.C:
-			func() {
-				defer util.Recover()
-				blockm.Range(func(k string, v int64) bool {
-					if v > 0 && v < time.Now().Unix() {
-						blockm.Del(k)
-					}
-					return true
-				})
-			}()
-		}
 	}
 }
 
