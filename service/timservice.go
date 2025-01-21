@@ -7,9 +7,9 @@
 
 package service
 
-import (
-	. "github.com/donnie4w/tim/stub"
-)
+//import (
+//	. "github.com/donnie4w/tim/stub"
+//)
 
 /**
 func timMessageService(tm *TimMessage) (err errs.ERROR) {
