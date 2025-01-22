@@ -170,38 +170,6 @@ const (
                 <td colspan="2">{{ .SYS.ADDR }}</td>
             </tr>
         </table>
-        <table class="table table-bordered">
-            {{range $k,$v := .RN }}
-            <tr>
-                <th rowspan="4" class="text-center bg-info" style="width: 100px;">远程节点: {{ $v.UUID }}</th>
-            </tr>
-            <tr>
-                <td style="width: 120px;background-color: antiquewhite;color:crimson;">UUID</td>
-                <td style="background-color: antiquewhite;color:crimson;">{{ $v.UUID }} [{{ $v.CSNUM }}]</td>
-            </tr>
-            <tr>
-                <td>集群监听地址</td>
-                <td>{{ $v.Addr }}</td>
-            </tr>
-            <tr>
-                <td>远程IP</td>
-                <td>{{ $v.Host }}</td>
-            </tr>
-            {{end}}
-        </table>
-        <div class="card">
-            <h5 class="text-danger">{{ .Show }}</h5>
-            <form class="row g-3" id="" action="/sysvar" method="post">
-                <h3>集群操作</h3>
-                <input name="atype" value="1" hidden />
-                <label>增加集群节点并连接</label>
-                <div class="input-group">
-                    <span class="input-group-text">目标节点服务地址</span>
-                    <input type="text" id="addr" name="addr" value="" placeholder="目标地址如  :6001" />
-                    <input class="btn btn-dark" type="submit" value="确定" />
-                </div>
-            </form>
-        </div>
     </div>
 </body>
 </html>
@@ -258,7 +226,6 @@ const (
         <table class="table table-striped " style="font-size: smaller;">
             <tr>
                 <th></th>
-                <th>在线用户总数</th>
                 <th>当前节点在线用户数</th>
                 <th>节点输入数据(B)</th>
                 <th>节点输出数据(B)</th>
@@ -292,7 +259,6 @@ const (
                 var json = JSON.parse(evt.data);
                 var tr = document.createElement('tr');
                 var d = '<td style="font-weight: bold;">' + id++ + '</td>'
-                    + '<td>' + json.OnlineTotal + '</td>'
                     + '<td>' + json.Online + '</td>'
                     + '<td>' + json.Input  + '</td>'
                     + '<td>' + json.Output  + '</td>'
