@@ -23,6 +23,8 @@ func init() {
 	sys.CsPresenceService = tw.CsPresenceService
 	sys.CsVBeanService = tw.CsVBeanService
 	sys.CsDevice = tw.CsDevice
+	sys.GetALLUUIDS = tw.getAlluuids
+	sys.Unaccess = tw.unAccess
 }
 
 var tw = NewTransWare()
@@ -31,6 +33,7 @@ type TransWare struct {
 	am       *hashmap.Map[int64, string]
 	conn     *hashmap.Map[int64, csNet] //sockId->csNet
 	csmap    *hashmap.Map[int64, csNet] //uuid->csNet
+	unaccess *hashmap.Map[int64, struct{}]
 	dataWait *lock.FastAwait[any]
 	tserver  *tServer
 	numlock  *lock.Numlock
@@ -41,6 +44,7 @@ func NewTransWare() *TransWare {
 	tw.am = hashmap.NewMap[int64, string]()
 	tw.conn = hashmap.NewMap[int64, csNet]()
 	tw.csmap = hashmap.NewMap[int64, csNet]()
+	tw.unaccess = hashmap.NewMap[int64, struct{}]()
 	tw.numlock = lock.NewNumLock(1 << 7)
 	tw.dataWait = lock.NewFastAwait[any]()
 	go tw.twTicker()
@@ -177,10 +181,14 @@ func (tw *TransWare) getAndSetCsnet(uuid int64) csNet {
 				conn := newConnect(tw)
 				if conn.open(addr) == nil {
 					tw.csmap.Put(uuid, conn)
+					tw.unaccess.Del(uuid)
 					return conn
 				}
 			}
 		}
+	}
+	if cn == nil {
+		tw.unaccess.Put(uuid, struct{}{})
 	}
 	return cn
 }
@@ -215,4 +223,22 @@ func (tw *TransWare) twTicker() {
 			tw.registerUuid()
 		}
 	}
+}
+
+func (tw *TransWare) getAlluuids() (r []int64) {
+	r = make([]int64, 0)
+	tw.conn.Range(func(k int64, _ csNet) bool {
+		r = append(r, k)
+		return true
+	})
+	return
+}
+
+func (tw *TransWare) unAccess() (r []int64) {
+	r = make([]int64, 0)
+	tw.unaccess.Range(func(k int64, _ struct{}) bool {
+		r = append(r, k)
+		return true
+	})
+	return
 }
