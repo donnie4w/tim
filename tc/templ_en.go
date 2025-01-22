@@ -171,38 +171,6 @@ const (
                 <td colspan="2">{{ .SYS.ADDR }}</td>
             </tr>
         </table>
-        <table class="table table-bordered">
-            {{range $k,$v := .RN }}
-            <tr>
-                <th rowspan="4" class="text-center bg-info" style="width: 100px;">remote node: {{ $v.UUID }}</th>
-            </tr>
-            <tr>
-                <td style="width: 120px;background-color: antiquewhite;color:crimson;">UUID</td>
-                <td style="background-color: antiquewhite;color:crimson;">{{ $v.UUID }} [{{ $v.CSNUM }}]</td>
-            </tr>
-            <tr>
-                <td>Cluster listening address</td>
-                <td>{{ $v.Addr }}</td>
-            </tr>
-            <tr>
-                <td>remote IP</td>
-                <td>{{ $v.Host }}</td>
-            </tr>
-            {{end}}
-        </table>
-        <div class="card">
-            <h5 class="text-danger">{{ .Show }}</h5>
-            <form class="row g-3" id="" action="/sysvar" method="post">
-                <h3>Cluster connect operation</h3>
-                <input name="atype" value="1" hidden />
-                <label>add and connect cluster nodes</label>
-                <div class="input-group">
-                    <span class="input-group-text">Service address of the target node</span>
-                    <input type="text" id="addr" name="addr" value="" placeholder="Target address such as  :6001" />
-                    <input class="btn btn-dark" type="submit" value="submit" />
-                </div>
-            </form>
-        </div>
     </div>
 </body>
 </html>
@@ -259,7 +227,6 @@ const (
             <tr>
                 <th></th>
                 <th>Online total</th>
-                <th>Online total node</th>
                 <th>Input data(Byte)</th>
                 <th>Output data(Byte)</th>
                 <th>Disconnected node</th>
@@ -292,7 +259,6 @@ const (
                 var json = JSON.parse(evt.data);
                 var tr = document.createElement('tr');
                 var d = '<td style="font-weight: bold;">' + id++ + '</td>'
-                    + '<td>' + json.OnlineTotal + '</td>'
                     + '<td>' + json.Online + '</td>'
                     + '<td>' + json.Input  + '</td>'
                     + '<td>' + json.Output  + '</td>'
