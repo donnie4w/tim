@@ -30,8 +30,8 @@ func getDataMonitor() (dm *dataMonitor) {
 	dm.Input = sys.Stat.Ibs()
 	dm.Output = sys.Stat.Obs()
 	dm.Online = sys.WssLen()
-	//dm.OnlineTotal = sys.WssTt()
-	//dm.Unaccess = sys.Unaccess()
+	dm.OnlineTotal = 0
+	dm.Unaccess = sys.Unaccess()
 	return
 }
 
