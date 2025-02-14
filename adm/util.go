@@ -24,7 +24,7 @@ func ctx2CliContext(ctx context.Context) *pcontext {
 }
 
 func auth(name, pwd, domain string) (b bool) {
-	if sys.Conf.TimAdminAuth {
+	if sys.Conf.UseTimDomain {
 		return data.Service.TimAdminAuth(name, pwd, domain)
 	} else if _r, ok := keystore.Admin.GetAdmin(name); ok {
 		b = strings.EqualFold(_r.Pwd, goutil.Md5Str(pwd))
@@ -44,9 +44,9 @@ func newAdmAck(ok bool) *stub.AdmAck {
 	return &stub.AdmAck{Ok: &ok}
 }
 
-func nodeToTid(node *string) (_r *stub.Tid) {
+func nodeToTid(node, domain *string) (_r *stub.Tid) {
 	if node != nil {
-		_r = &stub.Tid{Node: *node}
+		_r = &stub.Tid{Node: *node, Domain: domain}
 	}
 	return
 }
@@ -58,9 +58,9 @@ func admMessageToTimMessage(amb *stub.AdmMessage) *stub.TimMessage {
 	tm.ID = amb.ID
 	tm.Mid = amb.Mid
 	tm.BnType = amb.BnType
-	tm.FromTid = nodeToTid(amb.FromNode)
-	tm.ToTid = nodeToTid(amb.ToNode)
-	tm.RoomTid = nodeToTid(amb.RoomNode)
+	tm.FromTid = nodeToTid(amb.FromNode, amb.Domain)
+	tm.ToTid = nodeToTid(amb.ToNode, amb.Domain)
+	tm.RoomTid = nodeToTid(amb.RoomNode, amb.Domain)
 	tm.DataBinary = amb.DataBinary
 	tm.DataString = amb.DataString
 	tm.Udtype = amb.Udtype
@@ -79,18 +79,15 @@ func timMessageToAdmMessage(tm *stub.TimMessage) *stub.AdmMessage {
 	am.BnType = tm.BnType
 
 	if tm.FromTid != nil {
-		node := tm.FromTid.Node
-		am.FromNode = &node
+		am.FromNode = &tm.FromTid.Node
 	}
 
 	if tm.ToTid != nil {
-		node := tm.ToTid.Node
-		am.ToNode = &node
+		am.ToNode = &tm.ToTid.Node
 	}
 
 	if tm.RoomTid != nil {
-		node := tm.RoomTid.Node
-		am.RoomNode = &node
+		am.RoomNode = &tm.RoomTid.Node
 	}
 
 	am.DataBinary = tm.DataBinary
@@ -105,8 +102,8 @@ func timMessageToAdmMessage(tm *stub.TimMessage) *stub.AdmMessage {
 func admPresenceToTimPresence(amp *stub.AdmPresence) *stub.TimPresence {
 	tp := stub.NewTimPresence()
 	tp.ID = amp.ID
-	tp.FromTid = nodeToTid(amp.FromNode)
-	tp.ToTid = nodeToTid(amp.ToNode)
+	tp.FromTid = nodeToTid(amp.FromNode, nil)
+	tp.ToTid = nodeToTid(amp.ToNode, nil)
 	tp.ToList = amp.ToList
 	tp.Offline = amp.Offline
 	tp.Status = amp.Status
