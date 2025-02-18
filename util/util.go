@@ -18,7 +18,6 @@ import (
 	. "github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tim/sys"
 	"golang.org/x/crypto/bcrypt"
-	"runtime/debug"
 	"strings"
 )
 
@@ -74,7 +73,7 @@ func CheckUUID(uuid uint64) bool {
 }
 
 func CheckNode(node string) bool {
-	if len(node) <= sys.NodeMaxlength {
+	if len(node) <= sys.NodeMaxSize {
 		if _r := NodeToUUID(node); _r > 0 {
 			return CheckUUID(_r)
 		}
@@ -247,7 +246,7 @@ func ArraySub[K int | int8 | int32 | int64 | string](a1, a2 []K) (_r []K) {
 
 func Recover() {
 	if err := recover(); err != nil {
-		log.Error(string(debug.Stack()))
+		log.Error(err)
 	}
 }
 
@@ -268,14 +267,6 @@ func AesDecode(bs []byte) ([]byte, error) {
 }
 
 func ContainStrings(li []string, v string) (b bool) {
-	//if li == nil {
-	//	return false
-	//}
-	//sort.Strings(li)
-	//idx := sort.SearchStrings(li, v)
-	//if idx < len(li) {
-	//	b = li[idx] == v
-	//}
 	for _, item := range li {
 		if item == v {
 			return true
@@ -285,15 +276,6 @@ func ContainStrings(li []string, v string) (b bool) {
 }
 
 func ContainInt[T int64 | uint64 | int | uint | uint32 | int32](li []T, v T) (b bool) {
-	//if li == nil {
-	//	return false
-	//}
-	//sort.Slice(li, func(i, j int) bool { return li[i] < li[j] })
-	//idx := sort.Search(len(li), func(i int) bool { return li[i] >= v })
-	//if idx < len(li) {
-	//	b = li[idx] == v
-	//}
-	//return
 	for _, item := range li {
 		if item == v {
 			return true
