@@ -113,7 +113,7 @@ var (
 	TokenHandle           func([]byte) (string, errs.ERROR)
 	AuthHandle            func([]byte, *tlnet.Websocket) errs.ERROR
 	OfflinemsgHandle      func(*tlnet.Websocket) errs.ERROR
-	BroadpresenceHandle   func([]byte, *tlnet.Websocket) errs.ERROR
+	BroadPresenceHandle   func([]byte, *tlnet.Websocket) errs.ERROR
 	PullMessageHandle     func([]byte, *tlnet.Websocket) errs.ERROR
 	VRoomHandle           func([]byte, *tlnet.Websocket) errs.ERROR
 	MessageHandle         func([]byte, *tlnet.Websocket) errs.ERROR
@@ -156,15 +156,15 @@ var (
 	CsPresenceService     func(int64, *stub.TimPresence, bool) bool
 	CsVBeanService        func(int64, *stub.VBean, bool) bool
 	CsDevice              func(string) []byte
+	Unaccess              func() []int64
+	GetALLUUIDS           func() []int64
+	//GetRemoteNode         func() []*stub.RemoteNode
 	//CsMessage func(*TimMessage, int8) bool
 	//CsPresence func(*TimPresence, int8) bool
 	//CsVBean func(*VBean) bool
 	//CsNode        func(string) int64
 	//CsWssInfo func(string) []byte
 	//Csuser    func(string, bool, int64) error
-	//GetALLUUIDS   func() []int64
 	//Client2Serve  func(string) error
-	//GetRemoteNode func() []*RemoteNode
 	//WssTt     func() int64
-	//Unaccess  func() []int64
 )
