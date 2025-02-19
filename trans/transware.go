@@ -12,8 +12,11 @@ import (
 	"github.com/donnie4w/gofer/lock"
 	"github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/amr"
+	"github.com/donnie4w/tim/log"
 	"github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tim/sys"
+	"math"
+	"os"
 	"time"
 )
 
@@ -53,9 +56,14 @@ func NewTransWare() *TransWare {
 
 func (tw *TransWare) Serve() error {
 	if sys.GetCstype() != 0 {
-		tw.tserver = newTServer(tw)
-		go tw.tserver.serve(sys.Conf.CsListen)
-		tw.registerUuid()
+		if sys.Conf.CsListen != "" && sys.Conf.CsAccess != "" {
+			tw.tserver = newTServer(tw)
+			go tw.tserver.serve(sys.Conf.CsListen)
+			tw.registerUuid()
+		} else {
+			log.FmtPrint("Cluster configuration is incomplete[cluster_listen:", sys.Conf.CsListen, "][cluster_access:", sys.Conf.CsAccess, "]")
+			os.Exit(1)
+		}
 	}
 	return nil
 }
@@ -63,12 +71,29 @@ func (tw *TransWare) Serve() error {
 func (tw *TransWare) registerUuid() {
 	defer util.Recover(nil)
 	for {
+		if r, err := amr.GetCsAccess(sys.UUID); err == nil && r == "" {
+			if amr.PutCsAccess() == nil {
+				if list, _ := sys.WssList(0, math.MaxInt64); len(list) > 0 {
+					for i, aa := range list {
+						if amr.AddAccount(aa.Node) == nil {
+							goto END
+						}
+						time.Sleep(time.Millisecond)
+						if i%10000 == 0 {
+							amr.PutCsAccess()
+						}
+					}
+				}
+			}
+		}
 		if amr.PutCsAccess() == nil {
 			break
 		} else {
 			time.Sleep(5 * time.Second)
+			log.Warn("register uuid fail")
 		}
 	}
+END:
 }
 
 func (tw *TransWare) Close() error {
@@ -177,7 +202,7 @@ func (tw *TransWare) getAndSetCsnet(uuid int64) csNet {
 		tw.numlock.Lock(uuid)
 		defer tw.numlock.Unlock(uuid)
 		if cn, b = tw.csmap.Get(uuid); !b {
-			if addr := amr.GetCsAccess(uuid); addr != "" {
+			if addr, _ := amr.GetCsAccess(uuid); addr != "" {
 				conn := newConnect(tw)
 				if conn.open(addr) == nil {
 					tw.csmap.Put(uuid, conn)
