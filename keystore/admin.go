@@ -8,7 +8,7 @@
 package keystore
 
 import (
-	. "github.com/donnie4w/gofer/keystore"
+	ks "github.com/donnie4w/gofer/keystore"
 )
 
-var Admin = NewStoreAdmin()
+var Admin = ks.NewStoreAdmin()
