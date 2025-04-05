@@ -8,25 +8,22 @@
 package amr
 
 import (
-	"github.com/donnie4w/gofer/util"
+	"github.com/donnie4w/tim/log"
 	"github.com/donnie4w/tim/sys"
-	"sync"
+	"os"
 )
 
-func init() {
-	sys.Service.Put(sys.INIT_AMR, (amrservie)(0))
+type amrStore interface {
+	put(atype AMRTYPE, key, value []byte, ttl uint64) error
+	get(atype AMRTYPE, key []byte) ([]byte, error)
+	remove(atype AMRTYPE, key []byte) error
+	append(atype AMRTYPE, key, value []byte, ttl uint64) error
+	getMutil(atype AMRTYPE, key []byte) [][]byte
+	removeKV(atype AMRTYPE, key, value []byte) error
+	close() error
 }
 
-type AMR interface {
-	Put(key, value []byte, ttl uint64)
-	Get(key []byte) []byte
-	Remove(key []byte)
-	AddAccount(node string, uuid int64)
-	RemoveAccount(node string, uuid int64)
-	GetAccount(node string) []int64
-}
-
-var amr AMR
+var amr amrStore
 
 type amrservie byte
 
@@ -35,116 +32,48 @@ func (amrservie) Serve() error {
 	case sys.CS_RAFTX:
 		amr = newRaftxAmr()
 	case sys.CS_RAX:
-		panic("unrealized rax")
+		log.FmtPrint("unrealized rax")
 	case sys.CS_REDIS:
-		panic("unrealized redis")
+		amr = newRedisAmr()
 	case sys.CS_ETCD:
-		panic("unrealized etcd")
+		amr = newEtcdAmr()
 	case sys.CS_ZOOKEEPER:
-		panic("unrealized zookeeper")
+		amr = newZkAmr()
 	default:
-		amr = newAMR()
+		log.FmtPrint("No Cluster Service")
+		amr = localAmr(1)
+		islocalamr = true
 	}
 	if amr == nil {
-		panic("amr init failed")
+		log.FmtPrint("amr init failed")
+		os.Exit(1)
 	}
 	return nil
 }
 
 func (amrservie) Close() error {
-	return nil
-}
-
-func Put(key, value []byte, ttl uint64) {
-	amr.Put(key, value, ttl)
-}
-
-func Get(key []byte) []byte {
-	return amr.Get(key)
-}
-
-func Remove(key []byte) {
-	amr.Remove(key)
-}
-
-func AddAccount(node string, uuid int64) {
-	amr.AddAccount(node, uuid)
-}
-
-func RemoveAccount(node string, uuid int64) {
-	amr.RemoveAccount(node, uuid)
-}
-
-func GetAccount(node string) []int64 {
-	return amr.GetAccount(node)
-}
-
-type simpleAmr struct {
-	mux sync.RWMutex
-	am  map[uint64]map[int64]byte
-	bm  map[uint64][]byte
-}
-
-func newAMR() AMR {
-	return &simpleAmr{am: make(map[uint64]map[int64]byte)}
-}
-
-func (a *simpleAmr) Put(key, value []byte, ttl uint64) {
-	a.mux.Lock()
-	defer a.mux.Unlock()
-	id := util.FNVHash64(key)
-	a.bm[id] = value
-}
-
-func (a *simpleAmr) Get(key []byte) []byte {
-	a.mux.RLock()
-	defer a.mux.RUnlock()
-	id := util.FNVHash64(key)
-	v, _ := a.bm[id]
-	return v
-}
-
-func (a *simpleAmr) Remove(key []byte) {
-	a.mux.Lock()
-	defer a.mux.Unlock()
-	id := util.FNVHash64(key)
-	delete(a.bm, id)
-}
-
-func (a *simpleAmr) AddAccount(node string, uuid int64) {
-	a.mux.Lock()
-	defer a.mux.Unlock()
-	id := util.FNVHash64([]byte(node))
-	mm, ok := a.am[id]
-	if !ok {
-		mm = make(map[int64]byte)
+	if amr == nil {
+		return nil
 	}
-	mm[uuid] = 0
-	a.am[id] = mm
+	return amr.close()
 }
 
-func (a *simpleAmr) RemoveAccount(node string, uuid int64) {
-	a.mux.Lock()
-	defer a.mux.Unlock()
-	id := util.FNVHash64([]byte(node))
-	if mm, ok := a.am[id]; ok {
-		delete(mm, uuid)
-		if len(mm) == 0 {
-			delete(a.am, id)
-		}
-	}
+type localAmr byte
+
+func (a localAmr) put(atype AMRTYPE, key, value []byte, ttl uint64) error { return nil }
+func (a localAmr) get(atype AMRTYPE, key []byte) ([]byte, error) {
+	return nil, nil
+}
+func (a localAmr) remove(atype AMRTYPE, key []byte) error { return nil }
+
+func (a localAmr) append(atype AMRTYPE, key, value []byte, ttl uint64) error { return nil }
+
+func (a localAmr) getMutil(atype AMRTYPE, key []byte) [][]byte {
+	return [][]byte{}
 }
 
-func (a *simpleAmr) GetAccount(node string) []int64 {
-	a.mux.RLock()
-	defer a.mux.RUnlock()
-	id := util.FNVHash64([]byte(node))
-	if mm, ok := a.am[id]; ok {
-		r := make([]int64, 0, len(mm))
-		for k := range mm {
-			r = append(r, k)
-		}
-		return r
-	}
+func (a localAmr) removeKV(atype AMRTYPE, key, value []byte) error { return nil }
+
+func (a localAmr) close() error {
 	return nil
 }
