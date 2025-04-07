@@ -7652,17 +7652,19 @@ type Admiface interface {
 	//  - Domain
 	//  - Tonode
 	//  - Mid
+	//  - Timeseries
 	//  - Limit
 	// 
-	PullUserMessage(ctx context.Context, fromnode string, domain string, tonode string, mid int64, limit int64) (_r *AdmMessageList, _err error)
+	PullUserMessage(ctx context.Context, fromnode string, domain string, tonode string, mid int64, timeseries int64, limit int64) (_r *AdmMessageList, _err error)
 	// Parameters:
 	//  - Fromnode
 	//  - Domain
 	//  - Tonode
 	//  - Mid
+	//  - Timeseries
 	//  - Limit
 	// 
-	PullRoomMessage(ctx context.Context, fromnode string, domain string, tonode string, mid int64, limit int64) (_r *AdmMessageList, _err error)
+	PullRoomMessage(ctx context.Context, fromnode string, domain string, tonode string, mid int64, timeseries int64, limit int64) (_r *AdmMessageList, _err error)
 	// Parameters:
 	//  - Fromnode
 	//  - Domain
@@ -8216,14 +8218,16 @@ func (p *AdmifaceClient) Blockroster(ctx context.Context, fromnode string, domai
 //  - Domain
 //  - Tonode
 //  - Mid
+//  - Timeseries
 //  - Limit
 // 
-func (p *AdmifaceClient) PullUserMessage(ctx context.Context, fromnode string, domain string, tonode string, mid int64, limit int64) (_r *AdmMessageList, _err error) {
+func (p *AdmifaceClient) PullUserMessage(ctx context.Context, fromnode string, domain string, tonode string, mid int64, timeseries int64, limit int64) (_r *AdmMessageList, _err error) {
 	var _args122 AdmifacePullUserMessageArgs
 	_args122.Fromnode = fromnode
 	_args122.Domain = domain
 	_args122.Tonode = tonode
 	_args122.Mid = mid
+	_args122.Timeseries = timeseries
 	_args122.Limit = limit
 	var _result124 AdmifacePullUserMessageResult
 	var _meta123 thrift.ResponseMeta
@@ -8243,14 +8247,16 @@ func (p *AdmifaceClient) PullUserMessage(ctx context.Context, fromnode string, d
 //  - Domain
 //  - Tonode
 //  - Mid
+//  - Timeseries
 //  - Limit
 // 
-func (p *AdmifaceClient) PullRoomMessage(ctx context.Context, fromnode string, domain string, tonode string, mid int64, limit int64) (_r *AdmMessageList, _err error) {
+func (p *AdmifaceClient) PullRoomMessage(ctx context.Context, fromnode string, domain string, tonode string, mid int64, timeseries int64, limit int64) (_r *AdmMessageList, _err error) {
 	var _args126 AdmifacePullRoomMessageArgs
 	_args126.Fromnode = fromnode
 	_args126.Domain = domain
 	_args126.Tonode = tonode
 	_args126.Mid = mid
+	_args126.Timeseries = timeseries
 	_args126.Limit = limit
 	var _result128 AdmifacePullRoomMessageResult
 	var _meta127 thrift.ResponseMeta
@@ -10670,7 +10676,7 @@ func (p *admifaceProcessorPullUserMessage) Process(ctx context.Context, seqId in
 	}
 
 	result := AdmifacePullUserMessageResult{}
-	if retval, err2 := p.handler.PullUserMessage(ctx, args.Fromnode, args.Domain, args.Tonode, args.Mid, args.Limit); err2 != nil {
+	if retval, err2 := p.handler.PullUserMessage(ctx, args.Fromnode, args.Domain, args.Tonode, args.Mid, args.Timeseries, args.Limit); err2 != nil {
 		tickerCancel()
 		err = thrift.WrapTException(err2)
 		if errors.Is(err2, thrift.ErrAbandonRequest) {
@@ -10765,7 +10771,7 @@ func (p *admifaceProcessorPullRoomMessage) Process(ctx context.Context, seqId in
 	}
 
 	result := AdmifacePullRoomMessageResult{}
-	if retval, err2 := p.handler.PullRoomMessage(ctx, args.Fromnode, args.Domain, args.Tonode, args.Mid, args.Limit); err2 != nil {
+	if retval, err2 := p.handler.PullRoomMessage(ctx, args.Fromnode, args.Domain, args.Tonode, args.Mid, args.Timeseries, args.Limit); err2 != nil {
 		tickerCancel()
 		err = thrift.WrapTException(err2)
 		if errors.Is(err2, thrift.ErrAbandonRequest) {
@@ -17864,6 +17870,7 @@ var _ slog.LogValuer = (*AdmifaceBlockrosterResult)(nil)
 //  - Domain
 //  - Tonode
 //  - Mid
+//  - Timeseries
 //  - Limit
 // 
 type AdmifacePullUserMessageArgs struct {
@@ -17871,7 +17878,8 @@ type AdmifacePullUserMessageArgs struct {
 	Domain string `thrift:"domain,2" db:"domain" json:"domain"`
 	Tonode string `thrift:"tonode,3" db:"tonode" json:"tonode"`
 	Mid int64 `thrift:"mid,4" db:"mid" json:"mid"`
-	Limit int64 `thrift:"limit,5" db:"limit" json:"limit"`
+	Timeseries int64 `thrift:"timeseries,5" db:"timeseries" json:"timeseries"`
+	Limit int64 `thrift:"limit,6" db:"limit" json:"limit"`
 }
 
 func NewAdmifacePullUserMessageArgs() *AdmifacePullUserMessageArgs {
@@ -17900,6 +17908,12 @@ func (p *AdmifacePullUserMessageArgs) GetTonode() string {
 
 func (p *AdmifacePullUserMessageArgs) GetMid() int64 {
 	return p.Mid
+}
+
+
+
+func (p *AdmifacePullUserMessageArgs) GetTimeseries() int64 {
+	return p.Timeseries
 }
 
 
@@ -17973,6 +17987,16 @@ func (p *AdmifacePullUserMessageArgs) Read(ctx context.Context, iprot thrift.TPr
 					return err
 				}
 			}
+		case 6:
+			if fieldTypeId == thrift.I64 {
+				if err := p.ReadField6(ctx, iprot); err != nil {
+					return err
+				}
+			} else {
+				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+					return err
+				}
+			}
 		default:
 			if err := iprot.Skip(ctx, fieldTypeId); err != nil {
 				return err
@@ -18028,6 +18052,15 @@ func (p *AdmifacePullUserMessageArgs) ReadField5(ctx context.Context, iprot thri
 	if v, err := iprot.ReadI64(ctx); err != nil {
 		return thrift.PrependError("error reading field 5: ", err)
 	} else {
+		p.Timeseries = v
+	}
+	return nil
+}
+
+func (p *AdmifacePullUserMessageArgs) ReadField6(ctx context.Context, iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI64(ctx); err != nil {
+		return thrift.PrependError("error reading field 6: ", err)
+	} else {
 		p.Limit = v
 	}
 	return nil
@@ -18043,6 +18076,7 @@ func (p *AdmifacePullUserMessageArgs) Write(ctx context.Context, oprot thrift.TP
 		if err := p.writeField3(ctx, oprot); err != nil { return err }
 		if err := p.writeField4(ctx, oprot); err != nil { return err }
 		if err := p.writeField5(ctx, oprot); err != nil { return err }
+		if err := p.writeField6(ctx, oprot); err != nil { return err }
 	}
 	if err := oprot.WriteFieldStop(ctx); err != nil {
 		return thrift.PrependError("write field stop error: ", err)
@@ -18106,14 +18140,27 @@ func (p *AdmifacePullUserMessageArgs) writeField4(ctx context.Context, oprot thr
 }
 
 func (p *AdmifacePullUserMessageArgs) writeField5(ctx context.Context, oprot thrift.TProtocol) (err error) {
-	if err := oprot.WriteFieldBegin(ctx, "limit", thrift.I64, 5); err != nil {
-		return thrift.PrependError(fmt.Sprintf("%T write field begin error 5:limit: ", p), err)
+	if err := oprot.WriteFieldBegin(ctx, "timeseries", thrift.I64, 5); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field begin error 5:timeseries: ", p), err)
 	}
-	if err := oprot.WriteI64(ctx, int64(p.Limit)); err != nil {
-		return thrift.PrependError(fmt.Sprintf("%T.limit (5) field write error: ", p), err)
+	if err := oprot.WriteI64(ctx, int64(p.Timeseries)); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T.timeseries (5) field write error: ", p), err)
 	}
 	if err := oprot.WriteFieldEnd(ctx); err != nil {
-		return thrift.PrependError(fmt.Sprintf("%T write field end error 5:limit: ", p), err)
+		return thrift.PrependError(fmt.Sprintf("%T write field end error 5:timeseries: ", p), err)
+	}
+	return err
+}
+
+func (p *AdmifacePullUserMessageArgs) writeField6(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin(ctx, "limit", thrift.I64, 6); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field begin error 6:limit: ", p), err)
+	}
+	if err := oprot.WriteI64(ctx, int64(p.Limit)); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T.limit (6) field write error: ", p), err)
+	}
+	if err := oprot.WriteFieldEnd(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field end error 6:limit: ", p), err)
 	}
 	return err
 }
@@ -18266,6 +18313,7 @@ var _ slog.LogValuer = (*AdmifacePullUserMessageResult)(nil)
 //  - Domain
 //  - Tonode
 //  - Mid
+//  - Timeseries
 //  - Limit
 // 
 type AdmifacePullRoomMessageArgs struct {
@@ -18273,7 +18321,8 @@ type AdmifacePullRoomMessageArgs struct {
 	Domain string `thrift:"domain,2" db:"domain" json:"domain"`
 	Tonode string `thrift:"tonode,3" db:"tonode" json:"tonode"`
 	Mid int64 `thrift:"mid,4" db:"mid" json:"mid"`
-	Limit int64 `thrift:"limit,5" db:"limit" json:"limit"`
+	Timeseries int64 `thrift:"timeseries,5" db:"timeseries" json:"timeseries"`
+	Limit int64 `thrift:"limit,6" db:"limit" json:"limit"`
 }
 
 func NewAdmifacePullRoomMessageArgs() *AdmifacePullRoomMessageArgs {
@@ -18302,6 +18351,12 @@ func (p *AdmifacePullRoomMessageArgs) GetTonode() string {
 
 func (p *AdmifacePullRoomMessageArgs) GetMid() int64 {
 	return p.Mid
+}
+
+
+
+func (p *AdmifacePullRoomMessageArgs) GetTimeseries() int64 {
+	return p.Timeseries
 }
 
 
@@ -18375,6 +18430,16 @@ func (p *AdmifacePullRoomMessageArgs) Read(ctx context.Context, iprot thrift.TPr
 					return err
 				}
 			}
+		case 6:
+			if fieldTypeId == thrift.I64 {
+				if err := p.ReadField6(ctx, iprot); err != nil {
+					return err
+				}
+			} else {
+				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+					return err
+				}
+			}
 		default:
 			if err := iprot.Skip(ctx, fieldTypeId); err != nil {
 				return err
@@ -18430,6 +18495,15 @@ func (p *AdmifacePullRoomMessageArgs) ReadField5(ctx context.Context, iprot thri
 	if v, err := iprot.ReadI64(ctx); err != nil {
 		return thrift.PrependError("error reading field 5: ", err)
 	} else {
+		p.Timeseries = v
+	}
+	return nil
+}
+
+func (p *AdmifacePullRoomMessageArgs) ReadField6(ctx context.Context, iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI64(ctx); err != nil {
+		return thrift.PrependError("error reading field 6: ", err)
+	} else {
 		p.Limit = v
 	}
 	return nil
@@ -18445,6 +18519,7 @@ func (p *AdmifacePullRoomMessageArgs) Write(ctx context.Context, oprot thrift.TP
 		if err := p.writeField3(ctx, oprot); err != nil { return err }
 		if err := p.writeField4(ctx, oprot); err != nil { return err }
 		if err := p.writeField5(ctx, oprot); err != nil { return err }
+		if err := p.writeField6(ctx, oprot); err != nil { return err }
 	}
 	if err := oprot.WriteFieldStop(ctx); err != nil {
 		return thrift.PrependError("write field stop error: ", err)
@@ -18508,14 +18583,27 @@ func (p *AdmifacePullRoomMessageArgs) writeField4(ctx context.Context, oprot thr
 }
 
 func (p *AdmifacePullRoomMessageArgs) writeField5(ctx context.Context, oprot thrift.TProtocol) (err error) {
-	if err := oprot.WriteFieldBegin(ctx, "limit", thrift.I64, 5); err != nil {
-		return thrift.PrependError(fmt.Sprintf("%T write field begin error 5:limit: ", p), err)
+	if err := oprot.WriteFieldBegin(ctx, "timeseries", thrift.I64, 5); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field begin error 5:timeseries: ", p), err)
 	}
-	if err := oprot.WriteI64(ctx, int64(p.Limit)); err != nil {
-		return thrift.PrependError(fmt.Sprintf("%T.limit (5) field write error: ", p), err)
+	if err := oprot.WriteI64(ctx, int64(p.Timeseries)); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T.timeseries (5) field write error: ", p), err)
 	}
 	if err := oprot.WriteFieldEnd(ctx); err != nil {
-		return thrift.PrependError(fmt.Sprintf("%T write field end error 5:limit: ", p), err)
+		return thrift.PrependError(fmt.Sprintf("%T write field end error 5:timeseries: ", p), err)
+	}
+	return err
+}
+
+func (p *AdmifacePullRoomMessageArgs) writeField6(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin(ctx, "limit", thrift.I64, 6); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field begin error 6:limit: ", p), err)
+	}
+	if err := oprot.WriteI64(ctx, int64(p.Limit)); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T.limit (6) field write error: ", p), err)
+	}
+	if err := oprot.WriteFieldEnd(ctx); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field end error 6:limit: ", p), err)
 	}
 	return err
 }
