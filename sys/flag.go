@@ -10,7 +10,6 @@ package sys
 import (
 	"flag"
 	"fmt"
-	"github.com/donnie4w/gofer/hashmap"
 	"github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/log"
 	"github.com/donnie4w/tim/stub"
@@ -24,13 +23,11 @@ import (
 func praseflag() {
 	flag.StringVar(&TIMJSON, "c", "tim.json", "configuration file of tim in json")
 	flag.StringVar(&ORIGIN, "origin", "", "origin for websocket")
-	flag.StringVar(&KEYSTORE, "ks", "", "dir of keystore")
-	flag.BoolVar(&LOGDEBUG, "log", false, "debug log on or off")
 	flag.IntVar(&GOGC, "gc", -1, "a collection is triggered when the ratio of freshly allocated data")
 	flag.Usage = usage
 	flag.Parse()
 	flag.Usage()
-	parsec()
+	parser()
 
 	if Conf.Pwd == "" {
 		Conf.Pwd = defaultPwd
@@ -51,7 +48,7 @@ func praseflag() {
 		MaxBackup = *Conf.MaxBackup
 	}
 	if Conf.NodeMaxlength != nil {
-		NodeMaxlength = *Conf.NodeMaxlength
+		NodeMaxSize = *Conf.NodeMaxlength
 	}
 	if Conf.RequestRate <= 0 {
 		Conf.RequestRate = defaultLimitRate
@@ -84,9 +81,7 @@ func praseflag() {
 	if Conf.Bind != nil {
 		Bind = *Conf.Bind
 	}
-	if Conf.Keystore != nil {
-		KEYSTORE = *Conf.Keystore
-	}
+
 	if Conf.TTL <= 0 {
 		Conf.TTL = defaultTTL
 	}
@@ -97,12 +92,17 @@ func praseflag() {
 		Conf.TokenTimeout = Conf.TokenTimeout * 1e9
 	}
 
-	if Conf.Security != nil && Conf.BlockAPI != nil {
-		BlockApiMap = hashmap.NewMap[TIMTYPE, int8]()
-		for _, v := range Conf.BlockAPI {
-			BlockApiMap.Put(TIMTYPE(v), 0)
-		}
+	if Conf.AdminAccount == nil {
+		Conf.AdminAccount = defaultAdminAccount
 	}
+
+	//if Conf.Security != nil && Conf.BlockAPI != nil {
+	//	BlockApiMap = hashmap.NewMap[TIMTYPE, int8]()
+	//	for _, v := range Conf.BlockAPI {
+	//		BlockApiMap.Put(TIMTYPE(v), 0)
+	//	}
+	//}
+
 	debug.SetMemoryLimit(int64(Conf.Memlimit) * MB)
 	debug.SetGCPercent(GOGC)
 	Stat = &stat{}
@@ -123,19 +123,15 @@ func Service(init int, se Server) {
 	service.Put(init, se)
 }
 
-func parsec() {
-	var err error
-	if defaultConf != "" {
-		Conf, _ = util.JsonDecode[*stub.ConfBean]([]byte(defaultConf))
-	} else if bs, e := util.ReadFile(TIMJSON); e == nil {
-		Conf, err = util.JsonDecode[*stub.ConfBean](bs)
-		if err != nil {
+func parser() {
+	if bs, err := util.ReadFile(TIMJSON); err == nil {
+		if Conf, err = util.JsonDecode[*stub.ConfBean](bs); err != nil {
 			log.FmtPrint("configuration file[", TIMJSON, "] parsing error:", err)
+			os.Exit(1)
 		}
-	}
-	if Conf == nil {
-		log.FmtPrint("empty config")
-		Conf = &stub.ConfBean{}
+	} else {
+		os.WriteFile(TIMJSON, []byte(dfaultCfg), os.ModePerm)
+		Conf, _ = util.JsonDecode[*stub.ConfBean]([]byte(dfaultCfg))
 	}
 }
 
