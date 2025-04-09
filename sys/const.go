@@ -62,14 +62,43 @@ const (
 	SOURCE_ROOM int8 = 3
 )
 
+var (
+	ONLINE   int8 = 1
+	OFFLIINE int8 = 2
+)
+
 const (
 	_ = iota
-	INIT_DATA
-	INIT_KEYSTORE
-	INIT_TIMNET
-	INIT_TC
-	INIT_TNET
-	INIT_ADM
+	INIT_SYS
 	INIT_AMR
+	INIT_KEYSTORE
+	INIT_DATA
+	INIT_TC
+	INIT_MESH
+	INIT_ADM
 	INIT_TRANS
+	INIT_INET
+)
+
+const (
+	timlogo = `
+        ████████████████╗ ████╗ ██████╗     ██████╗
+        ╚═════████╔═════╝ ████║ ████████╗ ████████║
+              ████║       ████║ ████╔████████╔████║
+              ████║       ████║ ████║ ╚████╔═╝████║
+              ████║       ████║ ████║  ╚═══╝  ████║
+              ╚═══╝       ╚═══╝ ╚═══╝         ╚═══╝
+`
+
+	dfaultCfg = `{
+	"client_listen": ":20003",
+	"webadmin_listen": ":20002",
+	"server_api_listen": ":20001",
+	"connect_limit": 1000000,
+	"request_rate": 100,
+	"memLimit": 512,
+	"inlinedb": {
+		"sqlite": {"dbname": "tim.db"}
+	}
+}`
 )
