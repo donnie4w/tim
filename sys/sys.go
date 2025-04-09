@@ -20,7 +20,7 @@ type server byte
 
 func (s server) Serve() error {
 	praseflag()
-	log.Info(timlogo)
+	log.Warn(timlogo)
 	return nil
 }
 
@@ -33,13 +33,8 @@ func (s server) Close() (err error) {
 	return
 }
 
-func AddNode(addr string) (err error) {
-	//return Client2Serve(addr)
-	return nil
-}
-
 func UseBuiltInData() bool {
-	return Conf.InlineDB != nil || len(Conf.InlineExtent) > 0 || Conf.Tldb != nil || len(Conf.TldbExtent) > 0
+	return Conf.InlineDB != nil || len(Conf.InlineExtent) > 0 || Conf.Tldb != nil || len(Conf.TldbExtent) > 0 || Conf.Mongodb != nil || len(Conf.MongodbExtent) > 0
 }
 
 type Server interface {
@@ -73,6 +68,9 @@ func GetDBMOD() DBMOD {
 	}
 	if Conf.Tldb != nil || len(Conf.TldbExtent) > 0 {
 		return TLDB
+	}
+	if Conf.Mongodb != nil || len(Conf.MongodbExtent) > 0 {
+		return MONGODB
 	}
 	if Conf.ExternalDB != nil {
 		return EXTERNALDB
