@@ -299,6 +299,10 @@ func (wsk *WsSock) pingTo() bool {
 
 var syncIndex atomic.Int32
 
+func (wsk *WsSock) Send(ts thrift.TStruct, tt sys.TIMTYPE) error {
+	return wsk.send(ts, tt, false)
+}
+
 func (wsk *WsSock) send(ts thrift.TStruct, tt sys.TIMTYPE, sync bool) (err error) {
 	lenght := 1
 	if sync {
