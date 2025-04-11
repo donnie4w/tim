@@ -9,10 +9,6 @@ package service
 
 import (
 	"bytes"
-	"sort"
-	"strings"
-	"time"
-
 	"github.com/donnie4w/gofer/base58"
 	goutil "github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/amr"
@@ -24,6 +20,10 @@ import (
 	"github.com/donnie4w/tim/util"
 	"github.com/donnie4w/tim/vgate"
 	"github.com/donnie4w/tlnet"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
 )
 
 var service = &timservice{}
@@ -49,7 +49,7 @@ func (tss *timservice) register(bs []byte) (node string, e errs.ERROR) {
 		ta, err = goutil.TDecode(bs[1:], &stub.TimAuth{})
 	}
 	if err == nil {
-		node, e = data.Service.Register(*ta.Name, *ta.Pwd, ta.Domain)
+		node, e = data.Service.Register(ta.GetName(), ta.GetPwd(), ta.Domain)
 	} else {
 		e = errs.ERR_PARAMS
 	}
@@ -110,7 +110,7 @@ func (tss *timservice) token(bs []byte) (_r string, e errs.ERROR) {
 		return _r, errs.ERR_PARAMS
 	}
 	var node string
-	if node, e = data.Service.AuthNode(*ta.Name, *ta.Pwd, ta.Domain); e == nil {
+	if node, e = data.Service.AuthNode(ta.GetName(), ta.GetPwd(), ta.Domain); e == nil {
 		tid := &stub.Tid{Node: node, Domain: ta.Domain, Extend: ta.Extend}
 		_r = token()
 		cache.TokenCache.Put(_r, tid)
@@ -163,7 +163,7 @@ func (tss *timservice) auth(bs []byte, ws *tlnet.Websocket) (e errs.ERROR) {
 					typebs := sys.DeviceTypeList(tid.Node)
 					c := 0
 					for _, u := range append(dtl, typebs...) {
-						if u == byte(*tid.Termtyp) {
+						if u == byte(tid.GetTermtyp()) {
 							c++
 						}
 					}
@@ -291,71 +291,6 @@ func (tss *timservice) wssMessage(tm *stub.TimMessage, ws *tlnet.Websocket) (_r 
 	if wss, b := wsware.Get(ws); b {
 		tm.FromTid = wss.tid
 		return tss.messagehandle(tm, true)
-		//tm.FromTid = wss.tid
-		//if tm.ToTid != nil {
-		//	tm.ToTid.Domain = wss.tid.Domain
-		//}
-		//if !existUser(tm.ToTid) && !existGroup(tm.RoomTid) {
-		//	return errs.ERR_ACCOUNT
-		//}
-		//if tm.MsType == sys.SOURCE_ROOM {
-		//	if tm.RoomTid != nil && AuthGroup(tm.RoomTid.Node, tm.FromTid.Node, tm.FromTid.Domain) {
-		//		var err error
-		//		switch tm.OdType {
-		//		case sys.ORDER_INOF:
-		//			err = data.Service.SaveMessage(tm)
-		//		case sys.ORDER_REVOKE:
-		//			if tm.Mid == nil || *tm.Mid == 0 {
-		//				return errs.ERR_PARAMS
-		//			}
-		//			tid := util.ChatIdByRoom(tm.RoomTid.Node, wss.tid.Domain)
-		//			if chatId, fid, err := data.Service.GetChatIdByMid(tid, *tm.Mid); err == nil && chatId != nil {
-		//				b1 := uint64(goutil.BytesToInt64(chatId[0:8])) == util.CreateUUID(tm.RoomTid.Node, wss.tid.Domain)
-		//				b2 := int32(fid) == int32(goutil.FNVHash32([]byte(tm.FromTid.Node)))
-		//				if b1 && b2 {
-		//					if err = data.Service.DelMessageByMid(tid, *tm.Mid); err == nil {
-		//						t := int64(sys.SOURCE_ROOM)
-		//						wsware.SendNode(tm.FromTid.Node, &stub.TimAck{Ok: true, TimType: int8(sys.TIMREVOKEMESSAGE), N: &tm.RoomTid.Node, T: &t, T2: tm.Mid}, sys.TIMACK)
-		//					} else {
-		//						return errs.ERR_DATABASE
-		//					}
-		//				} else {
-		//					return errs.ERR_PERM_DENIED
-		//				}
-		//			} else {
-		//				return errs.ERR_PARAMS
-		//			}
-		//		case sys.ORDER_STREAM, sys.ORDER_BIGSTRING, sys.ORDER_BIGBINARY:
-		//		default:
-		//			return errs.ERR_PARAMS
-		//		}
-		//		if err == nil {
-		//			if tm.OdType == sys.ORDER_INOF {
-		//				wsware.SendNode(tm.FromTid.Node, tm, sys.TIMMESSAGE)
-		//			}
-		//			if rs := data.Service.GroupRoster(tm.RoomTid.Node); len(rs) > 0 {
-		//				tm.ToList = rs
-		//				sys.TimMessageProcessor(tm, sys.TRANS_SOURCE)
-		//			}
-		//		}
-		//	} else {
-		//		return errs.ERR_PERM_DENIED
-		//	}
-		//} else if tm.MsType == sys.SOURCE_USER {
-		//	if tm.RoomTid != nil && tm.ToTid != nil {
-		//		if AuthGroup(tm.RoomTid.Node, tm.FromTid.Node, tm.FromTid.Domain) && AuthGroup(tm.RoomTid.Node, tm.ToTid.Node, tm.FromTid.Domain) {
-		//			return tss.messagehandler(tm)
-		//		} else {
-		//			return errs.ERR_PERM_DENIED
-		//		}
-		//	} else if tm.ToTid != nil && AuthUser(tm.FromTid, tm.ToTid, false) {
-		//		return tss.messagehandler(tm)
-		//	} else {
-		//		return errs.ERR_PERM_DENIED
-		//	}
-		//} else {
-		//	return errs.ERR_PARAMS
-		//}
 	}
 	return
 }
@@ -377,15 +312,15 @@ func (tss *timservice) messagehandle(tm *stub.TimMessage, auth bool) (_r errs.ER
 			case sys.ORDER_INOF:
 				err = data.Service.SaveMessage(tm)
 			case sys.ORDER_REVOKE:
-				if tm.Mid == nil || *tm.Mid == 0 {
+				if tm.GetMid() == 0 {
 					return errs.ERR_PARAMS
 				}
 				tid := util.ChatIdByRoom(tm.RoomTid.Node, tm.FromTid.Domain)
-				if chatId, fid, err := data.Service.GetChatIdByMid(tid, *tm.Mid); err == nil && chatId != nil {
-					b1 := uint64(goutil.BytesToInt64(chatId[0:8])) == util.CreateUUID(tm.RoomTid.Node, tm.FromTid.Domain)
+				if fid, err := data.Service.GetFidByMid(tid, tm.GetMid()); err == nil && fid != 0 {
+					b1 := uint64(goutil.BytesToInt64(tid[0:8])) == util.CreateUUID(tm.RoomTid.Node, tm.FromTid.Domain)
 					b2 := int32(fid) == int32(goutil.FNVHash32([]byte(tm.FromTid.Node)))
 					if b1 && b2 {
-						if err = data.Service.DelMessageByMid(tid, *tm.Mid); err == nil {
+						if err = data.Service.DelMessageByMid(tid, tm.GetMid()); err == nil {
 							t := int64(sys.SOURCE_ROOM)
 							wsware.SendNode(tm.FromTid.Node, &stub.TimAck{Ok: true, TimType: int8(sys.TIMREVOKEMESSAGE), N: &tm.RoomTid.Node, T: &t, T2: tm.Mid}, sys.TIMACK)
 						} else {
@@ -445,18 +380,19 @@ func (tss *timservice) messagehandler(tm *stub.TimMessage, auth bool) (_r errs.E
 			return errs.ERR_DATABASE
 		}
 	case sys.ORDER_REVOKE:
-		if tm.Mid == nil || *tm.Mid == 0 {
+		if tm.GetMid() == 0 {
 			return errs.ERR_PARAMS
 		}
 		if auth && !authUser(tm.FromTid, tm.ToTid, true) {
 			return errs.ERR_PERM_DENIED
 		}
 		tid := util.ChatIdByNode(tm.FromTid.Node, tm.ToTid.Node, tm.FromTid.Domain)
-		if chatId, fid, err := data.Service.GetChatIdByMid(tid, *tm.Mid); err == nil && bytes.Equal(chatId, tid) {
+		if fid, err := data.Service.GetFidByMid(tid, tm.GetMid()); err == nil && fid != 0 {
 			if int32(fid) == int32(goutil.FNVHash32([]byte(tm.FromTid.Node))) {
-				if err = data.Service.DelMessageByMid(tid, *tm.Mid); err == nil {
-					t := int64(sys.SOURCE_USER)
-					wsware.SendNode(tm.FromTid.Node, &stub.TimAck{Ok: true, TimType: int8(sys.TIMREVOKEMESSAGE), N: &tm.ToTid.Node, T: &t, T2: tm.Mid}, sys.TIMACK)
+				if err = data.Service.DelMessageByMid(tid, tm.GetMid()); err == nil {
+					//t := int64(sys.SOURCE_USER)
+					//wsware.SendNode(tm.FromTid.Node, &stub.TimAck{Ok: true, TimType: int8(sys.TIMREVOKEMESSAGE), N: &tm.ToTid.Node, T: &t, T2: tm.Mid}, sys.TIMACK)
+					timMessage4goal(tm.FromTid.Node, tm)
 				} else {
 					return errs.ERR_DATABASE
 				}
@@ -468,18 +404,19 @@ func (tss *timservice) messagehandler(tm *stub.TimMessage, auth bool) (_r errs.E
 			return errs.ERR_PARAMS
 		}
 	case sys.ORDER_BURN:
-		if tm.Mid == nil || *tm.Mid == 0 {
+		if tm.GetMid() == 0 {
 			return errs.ERR_PARAMS
 		}
 		if auth && !authUser(tm.FromTid, tm.ToTid, true) {
 			return errs.ERR_PERM_DENIED
 		}
 		tid := util.ChatIdByNode(tm.FromTid.Node, tm.ToTid.Node, tm.FromTid.Domain)
-		if chatId, fid, err := data.Service.GetChatIdByMid(tid, *tm.Mid); err == nil && bytes.Equal(chatId, tid) {
+		if fid, err := data.Service.GetFidByMid(tid, tm.GetMid()); err == nil && fid != 0 {
 			if int32(fid) == int32(goutil.FNVHash32([]byte(tm.ToTid.Node))) {
-				if err = data.Service.DelMessageByMid(tid, *tm.Mid); err == nil {
-					t := int64(sys.SOURCE_USER)
-					wsware.SendNode(tm.FromTid.Node, &stub.TimAck{Ok: true, TimType: int8(sys.TIMBURNMESSAGE), N: &tm.ToTid.Node, T: &t, T2: tm.Mid}, sys.TIMACK)
+				if err = data.Service.DelMessageByMid(tid, tm.GetMid()); err == nil {
+					timMessage4goal(tm.FromTid.Node, tm)
+					//t := int64(sys.SOURCE_USER)
+					//wsware.SendNode(tm.FromTid.Node, &stub.TimAck{Ok: true, TimType: int8(sys.TIMBURNMESSAGE), N: &tm.ToTid.Node, T: &t, T2: tm.Mid}, sys.TIMACK)
 				} else {
 					return errs.ERR_DATABASE
 				}
@@ -550,24 +487,22 @@ func (tss *timservice) offlineMsg(ws *tlnet.Websocket) (err errs.ERROR) {
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
 	if wss, ok := wsware.Get(ws); ok {
-		if oblist, err := data.Service.GetOfflineMessage(wss.tid.Node, 10); err == nil && oblist != nil && len(oblist) > 0 {
+		if oblist, _ := data.Service.GetOfflineMessage(wss.tid.Node, 10); len(oblist) > 0 {
 			tmList := make([]*stub.TimMessage, 0)
 			isOff := true
-			ids := make([]int64, 0)
+			ids := make([]any, 0)
 			for _, ob := range oblist {
 				ids = append(ids, ob.Id)
-				if ob.Stanze != nil {
-					if tm, err := goutil.TDecode(ob.Stanze, &stub.TimMessage{}); err == nil {
+				if len(ob.Stanze) > 0 {
+					if tm, err := goutil.TDecode(ob.Stanze, &stub.TimMessage{}); err == nil && tm != nil {
 						tm.IsOffline = &isOff
 						tmList = append(tmList, tm)
-						if ob.Mid > 0 {
-							tm.Mid = &ob.Mid
-						}
+						tm.Mid = &ob.Mid
 					}
 				}
 			}
 			sort.Slice(tmList, func(i, j int) bool {
-				return *tmList[i].Timestamp < *tmList[j].Timestamp
+				return tmList[i].GetTimestamp() < tmList[j].GetTimestamp()
 			})
 			id := goutil.UUID64()
 			if wsware.SendWsWithAck(ws.Id, &stub.TimMessageList{MessageList: tmList, ID: &id}, sys.TIMOFFLINEMSG) {
@@ -576,7 +511,7 @@ func (tss *timservice) offlineMsg(ws *tlnet.Websocket) (err errs.ERROR) {
 				}
 			}
 		} else if err == nil {
-			wsware.SendWs(ws.Id, nil, sys.TIMOFFLINEMSGEND)
+			wss.Send(nil, sys.TIMOFFLINEMSGEND)
 		} else {
 			return errs.ERR_DATABASE
 		}
@@ -584,7 +519,7 @@ func (tss *timservice) offlineMsg(ws *tlnet.Websocket) (err errs.ERROR) {
 	return
 }
 
-func (tss *timservice) broadpresence(bs []byte, ws *tlnet.Websocket) (e errs.ERROR) {
+func (tss *timservice) broadPresence(bs []byte, ws *tlnet.Websocket) (e errs.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
@@ -618,7 +553,7 @@ func (tss *timservice) pullmessage(bs []byte, ws *tlnet.Websocket) (err errs.ERR
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
 	tr := newTimReq(bs)
-	if tr == nil || tr.Rtype == nil || tr.Node == nil || tr.ReqInt == nil || tr.ReqInt2 == nil || !checkNode(*tr.Node) {
+	if tr == nil || tr.Rtype == nil || tr.Node == nil || tr.ReqInt == nil || tr.ReqInt2 == nil || !checkNode(tr.GetNode()) {
 		return errs.ERR_PARAMS
 	}
 	if wss, b := wsware.Get(ws); b {
@@ -627,12 +562,17 @@ func (tss *timservice) pullmessage(bs []byte, ws *tlnet.Websocket) (err errs.ERR
 				return errs.ERR_PERM_DENIED
 			}
 		}
-		if oblist, err := data.Service.GetMessage(wss.tid.Node, wss.tid.Domain, int8(tr.GetRtype()), tr.GetNode(), tr.GetReqInt(), tr.GetReqInt2()); err == nil && len(oblist) > 0 {
-			if oblist[0].GetMid() == tr.GetReqInt() {
-				oblist = oblist[1:]
-			}
-			sort.Slice(oblist, func(i, j int) bool { return oblist[i].GetMid() > oblist[j].GetMid() })
-			wsware.SendWs(ws.Id, &stub.TimMessageList{MessageList: oblist}, sys.TIMPULLMESSAGE)
+		timestamp := int64(0)
+		mid := tr.GetReqInt()
+		if tr.GetNode2() != "" {
+			timestamp, _ = strconv.ParseInt(tr.GetNode2(), 10, 64)
+		}
+		if oblist, _ := data.Service.GetMessage(wss.tid.Node, wss.tid.Domain, int8(tr.GetRtype()), tr.GetNode(), mid, timestamp, tr.GetReqInt2()); len(oblist) > 0 {
+			//if oblist[0].GetMid() == tr.GetReqInt() {
+			//	oblist = oblist[1:]
+			//}
+			//sort.Slice(oblist, func(i, j int) bool { return oblist[i].GetTimestamp() > oblist[j].GetTimestamp() })
+			wss.Send(&stub.TimMessageList{MessageList: oblist}, sys.TIMPULLMESSAGE)
 		}
 	}
 	return
@@ -642,9 +582,6 @@ func (tss *timservice) osvroomprocess(node string, rtype int8) (_r string) {
 	switch rtype {
 	case 1:
 		_r = vgate.VGate.NewVRoom(node)
-		//if sys.CsVBean(&VBean{Rtype: 1, Vnode: vnode, FoundNode: &node}) {
-		//	_r = vnode
-		//}
 	}
 	return
 }
@@ -662,23 +599,23 @@ func (tss *timservice) vroomHandle(bs []byte, ws *tlnet.Websocket) (err errs.ERR
 		switch sys.TIMTYPE(tr.GetRtype()) {
 		case sys.VROOM_NEW:
 			vnode := vgate.VGate.NewVRoom(wss.tid.Node)
-			wsware.SendWs(ws.Id, &stub.TimAck{Ok: true, TimType: int8(sys.TIMVROOM), N: &vnode, T: &t}, sys.TIMACK)
+			wss.Send(&stub.TimAck{Ok: true, TimType: int8(sys.TIMVROOM), N: &vnode, T: &t}, sys.TIMACK)
 		case sys.VROOM_REMOVE:
 			if tr.Node == nil || !util.CheckNode(tr.GetNode()) {
 				return errs.ERR_PARAMS
 			}
 			vgate.VGate.Remove(wss.tid.Node, tr.GetNode())
-			wsware.SendWs(ws.Id, &stub.TimAck{Ok: true, TimType: int8(sys.TIMVROOM), N: tr.Node, T: &t}, sys.TIMACK)
+			wss.Send(&stub.TimAck{Ok: true, TimType: int8(sys.TIMVROOM), N: tr.Node, T: &t}, sys.TIMACK)
 		case sys.VROOM_ADDAUTH:
 			if tr.Node == nil || tr.Node2 == nil || !util.CheckNode(tr.GetNode()) || !checkNode(tr.GetNode2()) {
 				return errs.ERR_PARAMS
 			}
-			wsware.SendWs(ws.Id, &stub.TimAck{Ok: false, TimType: int8(sys.TIMVROOM), N: tr.Node2, T: &t}, sys.TIMACK)
+			wss.Send(&stub.TimAck{Ok: false, TimType: int8(sys.TIMVROOM), N: tr.Node2, T: &t}, sys.TIMACK)
 		case sys.VROOM_DELAUTH:
 			if tr.Node == nil || tr.Node2 == nil || !util.CheckNode(tr.GetNode()) || !util.CheckNode(tr.GetNode2()) {
 				return errs.ERR_PARAMS
 			}
-			wsware.SendWs(ws.Id, &stub.TimAck{Ok: false, TimType: int8(sys.TIMVROOM), N: tr.Node2, T: &t}, sys.TIMACK)
+			wss.Send(&stub.TimAck{Ok: false, TimType: int8(sys.TIMVROOM), N: tr.Node2, T: &t}, sys.TIMACK)
 		case sys.VROOM_SUB:
 			if tr.Node == nil || !util.CheckNode(tr.GetNode()) {
 				return errs.ERR_PARAMS
@@ -691,7 +628,7 @@ func (tss *timservice) vroomHandle(bs []byte, ws *tlnet.Websocket) (err errs.ERR
 			}
 			if success {
 				if _, err = sys.TimSteamProcessor(&stub.VBean{Rtype: int8(sys.VROOM_SUB), Vnode: tr.GetNode(), Rnode: &wss.tid.Node}, sys.TRANS_SOURCE); err == nil {
-					wsware.SendWs(ws.Id, &stub.TimAck{Ok: true, TimType: int8(sys.TIMVROOM), N: tr.Node, T: &t}, sys.TIMACK)
+					wss.Send(&stub.TimAck{Ok: true, TimType: int8(sys.TIMVROOM), N: tr.Node, T: &t}, sys.TIMACK)
 				}
 			} else {
 				return errs.ERR_UNDEFINED
@@ -703,7 +640,7 @@ func (tss *timservice) vroomHandle(bs []byte, ws *tlnet.Websocket) (err errs.ERR
 			if r, b := vgate.VGate.UnSub(tr.GetNode(), wss.ws.Id); b && r == 0 {
 				sys.TimSteamProcessor(&stub.VBean{Rtype: int8(sys.VROOM_UNSUB), Vnode: tr.GetNode(), Rnode: &wss.tid.Node}, sys.TRANS_SOURCE)
 			}
-			wsware.SendWs(ws.Id, &stub.TimAck{Ok: true, TimType: int8(sys.TIMVROOM), N: tr.Node, T: &t}, sys.TIMACK)
+			wss.Send(&stub.TimAck{Ok: true, TimType: int8(sys.TIMVROOM), N: tr.Node, T: &t}, sys.TIMACK)
 		default:
 			return errs.ERR_PARAMS
 		}
@@ -730,7 +667,7 @@ func (tss *timservice) streamhandler(t *stub.TimStream, ws *tlnet.Websocket) (er
 				auth = vr.AuthStream(wss.tid.Node)
 			}
 			if !auth {
-				wsware.SendWs(ws.Id, &stub.TimAck{Ok: false, TimType: int8(sys.TIMSTREAM), Error: errs.ERR_PERM_DENIED.TimError(), N: &t.VNode}, sys.TIMACK)
+				wss.Send(&stub.TimAck{Ok: false, TimType: int8(sys.TIMSTREAM), Error: errs.ERR_PERM_DENIED.TimError(), N: &t.VNode}, sys.TIMACK)
 				return
 			}
 			csvb := &stub.VBean{Vnode: t.VNode, Rnode: &wss.tid.Node, Body: t.Body, Dtype: t.Dtype, Rtype: int8(sys.VROOM_MESSAGE), StreamId: &t.ID}
