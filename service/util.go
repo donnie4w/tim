@@ -34,7 +34,7 @@ func init() {
 	sys.PresenceHandle = service.presence
 	sys.PullMessageHandle = service.pullmessage
 	sys.OfflinemsgHandle = service.offlineMsg
-	sys.BroadpresenceHandle = service.broadpresence
+	sys.BroadPresenceHandle = service.broadPresence
 	sys.BusinessHandle = service.business
 	sys.VRoomHandle = service.vroomHandle
 	sys.StreamHandle = service.streamHandle
@@ -44,7 +44,7 @@ func init() {
 	sys.NodeInfoHandle = service.nodeinfo
 	sys.AuthRoster = authRoster
 	sys.AuthGroupuser = authGroupuser
-	sys.OsModify = service.sysmodify
+	sys.OsModify = service.sysModify
 	sys.OsMessage = sysMessage
 	sys.OsPresence = sysPresence
 	sys.OsUserBean = service.osuserbean
@@ -227,7 +227,7 @@ func checkTid(tid *Tid) (_r bool) {
 		return util.CheckNode(tid.Node)
 	}
 
-	if tid != nil && len(tid.Node) > sys.NodeMaxlength {
+	if tid != nil && len(tid.Node) > sys.NodeMaxSize {
 		return false
 	}
 	return true
@@ -237,7 +237,7 @@ func checkNode(node string) (_r bool) {
 	if sys.UseBuiltInData() && node != "" {
 		return util.CheckNode(node)
 	}
-	if len(node) > sys.NodeMaxlength {
+	if len(node) > sys.NodeMaxSize {
 		return false
 	}
 	return true
@@ -246,7 +246,7 @@ func checkNode(node string) (_r bool) {
 func checkList(ls []string) (_r bool) {
 	if sys.UseBuiltInData() && ls != nil {
 		for _, u := range ls {
-			if len(u) > sys.NodeMaxlength {
+			if len(u) > sys.NodeMaxSize {
 				return false
 			}
 			if !util.CheckNode(u) {
