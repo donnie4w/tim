@@ -12,6 +12,7 @@ import (
 	"github.com/donnie4w/gofer/hashmap"
 	goutil "github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/stub"
+	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
 	"sync"
 )
@@ -63,7 +64,7 @@ func (m *mqBean) Sub(topicType TopicType, id int64, f func(any)) error {
 
 func (m *mqBean) check(topicType TopicType) bool {
 	switch topicType {
-	case ONLINE:
+	case ONLINESTATUS:
 		return true
 	}
 	return false
@@ -92,18 +93,19 @@ func (m *mqBean) Push(topicType TopicType, bean any) {
 
 type TopicType int8
 
-var ONLINE TopicType = 1
+var ONLINESTATUS TopicType = 1
 
 func PushOnline(node string, on bool) {
 	ab := stub.NewAdmSubBean()
-	st, status := int8(ONLINE), int8(1)
-	if !on {
-		status = 0
-	}
+	st := int8(ONLINESTATUS)
 	ab.SubType = &st
 	asob := stub.NewAdmSubOnlineBean()
 	asob.Node = &node
-	asob.Status = &status
+	if on {
+		asob.Status = &sys.ONLINE
+	} else {
+		asob.Status = &sys.OFFLIINE
+	}
 	ab.Bs = goutil.TEncode(asob)
-	Push(ONLINE, ab)
+	Push(ONLINESTATUS, ab)
 }
