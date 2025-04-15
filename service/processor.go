@@ -12,55 +12,11 @@ import (
 	"github.com/donnie4w/tim/amr"
 	"github.com/donnie4w/tim/data"
 	"github.com/donnie4w/tim/errs"
-	"github.com/donnie4w/tim/log"
 	"github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
 	"github.com/donnie4w/tim/vgate"
 )
-
-// Deprecated
-//func timMessage(tm *TimMessage, transType int8) (err errs.ERROR) {
-//	defer util.Recover()
-//	sys.Stat.TxDo()
-//	defer sys.Stat.TxDone()
-//	if toTid := tm.ToTid; toTid != nil {
-//		switch transType {
-//		case sys.TRANS_CONSISHASH:
-//			sys.CsMessage(tm, sys.TRANS_CONSISHASH)
-//		case sys.TRANS_SOURCE:
-//			sys.CsMessage(tm, sys.TRANS_SOURCE)
-//		case sys.TRANS_STAFF:
-//			sys.CsMessage(tm, sys.TRANS_STAFF)
-//		case sys.TRANS_GOAL:
-//			ol := false
-//			node := tm.ToTid.Node
-//			if wsware.hasUser(node) {
-//				if tm.OdType != sys.ORDER_STREAM && tm.OdType != sys.ORDER_BIGSTRING && tm.OdType != sys.ORDER_BIGBINARY {
-//					if wsware.SendNodeWithAck(node, tm, sys.TIMMESSAGE) {
-//						ol = true
-//					}
-//				} else if tm.OdType == sys.ORDER_BIGSTRING {
-//					wsware.SendBigData(tm.ToTid.Node, []byte(tm.FromTid.Node+sys.SEP_STR+tm.GetDataString()), sys.TIMBIGSTRING)
-//				} else if tm.OdType == sys.ORDER_BIGBINARY {
-//					buf := NewBufferWithCapacity(len(tm.FromTid.Node) + 1 + len(tm.GetDataBinary()))
-//					buf.WriteString(tm.FromTid.Node)
-//					buf.WriteByte(sys.SEP_BIN)
-//					buf.Write(tm.GetDataBinary())
-//					wsware.SendBigData(tm.ToTid.Node, buf.Bytes(), sys.TIMBIGBINARY)
-//				} else {
-//					wsware.SendNode(node, tm, sys.TIMMESSAGE)
-//				}
-//			}
-//			if !ol && tm.OdType != sys.ORDER_STREAM && tm.OdType != sys.ORDER_BIGSTRING && tm.OdType != sys.ORDER_BIGBINARY {
-//				data.Service.SaveOfflineMessage(tm)
-//			}
-//		}
-//	} else {
-//		err = errs.ERR_PARAMS
-//	}
-//	return
-//}
 
 func timMessageProcessor(tm *stub.TimMessage, transType int8) (err errs.ERROR) {
 	defer util.Recover()
@@ -115,11 +71,7 @@ func timMessageProcessor(tm *stub.TimMessage, transType int8) (err errs.ERROR) {
 		if len(tm.ToList) > 0 {
 			list := tm.ToList
 			tm.ToList = nil
-			if tm.ToTid == nil {
-				tm.ToTid = stub.NewTid()
-			}
 			for _, node := range list {
-				tm.ToTid.Node = node
 				timMessage4goal(node, tm)
 			}
 		} else if tm.ToTid != nil {
@@ -131,50 +83,27 @@ func timMessageProcessor(tm *stub.TimMessage, transType int8) (err errs.ERROR) {
 
 func timMessage4goal(node string, tm *stub.TimMessage) {
 	ol := false
-	//node := tm.ToTid.Node
 	if wsware.hasUser(node) {
 		if tm.OdType != sys.ORDER_STREAM && tm.OdType != sys.ORDER_BIGSTRING && tm.OdType != sys.ORDER_BIGBINARY {
 			if wsware.SendNodeWithAck(node, tm, sys.TIMMESSAGE) {
 				ol = true
 			}
 		} else if tm.OdType == sys.ORDER_BIGSTRING {
-			wsware.SendBigData(tm.ToTid.Node, []byte(tm.FromTid.Node+sys.SEP_STR+tm.GetDataString()), sys.TIMBIGSTRING)
+			wsware.SendBigData(node, []byte(tm.FromTid.Node+sys.SEP_STR+tm.GetDataString()), sys.TIMBIGSTRING)
 		} else if tm.OdType == sys.ORDER_BIGBINARY {
 			buf := buffer.NewBufferWithCapacity(len(tm.FromTid.Node) + 1 + len(tm.GetDataBinary()))
 			buf.WriteString(tm.FromTid.Node)
 			buf.WriteByte(sys.SEP_BIN)
 			buf.Write(tm.GetDataBinary())
-			wsware.SendBigData(tm.ToTid.Node, buf.Bytes(), sys.TIMBIGBINARY)
+			wsware.SendBigData(node, buf.Bytes(), sys.TIMBIGBINARY)
 		} else {
 			wsware.SendNode(node, tm, sys.TIMMESSAGE)
 		}
 	}
 	if !ol && tm.OdType != sys.ORDER_STREAM && tm.OdType != sys.ORDER_BIGSTRING && tm.OdType != sys.ORDER_BIGBINARY {
-		data.Service.SaveOfflineMessage(tm)
+		data.Service.SaveOfflineMessage(node, tm)
 	}
 }
-
-// Deprecated
-//func timPresence(tp *TimPresence, transType int8) (err errs.ERROR) {
-//	defer util.Recover()
-//	sys.Stat.TxDo()
-//	defer sys.Stat.TxDone()
-//	if tp.ToTid != nil || tp.ToList != nil {
-//		switch transType {
-//		case sys.TRANS_CONSISHASH:
-//			sys.CsPresence(tp, sys.TRANS_CONSISHASH)
-//		case sys.TRANS_SOURCE:
-//			sys.CsPresence(tp, sys.TRANS_SOURCE)
-//		case sys.TRANS_STAFF:
-//			sys.CsPresence(tp, sys.TRANS_STAFF)
-//		case sys.TRANS_GOAL:
-//			wsware.SendNode(tp.ToTid.Node, tp, sys.TIMPRESENCE)
-//		}
-//	} else {
-//		err = errs.ERR_PARAMS
-//	}
-//	return
-//}
 
 func timPresenceProcessor(tp *stub.TimPresence, transType int8) (err errs.ERROR) {
 	defer util.Recover()
@@ -189,7 +118,7 @@ func timPresenceProcessor(tp *stub.TimPresence, transType int8) (err errs.ERROR)
 					uuids := amr.GetAccount(node)
 					for _, uuid := range uuids {
 						if us, b := ms[uuid]; b {
-							us = append(us, node)
+							ms[uuid] = append(us, node)
 						} else {
 							ms[uuid] = []string{node}
 						}
@@ -273,7 +202,6 @@ func sendVStream(vb *stub.VBean) (b bool, err errs.ERROR) {
 	defer sys.Stat.TxDone()
 	if vr, ok := vgate.VGate.GetVroom(vb.Vnode); ok {
 		vr.Updatetime()
-		log.Debug("vr.SubMap()>>>", vr.SubMap())
 		vr.SubMap().Range(func(wsId int64, ib int8) bool {
 			var ok bool
 			if ib == 0 {
