@@ -10,13 +10,20 @@ package log
 import (
 	"fmt"
 	"github.com/donnie4w/go-logger/logger"
+	"strings"
+	"time"
 )
 
 var log = logger.NewLogger()
 
+func init() {
+	SetFile("tim.log")
+}
+
 func SetFile(filepath string) {
-	log.SetOption(&logger.Option{FileOption: &logger.FileMixedMode{Filename: filepath, Maxsize: 1 << 20, Maxbuckup: 30, IsCompress: true, Timemode: logger.MODE_DAY}})
-	log.SetConsole(true)
+	log.SetOption(&logger.Option{CallDepth: 1, FileOption: &logger.FileSizeMode{Filename: filepath, Maxsize: 1 << 30, Maxbuckup: 30, IsCompress: true}})
+	log.SetLevelOption(logger.LEVEL_WARN, &logger.LevelOption{Format: logger.FORMAT_NANO})
+	log.SetConsole(true).SetFormat(logger.FORMAT_DATE | logger.FORMAT_TIME)
 }
 
 func SetConsole(ok bool) {
@@ -27,16 +34,31 @@ func SetLevel(level logger.LEVELTYPE) {
 	log.SetLevel(level)
 }
 
-func Write(bs []byte) {
-	log.Write(bs)
-}
-
 func Debug(v ...interface{}) {
 	log.Debug(v...)
 }
 
 func FmtPrint(v ...interface{}) {
-	fmtPrint(log, v...)
+	info := fmt.Sprint(v...)
+	const ll = 80
+	if len(info) >= ll {
+		log.Info(info)
+		return
+	}
+	padLen := (ll - len(info)) / 2
+	padding := strings.Repeat("═", padLen)
+	extraPadding := ""
+	if len(info)+padLen*2 < ll {
+		extraPadding = " "
+	}
+	log.Infof("%s %s%s %s", padding, extraPadding, info, padding)
+}
+
+func DelayPrint(v ...any) {
+	go func() {
+		time.Sleep(2 * time.Second)
+		log.Warn(fmt.Sprint(v...))
+	}()
 }
 
 func Info(v ...interface{}) {
@@ -65,20 +87,4 @@ func Warnf(format string, v ...interface{}) {
 
 func Errorf(format string, v ...interface{}) {
 	log.Errorf(format, v...)
-}
-
-func fmtPrint(log *logger.Logging, v ...any) {
-	info := fmt.Sprint(v...)
-	a, b := "", ""
-	ll := 80
-	if ll >= len(info) {
-		for i := 0; i < (ll-len(info))/2; i++ {
-			a = a + "="
-		}
-		b = a
-		if ll > len(info)+len(a)*2 {
-			b = a + "="
-		}
-	}
-	log.Info(a, info, b)
 }
