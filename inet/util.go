@@ -8,27 +8,26 @@
 package inet
 
 import (
-	"github.com/donnie4w/gofer/httpclient"
-	"github.com/donnie4w/tim/errs"
-	"sync/atomic"
-	"time"
-
 	"github.com/donnie4w/gofer/buffer"
 	"github.com/donnie4w/gofer/hashmap"
+	"github.com/donnie4w/gofer/httpclient"
 	goutil "github.com/donnie4w/gofer/util"
+	"github.com/donnie4w/tim/errs"
 	"github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
 	"github.com/donnie4w/tlnet"
+	"sync/atomic"
+	"time"
 )
 
-func isForBidRegister() bool {
-	return sys.Conf.Security != nil && sys.Conf.Security.ForBidRegister
-}
+//func isForBidRegister() bool {
+//	return sys.Conf.Security != nil && sys.Conf.Security.ForBidRegister
+//}
 
-func isForBidToken() bool {
-	return sys.Conf.Security != nil && sys.Conf.Security.ForBidToken
-}
+//func isForBidToken() bool {
+//	return sys.Conf.Security != nil && sys.Conf.Security.ForBidToken
+//}
 
 func reqHzSecond() int {
 	if sys.Conf.Security != nil {
@@ -145,9 +144,53 @@ func isBigData(id int64) bool {
 	return bigMap.Has(id)
 }
 
-func isForBitIface(b byte) bool {
-	if sys.BlockApiMap != nil {
-		return sys.BlockApiMap.Has(sys.TIMTYPE(b & 0x7f))
+//func isForBitIface(b byte) bool {
+//	if sys.BlockApiMap != nil {
+//		return sys.BlockApiMap.Has(sys.TIMTYPE(b & 0x7f))
+//	}
+//	return false
+//}
+
+func isForBitApi(b byte) bool {
+	switch sys.TIMTYPE(b) {
+	case sys.TIMREGISTER:
+		return sys.Conf.DeactivateApi.TIMREGISTER
+	case sys.TIMTOKEN:
+		return sys.Conf.DeactivateApi.TIMTOKEN
+	case sys.TIMAUTH:
+		return sys.Conf.DeactivateApi.TIMAUTH
+	case sys.TIMOFFLINEMSG:
+		return sys.Conf.DeactivateApi.TIMOFFLINEMSG
+	case sys.TIMOFFLINEMSGEND:
+		return sys.Conf.DeactivateApi.TIMOFFLINEMSGEND
+	case sys.TIMBROADPRESENCE:
+		return sys.Conf.DeactivateApi.TIMBROADPRESENCE
+	case sys.TIMLOGOUT:
+		return sys.Conf.DeactivateApi.TIMLOGOUT
+	case sys.TIMPULLMESSAGE:
+		return sys.Conf.DeactivateApi.TIMPULLMESSAGE
+	case sys.TIMVROOM:
+		return sys.Conf.DeactivateApi.TIMVROOM
+	case sys.TIMBUSINESS:
+		return sys.Conf.DeactivateApi.TIMBUSINESS
+	case sys.TIMNODES:
+		return sys.Conf.DeactivateApi.TIMNODES
+	case sys.TIMMESSAGE:
+		return sys.Conf.DeactivateApi.TIMMESSAGE
+	case sys.TIMPRESENCE:
+		return sys.Conf.DeactivateApi.TIMPRESENCE
+	case sys.TIMREVOKEMESSAGE:
+		return sys.Conf.DeactivateApi.TIMREVOKEMESSAGE
+	case sys.TIMBURNMESSAGE:
+		return sys.Conf.DeactivateApi.TIMBURNMESSAGE
+	case sys.TIMSTREAM:
+		return sys.Conf.DeactivateApi.TIMSTREAM
+	case sys.TIMBIGSTRING:
+		return sys.Conf.DeactivateApi.TIMBIGSTRING
+	case sys.TIMBIGBINARY:
+		return sys.Conf.DeactivateApi.TIMBIGBINARY
+	case sys.TIMBIGBINARYSTREAM:
+		return sys.Conf.DeactivateApi.TIMBIGBINARYSTREAM
 	}
 	return false
 }
