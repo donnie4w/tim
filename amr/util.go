@@ -7,21 +7,29 @@
 
 package amr
 
-import "github.com/donnie4w/gofer/util"
+import (
+	"github.com/donnie4w/tim/sys"
+)
 
-func GetVnode(vnode string) int64 {
-	if bs := Get([]byte(vnode)); len(bs) > 0 {
-		return util.BytesToInt64(bs)
-	}
-	return 0
+type AMRTYPE byte
+
+const (
+	ACCOUNT AMRTYPE = 1
+	TOKEN   AMRTYPE = 2
+	VNODE   AMRTYPE = 3
+	BLOCK   AMRTYPE = 4
+	UUID    AMRTYPE = 5
+)
+
+var islocalamr = false
+
+func init() {
+	sys.Service(sys.INIT_AMR, (amrservie)(0))
 }
-func PutVnode(vnode string, uuid int64) {
-	if vnode != "" && uuid != 0 {
-		Put([]byte(vnode), util.Int64ToBytes(uuid), 365*86400)
-	}
-}
-func DelVnode(vnode string) {
-	if vnode != "" {
-		Remove([]byte(vnode))
-	}
+
+func amrKey(atype AMRTYPE, key []byte) []byte {
+	bs := make([]byte, len(key)+1)
+	bs[0] = byte(atype)
+	copy(bs[1:], key)
+	return bs
 }
