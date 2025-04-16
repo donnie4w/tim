@@ -9,22 +9,21 @@ package inet
 
 import (
 	"context"
+	"github.com/donnie4w/gofer/buffer"
+	"github.com/donnie4w/gofer/hashmap"
+	"github.com/donnie4w/gofer/keystore"
+	goutil "github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/errs"
 	"github.com/donnie4w/tim/log"
+	"github.com/donnie4w/tim/stub"
+	"github.com/donnie4w/tim/sys"
+	"github.com/donnie4w/tim/util"
+	"github.com/donnie4w/tlnet"
 	"golang.org/x/time/rate"
 	"math"
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/donnie4w/gofer/buffer"
-	"github.com/donnie4w/gofer/hashmap"
-	"github.com/donnie4w/gofer/keystore"
-	goutil "github.com/donnie4w/gofer/util"
-	"github.com/donnie4w/tim/stub"
-	"github.com/donnie4w/tim/sys"
-	"github.com/donnie4w/tim/util"
-	"github.com/donnie4w/tlnet"
 )
 
 func init() {
@@ -112,13 +111,12 @@ func httpHandler(hc *tlnet.HttpContext) {
 		return
 	}
 	bs := hc.RequestBody()
-	if isForBitIface(bs[0]) {
-		return
+	if isForBitApi(bs[0]) {
+		hc.ResponseBytes(http.StatusForbidden, nil)
 	}
 	if overMaxData(nil, int64(len(bs))) {
 		return
 	}
-
 	if limiterWait() {
 		handle_http(hc, bs)
 	} else {
@@ -130,20 +128,12 @@ func handle_http(hc *tlnet.HttpContext, bs []byte) {
 	j := util.JTP(bs[0])
 	switch sys.TIMTYPE(bs[0] & 0x7f) {
 	case sys.TIMREGISTER:
-		if isForBidRegister() {
-			hc.ResponseBytes(http.StatusForbidden, nil)
-			return
-		}
 		if node, err := sys.RegisterHandle(bs); err == nil {
 			hc.ResponseBytes(0, reTimAck(j, &stub.TimAck{Ok: true, TimType: int8(sys.TIMREGISTER), N: &node}))
 		} else {
 			hc.ResponseBytes(0, reTimAck(j, &stub.TimAck{Ok: false, TimType: int8(sys.TIMREGISTER), Error: err.TimError()}))
 		}
 	case sys.TIMTOKEN:
-		if isForBidToken() {
-			hc.ResponseBytes(http.StatusForbidden, nil)
-			return
-		}
 		if t, err := sys.TokenHandle(bs); err == nil {
 			hc.ResponseBytes(0, reTimAck(j, &stub.TimAck{Ok: true, TimType: int8(sys.TIMTOKEN), N: &t}))
 		} else {
@@ -184,7 +174,7 @@ func wsHandler(hc *tlnet.HttpContext) {
 	}
 	bs := make([]byte, len(hc.WS.Read()))
 	sys.Stat.Ib(int64(len(bs)))
-	if isForBitIface(bs[0]) {
+	if isForBitApi(bs[0]) {
 		return
 	}
 	copy(bs, hc.WS.Read())
@@ -267,7 +257,7 @@ func handle_business(hc *tlnet.HttpContext, bs []byte, t sys.TIMTYPE) {
 	case sys.TIMPULLMESSAGE:
 		err = sys.PullMessageHandle(bs, hc.WS)
 	case sys.TIMBROADPRESENCE:
-		err = sys.BroadpresenceHandle(bs, hc.WS)
+		err = sys.BroadPresenceHandle(bs, hc.WS)
 	case sys.TIMBUSINESS:
 		err = sys.BusinessHandle(bs, hc.WS)
 	case sys.TIMVROOM:
