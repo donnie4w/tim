@@ -9,13 +9,15 @@ package data
 
 import (
 	"github.com/donnie4w/gdao/base"
+	gocache "github.com/donnie4w/gofer/cache"
+	"github.com/donnie4w/gofer/lock"
+	goutil "github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/log"
+	"github.com/donnie4w/tim/sys"
+	"math/rand"
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/donnie4w/gofer/lock"
-	"github.com/donnie4w/tim/sys"
 )
 
 var Service service
@@ -27,13 +29,17 @@ func getService() service {
 	case sys.INLINEDB:
 		return new(inlineHandle).init()
 	case sys.TLDB:
-		return new(tldbhandle).init()
+		return new(tldbHandle).init()
+	case sys.MONGODB:
+		return new(mongoHandle).init()
 	case sys.EXTERNALDB:
-		return new(externalhandle).init()
+		return new(externHandle).init()
 	case sys.NODB:
-		return new(nodbhandle)
+		return new(nodbHandle).init()
+	case sys.CASSANDRA:
+		return new(cassandraHandle).init()
 	}
-	panic("No supported service found")
+	return nil
 }
 
 func init() {
@@ -46,16 +52,20 @@ func (serv) Serve() error {
 	defer func() {
 		if err := recover(); err != nil {
 			log.FmtPrint(err)
-			os.Exit(0)
+			os.Exit(1)
 		}
 	}()
-	Service = getService()
+	if Service = getService(); Service == nil {
+		panic("no database service found")
+	}
 	return nil
 }
 
 func (serv) Close() error {
 	return nil
 }
+
+var uuidCache = gocache.NewBloomFilter(1<<19, 0.01)
 
 func _getString(a any) (_r string) {
 	switch a.(type) {
@@ -113,19 +123,21 @@ const (
 	Driver_Oracle    = "godror"
 )
 
-const localDB = "tim.db"
+const localdb = "tim.db"
 
-func initLocalDB(dbhandle base.DBhandle, driverName string) {
+func initLocalDB(dbhandle base.DBhandle, driver string) {
 	var ss []string
-	switch driverName {
+	switch driver {
 	case Driver_Sqlite:
-		ss = sys.Sqlite("").CreateSql()
+		ss = Sqlite("").CreateSql()
 	case Driver_Postgres:
-		ss = sys.PostgreSql("").CreateSql()
+		ss = PostgreSql("").CreateSql()
 	case Driver_Mysql:
-		ss = sys.Mysql("").CreateSql()
+		ss = Mysql("").CreateSql()
 	case Driver_Sqlserver:
-		ss = sys.SqlServer("").CreateSql()
+		ss = SqlServer("").CreateSql()
+	case Driver_Oracle:
+		ss = Oracle("").CreateSql()
 	}
 	if len(ss) > 0 {
 		for _, s := range ss {
@@ -135,5 +147,54 @@ func initLocalDB(dbhandle base.DBhandle, driverName string) {
 }
 
 func TimeNano() int64 {
-	return time.Now().UnixNano()
+	return timenano.unix()
+}
+
+var timenano = newNano()
+
+type nano struct {
+	precision byte
+	count     uint64
+}
+
+func newNano() *nano {
+	t := time.Now()
+	if t.UnixNano() == t.UnixNano()/1e3*1e3 {
+		return &nano{precision: 3}
+	} else if t.UnixNano() == t.UnixNano()/1e2*1e2 {
+		return &nano{precision: 2}
+	} else if t.UnixNano() == t.UnixNano()/1e1*1e1 {
+		return &nano{precision: 1}
+	} else {
+		return &nano{precision: 0}
+	}
+}
+
+func (n *nano) unix() (r int64) {
+	switch n.precision {
+	case 3:
+		r = time.Now().UnixNano() + int64(n.count%1e3)
+	case 2:
+		r = time.Now().UnixNano() + int64(n.count%1e2)
+	case 1:
+		r = time.Now().UnixNano() + int64(n.count%1e1)
+	default:
+		r = time.Now().UnixNano()
+	}
+	n.count++
+	return r
+}
+
+var r = rand.New(rand.NewSource(goutil.UUID64()))
+
+func midUUID() int64 {
+	switch sys.Conf.UuidBits {
+	case 32:
+		return int64(goutil.UUID32())
+	case 53:
+		uuid32 := uint32(goutil.UUID32())
+		return int64(uuid32)<<21 | r.Int63n(1<<21)
+	default:
+		return goutil.UUID64()
+	}
 }
