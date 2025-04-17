@@ -34,18 +34,19 @@ func Addroster(fromnode string, domain *string, toNode string, msg *string) (err
 	if !util.CheckNodes(fromnode, toNode) {
 		return errs.ERR_PARAMS
 	}
-	if _, err = data.Service.Addroster(fromnode, toNode, domain); err == nil {
-		id, _t, bt := goutil.UUID64(), time.Now().UnixNano(), int32(sys.BUSINESS_ADDROSTER)
+	if status, e := data.Service.Addroster(fromnode, toNode, domain); e == nil {
+		id, _t := goutil.UUID64(), time.Now().UnixNano()
 		tm := &stub.TimMessage{ID: &id, MsType: sys.SOURCE_USER, OdType: sys.ORDER_BUSINESS, ToTid: &stub.Tid{Node: toNode}, FromTid: newTid(fromnode, domain), DataString: msg, Timestamp: &_t}
-		//if status == 0x10|0x01 {
-		//	bt := int32(sys.BUSINESS_FRIEND)
-		//	tm.BnType = &bt
-		//	sys.SendWs(ws.Id, tm, sys.TIMMESSAGE)
-		//} else {
-		//	bt := int32(sys.BUSINESS_ADDROSTER)
-		tm.BnType = &bt
-		//}/
+		if status == 0x10|0x01 {
+			bt := int32(sys.BUSINESS_FRIEND)
+			tm.BnType = &bt
+		} else {
+			bt := int32(sys.BUSINESS_ADDROSTER)
+			tm.BnType = &bt
+		}
 		sys.TimMessageProcessor(tm, sys.TRANS_SOURCE)
+	} else {
+		return e
 	}
 	return
 }
@@ -84,29 +85,29 @@ func Blockroster(fromnode string, domain *string, toNode string) errs.ERROR {
 	return nil
 }
 
-func PullUserMessage(fromnode string, domain *string, toNode string, mid int64, limit int64) []*stub.TimMessage {
+func PullUserMessage(fromnode string, domain *string, toNode string, mid, timeseries, limit int64) []*stub.TimMessage {
 	if !util.CheckNodes(fromnode, toNode) {
 		return nil
 	}
-	if oblist, _ := data.Service.GetMessage(fromnode, domain, 1, toNode, mid, limit); len(oblist) > 0 {
+	if oblist, _ := data.Service.GetMessage(fromnode, domain, 1, toNode, mid, timeseries, limit); len(oblist) > 0 {
 		if *oblist[0].Mid == mid {
 			oblist = oblist[1:]
 		}
-		sort.Slice(oblist, func(i, j int) bool { return *oblist[i].Mid > *oblist[j].Mid })
+		sort.Slice(oblist, func(i, j int) bool { return *oblist[i].Timestamp > *oblist[j].Timestamp })
 		return oblist
 	}
 	return nil
 }
 
-func PullRoomMessage(fromnode string, domain *string, roomNode string, mid int64, limit int64) []*stub.TimMessage {
+func PullRoomMessage(fromnode string, domain *string, roomNode string, mid, timeseries, limit int64) []*stub.TimMessage {
 	if !util.CheckNodes(fromnode, roomNode) {
 		return nil
 	}
-	if oblist, _ := data.Service.GetMessage(fromnode, domain, 2, roomNode, mid, limit); len(oblist) > 0 {
-		if *oblist[0].Mid == mid {
+	if oblist, _ := data.Service.GetMessage(fromnode, domain, 2, roomNode, mid, timeseries, limit); len(oblist) > 0 {
+		if oblist[0].GetMid() == mid {
 			oblist = oblist[1:]
 		}
-		sort.Slice(oblist, func(i, j int) bool { return *oblist[i].Mid > *oblist[j].Mid })
+		sort.Slice(oblist, func(i, j int) bool { return *oblist[i].Timestamp > *oblist[j].Timestamp })
 		return oblist
 	}
 	return nil
@@ -119,9 +120,9 @@ func OfflineMsg(fromnode string, domain *string, limit int) []*stub.TimMessage {
 	if oblist, _ := data.Service.GetOfflineMessage(fromnode, limit); len(oblist) > 0 {
 		tmList := make([]*stub.TimMessage, 0)
 		isOff := true
-		ids := make([]int64, 0)
+		//ids := make([]int64, 0)
 		for _, ob := range oblist {
-			ids = append(ids, ob.Id)
+			//ids = append(ids, ob.Id)
 			if ob.Stanze != nil {
 				if tm, err := goutil.TDecode(ob.Stanze, stub.NewTimMessage()); err == nil {
 					tm.IsOffline = &isOff
@@ -142,7 +143,11 @@ func OfflineMsg(fromnode string, domain *string, limit int) []*stub.TimMessage {
 
 func DelOfflineMsg(fromNode string, ids []int64) (int64, error) {
 	if uuid := util.NodeToUUID(fromNode); uuid > 0 {
-		return data.Service.DelOfflineMessage(util.NodeToUUID(fromNode), ids...)
+		var idds = make([]any, len(ids))
+		for i := range ids {
+			idds[i] = ids[i]
+		}
+		return data.Service.DelOfflineMessage(util.NodeToUUID(fromNode), idds...)
 	}
 	return 0, errs.ERR_ACCOUNT.Error()
 }
@@ -302,10 +307,8 @@ func VirtualroomRegister(fromnode, domain string) (r *stub.TimAck, err errs.ERRO
 		return
 	}
 	vnode := vgate.VGate.NewVRoom(fromnode)
-	//if sys.CsVBean(&stub.VBean{Rtype: int8(sys.VROOM_NEW), Vnode: vnode, FoundNode: &fromnode}) {
 	t := int64(sys.VROOM_NEW)
 	r = &stub.TimAck{Ok: true, TimType: int8(sys.TIMVROOM), N: &vnode, T: &t}
-	//}
 	return
 }
 
@@ -318,10 +321,8 @@ func VirtualroomRemove(fromnode, domain string, vNode string) (r *stub.TimAck, e
 		err = errs.ERR_NOEXIST
 		return
 	}
-	//if sys.CsVBean(&stub.VBean{Rtype: int8(sys.VROOM_REMOVE), Vnode: vNode, FoundNode: &fromnode}) {
 	t := int64(sys.VROOM_REMOVE)
 	r = &stub.TimAck{Ok: true, TimType: int8(sys.TIMVROOM), N: &vNode, T: &t}
-	//}
 	return
 }
 
@@ -359,9 +360,13 @@ func VirtualroomSub(wsId int64, fromnode string, domain string, vNode string, su
 		err = errs.ERR_PARAMS
 		return
 	}
-	if _, b := sys.WsById(wsId); !b {
-		err = errs.ERR_ACCOUNT
-		return
+	if wsId != 0 {
+		if _, b := sys.WsById(wsId); !b {
+			err = errs.ERR_ACCOUNT
+			return
+		}
+	} else if ws, b := sys.WsByNode(fromnode); b {
+		wsId = ws.Id
 	}
 	var success bool
 	if subType == 1 {
@@ -369,10 +374,11 @@ func VirtualroomSub(wsId int64, fromnode string, domain string, vNode string, su
 	} else {
 		success = vgate.VGate.Sub(vNode, sys.UUID, wsId)
 	}
-	if success && sys.TimSteamProcessor(&stub.VBean{Rtype: int8(sys.VROOM_SUB), Vnode: vNode, Rnode: &fromnode}, sys.TRANS_SOURCE) == nil {
-		//if sys.CsVBean(&stub.VBean{Rtype: int8(sys.VROOM_SUB), Vnode: vNode, Rnode: &fromnode}) {
-		t := int64(sys.VROOM_SUB)
-		r = &stub.TimAck{Ok: true, TimType: int8(sys.TIMVROOM), N: &fromnode, T: &t}
+	if success {
+		if _, err = sys.TimSteamProcessor(&stub.VBean{Rtype: int8(sys.VROOM_SUB), Vnode: vNode, Rnode: &fromnode}, sys.TRANS_SOURCE); err == nil {
+			t := int64(sys.VROOM_SUB)
+			r = &stub.TimAck{Ok: true, TimType: int8(sys.TIMVROOM), N: &fromnode, T: &t}
+		}
 	} else {
 		err = errs.ERR_UNDEFINED
 	}
@@ -391,7 +397,6 @@ func VirtualroomUnSub(wsId int64, fromnode string, domain string, vNode string) 
 	}
 	if k, b := vgate.VGate.UnSub(vNode, wsId); b && k == 0 {
 		t := int64(sys.VROOM_UNSUB)
-		//sys.CsVBean(&stub.VBean{Rtype: int8(sys.VROOM_UNSUB), Vnode: vNode})
 		sys.TimSteamProcessor(&stub.VBean{Rtype: int8(sys.VROOM_UNSUB), Vnode: vNode}, sys.TRANS_SOURCE)
 		r = &stub.TimAck{Ok: true, TimType: int8(sys.TIMVROOM), N: &fromnode, T: &t}
 	}
