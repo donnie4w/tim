@@ -109,7 +109,7 @@ type timstruct interface {
 }
 
 type OfflineBean struct {
-	Id         int64
+	Id         any
 	Mid        int64
 	Stanze     []byte
 	Timeseries int64 `idx:"1"`
