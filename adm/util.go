@@ -107,10 +107,10 @@ func admPresenceToTimPresence(amp *stub.AdmPresence) *stub.TimPresence {
 	tp.ToList = amp.ToList
 	tp.Offline = amp.Offline
 	tp.Status = amp.Status
+	tp.SubStatus = amp.SubStatus
 	tp.Show = amp.Show
 	tp.Extra = amp.Extra
 	tp.Extend = amp.Extend
-	tp.Extra = amp.Extra
 	return tp
 }
 
