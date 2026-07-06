@@ -5,7 +5,7 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2025-01-06 18:18:47
+// datetime :2026-03-09 16:55:09
 // gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timroster
 
@@ -19,7 +19,7 @@ import (
 )
 
 type Timroster struct {
-	gdao.Table[Timroster]
+	*gdao.Table[Timroster]
 
 	ID      *base.Field[Timroster]
 	UNIKID      *base.Field[Timroster]
@@ -47,7 +47,9 @@ func (u *Timroster) GetId() (_r int64){
 }
 
 func (u *Timroster) SetId(arg int64) *Timroster{
-	u.Put0(u.ID.FieldName, arg)
+	if u.ID != nil {
+		u.Put0(u.ID.FieldName, arg)
+	}	
 	u._ID = &arg
 	return u
 }
@@ -58,7 +60,9 @@ func (u *Timroster) GetUnikid() (_r []byte){
 }
 
 func (u *Timroster) SetUnikid(arg []byte) *Timroster{
-	u.Put0(u.UNIKID.FieldName, arg)
+	if u.UNIKID != nil {
+		u.Put0(u.UNIKID.FieldName, arg)
+	}	
 	u._UNIKID = arg
 	return u
 }
@@ -71,7 +75,9 @@ func (u *Timroster) GetUuid() (_r int64){
 }
 
 func (u *Timroster) SetUuid(arg int64) *Timroster{
-	u.Put0(u.UUID.FieldName, arg)
+	if u.UUID != nil {
+		u.Put0(u.UUID.FieldName, arg)
+	}	
 	u._UUID = &arg
 	return u
 }
@@ -84,7 +90,9 @@ func (u *Timroster) GetTuuid() (_r int64){
 }
 
 func (u *Timroster) SetTuuid(arg int64) *Timroster{
-	u.Put0(u.TUUID.FieldName, arg)
+	if u.TUUID != nil {
+		u.Put0(u.TUUID.FieldName, arg)
+	}	
 	u._TUUID = &arg
 	return u
 }
@@ -97,7 +105,9 @@ func (u *Timroster) GetTimeseries() (_r int64){
 }
 
 func (u *Timroster) SetTimeseries(arg int64) *Timroster{
-	u.Put0(u.TIMESERIES.FieldName, arg)
+	if u.TIMESERIES != nil {
+		u.Put0(u.TIMESERIES.FieldName, arg)
+	}	
 	u._TIMESERIES = &arg
 	return u
 }
@@ -146,6 +156,7 @@ func (t *Timroster)init(tablename string) {
 
 func NewTimroster(tablename ...string) (_r *Timroster) {
 	_r = &Timroster{}
+	_r.Table = &gdao.Table[Timroster]{}
 	s := "timroster"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
@@ -167,9 +178,9 @@ func (t *Timroster) Encode() ([]byte, error) {
 func (t *Timroster) Decode(bs []byte) (err error) {
 	var m map[string]any
 	if m, err = t.Table.Decode(bs); err == nil {
-		if !t.IsInit() {
-			t.ToGdao()
-		}
+		//if !t.IsInit() {
+		//	t.ToGdao()
+		//}
 		for name, bean := range m {
 			t.Scan(name, bean)
 		}
