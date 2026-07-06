@@ -61,7 +61,7 @@ func (ch *cassandraHandle) SaveOfflineMessage(string, *stub.TimMessage) (err err
 	return
 }
 
-func (ch *cassandraHandle) GetOfflineMessage(node string, limit int) (oblist []*OfflineBean, err error) {
+func (ch *cassandraHandle) GetOfflineMessage(node string, domain *string, limit int) (oblist []*OfflineBean, err error) {
 	return
 }
 
