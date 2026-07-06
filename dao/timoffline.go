@@ -5,7 +5,7 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2025-01-06 18:18:47
+// datetime :2026-03-09 16:55:09
 // gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timoffline
 
@@ -19,7 +19,7 @@ import (
 )
 
 type Timoffline struct {
-	gdao.Table[Timoffline]
+	*gdao.Table[Timoffline]
 
 	ID      *base.Field[Timoffline]
 	UUID      *base.Field[Timoffline]
@@ -50,7 +50,9 @@ func (u *Timoffline) GetId() (_r int64){
 }
 
 func (u *Timoffline) SetId(arg int64) *Timoffline{
-	u.Put0(u.ID.FieldName, arg)
+	if u.ID != nil {
+		u.Put0(u.ID.FieldName, arg)
+	}	
 	u._ID = &arg
 	return u
 }
@@ -63,7 +65,9 @@ func (u *Timoffline) GetUuid() (_r int64){
 }
 
 func (u *Timoffline) SetUuid(arg int64) *Timoffline{
-	u.Put0(u.UUID.FieldName, arg)
+	if u.UUID != nil {
+		u.Put0(u.UUID.FieldName, arg)
+	}	
 	u._UUID = &arg
 	return u
 }
@@ -74,7 +78,9 @@ func (u *Timoffline) GetChatid() (_r []byte){
 }
 
 func (u *Timoffline) SetChatid(arg []byte) *Timoffline{
-	u.Put0(u.CHATID.FieldName, arg)
+	if u.CHATID != nil {
+		u.Put0(u.CHATID.FieldName, arg)
+	}	
 	u._CHATID = arg
 	return u
 }
@@ -85,7 +91,9 @@ func (u *Timoffline) GetStanza() (_r []byte){
 }
 
 func (u *Timoffline) SetStanza(arg []byte) *Timoffline{
-	u.Put0(u.STANZA.FieldName, arg)
+	if u.STANZA != nil {
+		u.Put0(u.STANZA.FieldName, arg)
+	}	
 	u._STANZA = arg
 	return u
 }
@@ -98,7 +106,9 @@ func (u *Timoffline) GetMid() (_r int64){
 }
 
 func (u *Timoffline) SetMid(arg int64) *Timoffline{
-	u.Put0(u.MID.FieldName, arg)
+	if u.MID != nil {
+		u.Put0(u.MID.FieldName, arg)
+	}	
 	u._MID = &arg
 	return u
 }
@@ -111,7 +121,9 @@ func (u *Timoffline) GetTimeseries() (_r int64){
 }
 
 func (u *Timoffline) SetTimeseries(arg int64) *Timoffline{
-	u.Put0(u.TIMESERIES.FieldName, arg)
+	if u.TIMESERIES != nil {
+		u.Put0(u.TIMESERIES.FieldName, arg)
+	}	
 	u._TIMESERIES = &arg
 	return u
 }
@@ -164,6 +176,7 @@ func (t *Timoffline)init(tablename string) {
 
 func NewTimoffline(tablename ...string) (_r *Timoffline) {
 	_r = &Timoffline{}
+	_r.Table = &gdao.Table[Timoffline]{}
 	s := "timoffline"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
@@ -186,9 +199,9 @@ func (t *Timoffline) Encode() ([]byte, error) {
 func (t *Timoffline) Decode(bs []byte) (err error) {
 	var m map[string]any
 	if m, err = t.Table.Decode(bs); err == nil {
-		if !t.IsInit() {
-			t.ToGdao()
-		}
+		//if !t.IsInit() {
+		//	t.ToGdao()
+		//}
 		for name, bean := range m {
 			t.Scan(name, bean)
 		}
