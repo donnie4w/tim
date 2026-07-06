@@ -5,7 +5,7 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2025-01-06 18:18:47
+// datetime :2026-03-09 16:55:09
 // gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timblockroom
 
@@ -19,7 +19,7 @@ import (
 )
 
 type Timblockroom struct {
-	gdao.Table[Timblockroom]
+	*gdao.Table[Timblockroom]
 
 	ID      *base.Field[Timblockroom]
 	UNIKID      *base.Field[Timblockroom]
@@ -47,7 +47,9 @@ func (u *Timblockroom) GetId() (_r int64){
 }
 
 func (u *Timblockroom) SetId(arg int64) *Timblockroom{
-	u.Put0(u.ID.FieldName, arg)
+	if u.ID != nil {
+		u.Put0(u.ID.FieldName, arg)
+	}	
 	u._ID = &arg
 	return u
 }
@@ -58,7 +60,9 @@ func (u *Timblockroom) GetUnikid() (_r []byte){
 }
 
 func (u *Timblockroom) SetUnikid(arg []byte) *Timblockroom{
-	u.Put0(u.UNIKID.FieldName, arg)
+	if u.UNIKID != nil {
+		u.Put0(u.UNIKID.FieldName, arg)
+	}	
 	u._UNIKID = arg
 	return u
 }
@@ -71,7 +75,9 @@ func (u *Timblockroom) GetUuid() (_r int64){
 }
 
 func (u *Timblockroom) SetUuid(arg int64) *Timblockroom{
-	u.Put0(u.UUID.FieldName, arg)
+	if u.UUID != nil {
+		u.Put0(u.UUID.FieldName, arg)
+	}	
 	u._UUID = &arg
 	return u
 }
@@ -84,7 +90,9 @@ func (u *Timblockroom) GetTuuid() (_r int64){
 }
 
 func (u *Timblockroom) SetTuuid(arg int64) *Timblockroom{
-	u.Put0(u.TUUID.FieldName, arg)
+	if u.TUUID != nil {
+		u.Put0(u.TUUID.FieldName, arg)
+	}	
 	u._TUUID = &arg
 	return u
 }
@@ -97,7 +105,9 @@ func (u *Timblockroom) GetTimeseries() (_r int64){
 }
 
 func (u *Timblockroom) SetTimeseries(arg int64) *Timblockroom{
-	u.Put0(u.TIMESERIES.FieldName, arg)
+	if u.TIMESERIES != nil {
+		u.Put0(u.TIMESERIES.FieldName, arg)
+	}	
 	u._TIMESERIES = &arg
 	return u
 }
@@ -146,6 +156,7 @@ func (t *Timblockroom)init(tablename string) {
 
 func NewTimblockroom(tablename ...string) (_r *Timblockroom) {
 	_r = &Timblockroom{}
+	_r.Table = &gdao.Table[Timblockroom]{}
 	s := "timblockroom"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
@@ -167,9 +178,9 @@ func (t *Timblockroom) Encode() ([]byte, error) {
 func (t *Timblockroom) Decode(bs []byte) (err error) {
 	var m map[string]any
 	if m, err = t.Table.Decode(bs); err == nil {
-		if !t.IsInit() {
-			t.ToGdao()
-		}
+		//if !t.IsInit() {
+		//	t.ToGdao()
+		//}
 		for name, bean := range m {
 			t.Scan(name, bean)
 		}
