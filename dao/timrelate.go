@@ -5,7 +5,7 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2025-01-06 18:18:47
+// datetime :2026-03-09 16:55:09
 // gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timrelate
 
@@ -19,7 +19,7 @@ import (
 )
 
 type Timrelate struct {
-	gdao.Table[Timrelate]
+	*gdao.Table[Timrelate]
 
 	ID      *base.Field[Timrelate]
 	UUID      *base.Field[Timrelate]
@@ -44,7 +44,9 @@ func (u *Timrelate) GetId() (_r int64){
 }
 
 func (u *Timrelate) SetId(arg int64) *Timrelate{
-	u.Put0(u.ID.FieldName, arg)
+	if u.ID != nil {
+		u.Put0(u.ID.FieldName, arg)
+	}	
 	u._ID = &arg
 	return u
 }
@@ -55,7 +57,9 @@ func (u *Timrelate) GetUuid() (_r []byte){
 }
 
 func (u *Timrelate) SetUuid(arg []byte) *Timrelate{
-	u.Put0(u.UUID.FieldName, arg)
+	if u.UUID != nil {
+		u.Put0(u.UUID.FieldName, arg)
+	}	
 	u._UUID = arg
 	return u
 }
@@ -68,7 +72,9 @@ func (u *Timrelate) GetStatus() (_r int64){
 }
 
 func (u *Timrelate) SetStatus(arg int64) *Timrelate{
-	u.Put0(u.STATUS.FieldName, arg)
+	if u.STATUS != nil {
+		u.Put0(u.STATUS.FieldName, arg)
+	}	
 	u._STATUS = &arg
 	return u
 }
@@ -81,7 +87,9 @@ func (u *Timrelate) GetTimeseries() (_r int64){
 }
 
 func (u *Timrelate) SetTimeseries(arg int64) *Timrelate{
-	u.Put0(u.TIMESERIES.FieldName, arg)
+	if u.TIMESERIES != nil {
+		u.Put0(u.TIMESERIES.FieldName, arg)
+	}	
 	u._TIMESERIES = &arg
 	return u
 }
@@ -126,6 +134,7 @@ func (t *Timrelate)init(tablename string) {
 
 func NewTimrelate(tablename ...string) (_r *Timrelate) {
 	_r = &Timrelate{}
+	_r.Table = &gdao.Table[Timrelate]{}
 	s := "timrelate"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
@@ -146,9 +155,9 @@ func (t *Timrelate) Encode() ([]byte, error) {
 func (t *Timrelate) Decode(bs []byte) (err error) {
 	var m map[string]any
 	if m, err = t.Table.Decode(bs); err == nil {
-		if !t.IsInit() {
-			t.ToGdao()
-		}
+		//if !t.IsInit() {
+		//	t.ToGdao()
+		//}
 		for name, bean := range m {
 			t.Scan(name, bean)
 		}
