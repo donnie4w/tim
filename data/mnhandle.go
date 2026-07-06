@@ -181,8 +181,14 @@ func (h *mongoHandle) DelMessageByMid(tid []byte, mid int64) (err error) {
 }
 
 func (h *mongoHandle) SaveOfflineMessage(tnode string, tm *stub.TimMessage) (err error) {
+	var uuid uint64
+	if sys.Conf.ExternalAccount {
+		uuid = util.ExtantNodeToUUID(tnode, tm.FromTid.Domain)
+	} else {
+		uuid = util.NodeToUUID(tnode)
+	}
+
 	t := TimeNano()
-	uuid := util.NodeToUUID(tnode)
 	tf := newMnTimOffline(uuid)
 	if tm.OdType == sys.ORDER_INOF && tm.GetMid() > 0 {
 		var chatId []byte
@@ -213,8 +219,13 @@ func (h *mongoHandle) SaveOfflineMessage(tnode string, tm *stub.TimMessage) (err
 	return
 }
 
-func (h *mongoHandle) GetOfflineMessage(node string, limit int) (oblist []*OfflineBean, err error) {
-	uuid := util.NodeToUUID(node)
+func (h *mongoHandle) GetOfflineMessage(node string, domain *string, limit int) (oblist []*OfflineBean, err error) {
+	var uuid uint64
+	if sys.Conf.ExternalAccount {
+		uuid = util.ExtantNodeToUUID(node, domain)
+	} else {
+		uuid = util.NodeToUUID(node)
+	}
 	if uuid == 0 {
 		return
 	}
