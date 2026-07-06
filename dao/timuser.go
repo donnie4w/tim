@@ -5,7 +5,7 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2025-01-06 18:18:47
+// datetime :2026-03-09 16:55:09
 // gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timuser
 
@@ -19,7 +19,7 @@ import (
 )
 
 type Timuser struct {
-	gdao.Table[Timuser]
+	*gdao.Table[Timuser]
 
 	ID      *base.Field[Timuser]
 	UUID      *base.Field[Timuser]
@@ -50,7 +50,9 @@ func (u *Timuser) GetId() (_r int64){
 }
 
 func (u *Timuser) SetId(arg int64) *Timuser{
-	u.Put0(u.ID.FieldName, arg)
+	if u.ID != nil {
+		u.Put0(u.ID.FieldName, arg)
+	}	
 	u._ID = &arg
 	return u
 }
@@ -63,7 +65,9 @@ func (u *Timuser) GetUuid() (_r int64){
 }
 
 func (u *Timuser) SetUuid(arg int64) *Timuser{
-	u.Put0(u.UUID.FieldName, arg)
+	if u.UUID != nil {
+		u.Put0(u.UUID.FieldName, arg)
+	}	
 	u._UUID = &arg
 	return u
 }
@@ -76,7 +80,9 @@ func (u *Timuser) GetPwd() (_r string){
 }
 
 func (u *Timuser) SetPwd(arg string) *Timuser{
-	u.Put0(u.PWD.FieldName, arg)
+	if u.PWD != nil {
+		u.Put0(u.PWD.FieldName, arg)
+	}	
 	u._PWD = &arg
 	return u
 }
@@ -89,7 +95,9 @@ func (u *Timuser) GetCreatetime() (_r int64){
 }
 
 func (u *Timuser) SetCreatetime(arg int64) *Timuser{
-	u.Put0(u.CREATETIME.FieldName, arg)
+	if u.CREATETIME != nil {
+		u.Put0(u.CREATETIME.FieldName, arg)
+	}	
 	u._CREATETIME = &arg
 	return u
 }
@@ -100,7 +108,9 @@ func (u *Timuser) GetUbean() (_r []byte){
 }
 
 func (u *Timuser) SetUbean(arg []byte) *Timuser{
-	u.Put0(u.UBEAN.FieldName, arg)
+	if u.UBEAN != nil {
+		u.Put0(u.UBEAN.FieldName, arg)
+	}	
 	u._UBEAN = arg
 	return u
 }
@@ -113,7 +123,9 @@ func (u *Timuser) GetTimeseries() (_r int64){
 }
 
 func (u *Timuser) SetTimeseries(arg int64) *Timuser{
-	u.Put0(u.TIMESERIES.FieldName, arg)
+	if u.TIMESERIES != nil {
+		u.Put0(u.TIMESERIES.FieldName, arg)
+	}	
 	u._TIMESERIES = &arg
 	return u
 }
@@ -166,6 +178,7 @@ func (t *Timuser)init(tablename string) {
 
 func NewTimuser(tablename ...string) (_r *Timuser) {
 	_r = &Timuser{}
+	_r.Table = &gdao.Table[Timuser]{}
 	s := "timuser"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
@@ -188,9 +201,9 @@ func (t *Timuser) Encode() ([]byte, error) {
 func (t *Timuser) Decode(bs []byte) (err error) {
 	var m map[string]any
 	if m, err = t.Table.Decode(bs); err == nil {
-		if !t.IsInit() {
-			t.ToGdao()
-		}
+		//if !t.IsInit() {
+		//	t.ToGdao()
+		//}
 		for name, bean := range m {
 			t.Scan(name, bean)
 		}
