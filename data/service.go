@@ -19,18 +19,18 @@ type service interface {
 	AuthNode(string, string, *string) (string, errs.ERROR)
 	Modify(uint64, *string, string, *string) errs.ERROR
 	SaveMessage(*TimMessage) error
-	SaveOfflineMessage(*TimMessage) error
-	DelMessageByMid(uint64, int64) error
-	DelOfflineMessage(uint64, ...int64) (int64, error)
+	SaveOfflineMessage(string, *TimMessage) error
+	DelMessageByMid([]byte, int64) error
+	DelOfflineMessage(uint64, ...any) (int64, error)
 
 	ExistGroup(string) bool
 	ExistUser(string) bool
 	AuthGroupAndUser(string, string, *string) (bool, error)
 	AuthUserAndUser(string, string, *string) bool
 
-	GetMessage(string, *string, int8, string, int64, int64) ([]*TimMessage, error)
-	GetMessageByMid(uint64, int64) (*TimMessage, error)
-	GetOfflineMessage(string, int) ([]*OfflineBean, error)
+	GetMessage(string, *string, int8, string, int64, int64, int64) ([]*TimMessage, error)
+	GetFidByMid([]byte, int64) (int64, error)
+	GetOfflineMessage(string, *string, int) ([]*OfflineBean, error)
 
 	Addroster(string, string, *string) (int8, errs.ERROR)
 	Blockrosterlist(string) []string
@@ -55,7 +55,7 @@ type service interface {
 	Blockgroup(string, string, *string) errs.ERROR
 	Blockgroupmember(string, string, string, *string) errs.ERROR
 	Cancelgroup(string, string, *string) errs.ERROR
-	ModifygroupInfo(string, string, *TimRoomBean) errs.ERROR
+	ModifygroupInfo(string, string, *TimRoomBean, bool) errs.ERROR
 	GetGroupInfo([]string) (map[string]*TimRoomBean, errs.ERROR)
 	TimAdminAuth(account, password, domain string) bool
 }
