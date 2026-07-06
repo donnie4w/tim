@@ -60,7 +60,7 @@ func (n *nodbHandle) SaveOfflineMessage(string, *TimMessage) (err error) {
 	return
 }
 
-func (n *nodbHandle) GetOfflineMessage(node string, limit int) (oblist []*OfflineBean, err error) {
+func (n *nodbHandle) GetOfflineMessage(node string, domain *string, limit int) (oblist []*OfflineBean, err error) {
 	return
 }
 
