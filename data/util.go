@@ -20,9 +20,11 @@ import (
 	"time"
 )
 
-var Service service
-var numlock = lock.NewNumLock(1 << 9)
-var strlock = lock.NewStrlock(1 << 9)
+var (
+	Service service
+	numlock *lock.Numlock
+	strlock *lock.Strlock
+)
 
 func getService() service {
 	switch sys.GetDBMOD() {
@@ -55,9 +57,19 @@ func (serv) Serve() error {
 			os.Exit(1)
 		}
 	}()
+
+	if sys.Conf.Memlimit >= 1<<10 {
+		numlock = lock.NewNumLock(1 << 9)
+		strlock = lock.NewStrlock(1 << 9)
+	} else {
+		numlock = lock.NewNumLock(1 << 6)
+		strlock = lock.NewStrlock(1 << 6)
+	}
+
 	if Service = getService(); Service == nil {
 		panic("no database service found")
 	}
+
 	return nil
 }
 
