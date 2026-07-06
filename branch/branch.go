@@ -117,7 +117,7 @@ func OfflineMsg(fromnode string, domain *string, limit int) []*stub.TimMessage {
 	if !util.CheckNode(fromnode) {
 		return nil
 	}
-	if oblist, _ := data.Service.GetOfflineMessage(fromnode, limit); len(oblist) > 0 {
+	if oblist, _ := data.Service.GetOfflineMessage(fromnode, domain, limit); len(oblist) > 0 {
 		tmList := make([]*stub.TimMessage, 0)
 		isOff := true
 		//ids := make([]int64, 0)
