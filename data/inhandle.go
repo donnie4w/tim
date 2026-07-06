@@ -225,7 +225,12 @@ func (h *inlineHandle) DelMessageByMid(tid []byte, mid int64) (err error) {
 
 func (h *inlineHandle) SaveOfflineMessage(tnode string, tm *stub.TimMessage) (err error) {
 	t := TimeNano()
-	uuid := util.NodeToUUID(tnode)
+	var uuid uint64
+	if sys.Conf.ExternalAccount {
+		uuid = util.ExtantNodeToUUID(tnode, tm.FromTid.Domain)
+	} else {
+		uuid = util.NodeToUUID(tnode)
+	}
 	if tm.OdType == sys.ORDER_INOF && tm.GetMid() > 0 {
 		var chatId []byte
 		if tm.MsType == sys.SOURCE_ROOM {
@@ -233,7 +238,7 @@ func (h *inlineHandle) SaveOfflineMessage(tnode string, tm *stub.TimMessage) (er
 		} else {
 			chatId = util.ChatIdByNode(tm.FromTid.Node, tm.ToTid.Node, tm.FromTid.Domain)
 		}
-		_, err = newTimoffline(uuid).SetChatid(chatId).SetUuid(int64(uuid)).SetMid(int64(tm.GetMid())).SetTimeseries(t).Insert()
+		_, err = newTimoffline(uuid).SetChatid(chatId).SetUuid(int64(uuid)).SetMid(tm.GetMid()).SetTimeseries(t).Insert()
 	} else {
 		if tm.Timestamp == nil {
 			tm.Timestamp = &t
@@ -248,8 +253,13 @@ func (h *inlineHandle) SaveOfflineMessage(tnode string, tm *stub.TimMessage) (er
 	return
 }
 
-func (h *inlineHandle) GetOfflineMessage(node string, limit int) (oblist []*OfflineBean, err error) {
-	uuid := util.NodeToUUID(node)
+func (h *inlineHandle) GetOfflineMessage(node string, domain *string, limit int) (oblist []*OfflineBean, err error) {
+	var uuid uint64
+	if sys.Conf.ExternalAccount {
+		uuid = util.ExtantNodeToUUID(node, domain)
+	} else {
+		uuid = util.NodeToUUID(node)
+	}
 	if uuid == 0 {
 		return
 	}
