@@ -119,7 +119,7 @@ func (eh *externHandle) SaveOfflineMessage(tnode string, tm *stub.TimMessage) (e
 	return
 }
 
-func (eh *externHandle) GetOfflineMessage(node string, limit int) (oblist []*OfflineBean, err error) {
+func (eh *externHandle) GetOfflineMessage(node string, domain *string, limit int) (oblist []*OfflineBean, err error) {
 	if oblist, err = eh.externdb.getOfflineMessage(node, limit); err == nil {
 		for _, ob := range oblist {
 			ob.Stanze = util.Mask(ob.Stanze)
