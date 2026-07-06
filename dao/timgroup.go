@@ -5,7 +5,7 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2025-01-06 18:18:47
+// datetime :2026-03-09 16:55:09
 // gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timgroup
 
@@ -19,7 +19,7 @@ import (
 )
 
 type Timgroup struct {
-	gdao.Table[Timgroup]
+	*gdao.Table[Timgroup]
 
 	ID      *base.Field[Timgroup]
 	GTYPE      *base.Field[Timgroup]
@@ -53,7 +53,9 @@ func (u *Timgroup) GetId() (_r int64){
 }
 
 func (u *Timgroup) SetId(arg int64) *Timgroup{
-	u.Put0(u.ID.FieldName, arg)
+	if u.ID != nil {
+		u.Put0(u.ID.FieldName, arg)
+	}	
 	u._ID = &arg
 	return u
 }
@@ -66,7 +68,9 @@ func (u *Timgroup) GetGtype() (_r int64){
 }
 
 func (u *Timgroup) SetGtype(arg int64) *Timgroup{
-	u.Put0(u.GTYPE.FieldName, arg)
+	if u.GTYPE != nil {
+		u.Put0(u.GTYPE.FieldName, arg)
+	}	
 	u._GTYPE = &arg
 	return u
 }
@@ -79,7 +83,9 @@ func (u *Timgroup) GetUuid() (_r int64){
 }
 
 func (u *Timgroup) SetUuid(arg int64) *Timgroup{
-	u.Put0(u.UUID.FieldName, arg)
+	if u.UUID != nil {
+		u.Put0(u.UUID.FieldName, arg)
+	}	
 	u._UUID = &arg
 	return u
 }
@@ -92,7 +98,9 @@ func (u *Timgroup) GetCreatetime() (_r int64){
 }
 
 func (u *Timgroup) SetCreatetime(arg int64) *Timgroup{
-	u.Put0(u.CREATETIME.FieldName, arg)
+	if u.CREATETIME != nil {
+		u.Put0(u.CREATETIME.FieldName, arg)
+	}	
 	u._CREATETIME = &arg
 	return u
 }
@@ -105,7 +113,9 @@ func (u *Timgroup) GetStatus() (_r int64){
 }
 
 func (u *Timgroup) SetStatus(arg int64) *Timgroup{
-	u.Put0(u.STATUS.FieldName, arg)
+	if u.STATUS != nil {
+		u.Put0(u.STATUS.FieldName, arg)
+	}	
 	u._STATUS = &arg
 	return u
 }
@@ -116,7 +126,9 @@ func (u *Timgroup) GetRbean() (_r []byte){
 }
 
 func (u *Timgroup) SetRbean(arg []byte) *Timgroup{
-	u.Put0(u.RBEAN.FieldName, arg)
+	if u.RBEAN != nil {
+		u.Put0(u.RBEAN.FieldName, arg)
+	}	
 	u._RBEAN = arg
 	return u
 }
@@ -129,7 +141,9 @@ func (u *Timgroup) GetTimeseries() (_r int64){
 }
 
 func (u *Timgroup) SetTimeseries(arg int64) *Timgroup{
-	u.Put0(u.TIMESERIES.FieldName, arg)
+	if u.TIMESERIES != nil {
+		u.Put0(u.TIMESERIES.FieldName, arg)
+	}	
 	u._TIMESERIES = &arg
 	return u
 }
@@ -186,6 +200,7 @@ func (t *Timgroup)init(tablename string) {
 
 func NewTimgroup(tablename ...string) (_r *Timgroup) {
 	_r = &Timgroup{}
+	_r.Table = &gdao.Table[Timgroup]{}
 	s := "timgroup"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
@@ -209,9 +224,9 @@ func (t *Timgroup) Encode() ([]byte, error) {
 func (t *Timgroup) Decode(bs []byte) (err error) {
 	var m map[string]any
 	if m, err = t.Table.Decode(bs); err == nil {
-		if !t.IsInit() {
-			t.ToGdao()
-		}
+		//if !t.IsInit() {
+		//	t.ToGdao()
+		//}
 		for name, bean := range m {
 			t.Scan(name, bean)
 		}
