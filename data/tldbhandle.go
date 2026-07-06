@@ -179,19 +179,30 @@ func (th *tldbHandle) SaveOfflineMessage(tnode string, tm *TimMessage) (err erro
 	if fid != nil {
 		tm.FromTid = &Tid{Node: fid.Node}
 	}
+	var uuid uint64
+	if sys.Conf.ExternalAccount {
+		uuid = util.ExtantNodeToUUID(tnode, tm.FromTid.Domain)
+	} else {
+		uuid = util.NodeToUUID(tnode)
+	}
 
 	if tm.OdType == sys.ORDER_INOF && tm.Mid != nil && *tm.Mid > 0 {
 		cid := util.ChatIdByNode(fid.Node, tm.ToTid.Node, fid.Domain)
-		Insert(&timoffline{UUID: util.NodeToUUID(tnode), Mid: tm.GetMid(), ChatId: cid, Timeseries: TimeNano()})
+		Insert(&timoffline{UUID: uuid, Mid: tm.GetMid(), ChatId: cid, Timeseries: TimeNano()})
 	} else {
-		Insert(&timoffline{UUID: util.NodeToUUID(tnode), Stanza: util.Mask(TEncode(tm)), Timeseries: TimeNano()})
+		Insert(&timoffline{UUID: uuid, Stanza: util.Mask(TEncode(tm)), Timeseries: TimeNano()})
 	}
 	tm.FromTid = fid
 	return
 }
 
-func (th *tldbHandle) GetOfflineMessage(node string, limit int) (oblist []*OfflineBean, err error) {
-	uuid := util.NodeToUUID(node)
+func (th *tldbHandle) GetOfflineMessage(node string, domain *string, limit int) (oblist []*OfflineBean, err error) {
+	var uuid uint64
+	if sys.Conf.ExternalAccount {
+		uuid = util.ExtantNodeToUUID(node, domain)
+	} else {
+		uuid = util.NodeToUUID(node)
+	}
 	if tfs, _ := SelectByIdxLimit[timoffline](0, int64(limit), "UUID", uuid); tfs != nil {
 		oblist = make([]*OfflineBean, 0)
 		for _, tf := range tfs {
