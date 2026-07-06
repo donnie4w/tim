@@ -10,6 +10,7 @@ package cache
 import (
 	"github.com/donnie4w/gofer/hashmap"
 	"github.com/donnie4w/gofer/util"
+	"github.com/donnie4w/tim/sys"
 	"time"
 )
 
@@ -23,7 +24,14 @@ type accountPool struct {
 }
 
 func newAccountPool() *accountPool {
-	ap := &accountPool{mm: hashmap.NewLinkedHashMap[int64, *accountBean](1 << 17)}
+	var ap *accountPool
+	if sys.Conf.Memlimit >= 1<<10 {
+		ap = &accountPool{mm: hashmap.NewLinkedHashMap[int64, *accountBean](1 << 17)}
+	} else if sys.Conf.Memlimit >= 1<<9 {
+		ap = &accountPool{mm: hashmap.NewLinkedHashMap[int64, *accountBean](1 << 16)}
+	} else {
+		ap = &accountPool{mm: hashmap.NewLinkedHashMap[int64, *accountBean](1 << 15)}
+	}
 	go ap.ticker()
 	return ap
 }
