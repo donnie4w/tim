@@ -5,7 +5,7 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2025-01-06 18:18:47
+// datetime :2026-03-09 16:55:09
 // gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timdomain
 
@@ -19,7 +19,7 @@ import (
 )
 
 type Timdomain struct {
-	gdao.Table[Timdomain]
+	*gdao.Table[Timdomain]
 
 	ID      *base.Field[Timdomain]
 	ADMINACCOUNT      *base.Field[Timdomain]
@@ -50,7 +50,9 @@ func (u *Timdomain) GetId() (_r int64){
 }
 
 func (u *Timdomain) SetId(arg int64) *Timdomain{
-	u.Put0(u.ID.FieldName, arg)
+	if u.ID != nil {
+		u.Put0(u.ID.FieldName, arg)
+	}	
 	u._ID = &arg
 	return u
 }
@@ -63,7 +65,9 @@ func (u *Timdomain) GetAdminaccount() (_r string){
 }
 
 func (u *Timdomain) SetAdminaccount(arg string) *Timdomain{
-	u.Put0(u.ADMINACCOUNT.FieldName, arg)
+	if u.ADMINACCOUNT != nil {
+		u.Put0(u.ADMINACCOUNT.FieldName, arg)
+	}	
 	u._ADMINACCOUNT = &arg
 	return u
 }
@@ -76,7 +80,9 @@ func (u *Timdomain) GetAdminpassword() (_r string){
 }
 
 func (u *Timdomain) SetAdminpassword(arg string) *Timdomain{
-	u.Put0(u.ADMINPASSWORD.FieldName, arg)
+	if u.ADMINPASSWORD != nil {
+		u.Put0(u.ADMINPASSWORD.FieldName, arg)
+	}	
 	u._ADMINPASSWORD = &arg
 	return u
 }
@@ -89,7 +95,9 @@ func (u *Timdomain) GetTimdomain() (_r string){
 }
 
 func (u *Timdomain) SetTimdomain(arg string) *Timdomain{
-	u.Put0(u.TIMDOMAIN.FieldName, arg)
+	if u.TIMDOMAIN != nil {
+		u.Put0(u.TIMDOMAIN.FieldName, arg)
+	}	
 	u._TIMDOMAIN = &arg
 	return u
 }
@@ -102,7 +110,9 @@ func (u *Timdomain) GetCreatetime() (_r int64){
 }
 
 func (u *Timdomain) SetCreatetime(arg int64) *Timdomain{
-	u.Put0(u.CREATETIME.FieldName, arg)
+	if u.CREATETIME != nil {
+		u.Put0(u.CREATETIME.FieldName, arg)
+	}	
 	u._CREATETIME = &arg
 	return u
 }
@@ -115,7 +125,9 @@ func (u *Timdomain) GetTimeseries() (_r int64){
 }
 
 func (u *Timdomain) SetTimeseries(arg int64) *Timdomain{
-	u.Put0(u.TIMESERIES.FieldName, arg)
+	if u.TIMESERIES != nil {
+		u.Put0(u.TIMESERIES.FieldName, arg)
+	}	
 	u._TIMESERIES = &arg
 	return u
 }
@@ -168,6 +180,7 @@ func (t *Timdomain)init(tablename string) {
 
 func NewTimdomain(tablename ...string) (_r *Timdomain) {
 	_r = &Timdomain{}
+	_r.Table = &gdao.Table[Timdomain]{}
 	s := "timdomain"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
@@ -190,9 +203,9 @@ func (t *Timdomain) Encode() ([]byte, error) {
 func (t *Timdomain) Decode(bs []byte) (err error) {
 	var m map[string]any
 	if m, err = t.Table.Decode(bs); err == nil {
-		if !t.IsInit() {
-			t.ToGdao()
-		}
+		//if !t.IsInit() {
+		//	t.ToGdao()
+		//}
 		for name, bean := range m {
 			t.Scan(name, bean)
 		}
