@@ -57,7 +57,7 @@ func (ah *admhandle) Token(atoken *stub.AdmToken) (_r *stub.AdmAck) {
 		_r.Errcode = errs.ERR_ACCOUNT.TimError().Code
 		return
 	}
-	if tkn, n, err := sys.OsToken(atoken.GetName(), atoken.Password, atoken.Domain); err == nil {
+	if tkn, n, err := sys.OsToken(atoken.GetName(), atoken.Password, atoken.Domain, atoken.GetAdmtype()); err == nil {
 		*_r.Ok = true
 		tt := int8(sys.TIMTOKEN)
 		_r.TimType = &tt
