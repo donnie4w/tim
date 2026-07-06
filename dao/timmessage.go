@@ -5,7 +5,7 @@
 //
 // github.com/donnie4w/gdao
 //
-// datetime :2025-01-06 18:18:47
+// datetime :2026-03-09 16:55:09
 // gdao version 1.2.0
 // dbtype:sqlite ,database:timdb ,tablename:timmessage
 
@@ -19,7 +19,7 @@ import (
 )
 
 type Timmessage struct {
-	gdao.Table[Timmessage]
+	*gdao.Table[Timmessage]
 
 	ID      *base.Field[Timmessage]
 	CHATID      *base.Field[Timmessage]
@@ -47,7 +47,9 @@ func (u *Timmessage) GetId() (_r int64){
 }
 
 func (u *Timmessage) SetId(arg int64) *Timmessage{
-	u.Put0(u.ID.FieldName, arg)
+	if u.ID != nil {
+		u.Put0(u.ID.FieldName, arg)
+	}	
 	u._ID = &arg
 	return u
 }
@@ -58,7 +60,9 @@ func (u *Timmessage) GetChatid() (_r []byte){
 }
 
 func (u *Timmessage) SetChatid(arg []byte) *Timmessage{
-	u.Put0(u.CHATID.FieldName, arg)
+	if u.CHATID != nil {
+		u.Put0(u.CHATID.FieldName, arg)
+	}	
 	u._CHATID = arg
 	return u
 }
@@ -71,7 +75,9 @@ func (u *Timmessage) GetFid() (_r int64){
 }
 
 func (u *Timmessage) SetFid(arg int64) *Timmessage{
-	u.Put0(u.FID.FieldName, arg)
+	if u.FID != nil {
+		u.Put0(u.FID.FieldName, arg)
+	}	
 	u._FID = &arg
 	return u
 }
@@ -82,7 +88,9 @@ func (u *Timmessage) GetStanza() (_r []byte){
 }
 
 func (u *Timmessage) SetStanza(arg []byte) *Timmessage{
-	u.Put0(u.STANZA.FieldName, arg)
+	if u.STANZA != nil {
+		u.Put0(u.STANZA.FieldName, arg)
+	}	
 	u._STANZA = arg
 	return u
 }
@@ -95,7 +103,9 @@ func (u *Timmessage) GetTimeseries() (_r int64){
 }
 
 func (u *Timmessage) SetTimeseries(arg int64) *Timmessage{
-	u.Put0(u.TIMESERIES.FieldName, arg)
+	if u.TIMESERIES != nil {
+		u.Put0(u.TIMESERIES.FieldName, arg)
+	}	
 	u._TIMESERIES = &arg
 	return u
 }
@@ -144,6 +154,7 @@ func (t *Timmessage)init(tablename string) {
 
 func NewTimmessage(tablename ...string) (_r *Timmessage) {
 	_r = &Timmessage{}
+	_r.Table = &gdao.Table[Timmessage]{}
 	s := "timmessage"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
@@ -165,9 +176,9 @@ func (t *Timmessage) Encode() ([]byte, error) {
 func (t *Timmessage) Decode(bs []byte) (err error) {
 	var m map[string]any
 	if m, err = t.Table.Decode(bs); err == nil {
-		if !t.IsInit() {
-			t.ToGdao()
-		}
+		//if !t.IsInit() {
+		//	t.ToGdao()
+		//}
 		for name, bean := range m {
 			t.Scan(name, bean)
 		}
