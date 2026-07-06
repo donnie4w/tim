@@ -18,12 +18,17 @@ import (
 )
 
 type auth struct {
-	mm      *hashmap.LimitHashMap[uint64, int64]
+	mm      *hashmap.LimitFifoMap[uint64, int64]
 	strlock *lock.Strlock
 }
 
-func newAuth() *auth {
-	return &auth{mm: hashmap.NewLimitHashMapWithSegment[uint64, int64](1<<20, 1<<10), strlock: lock.NewStrlock(1 << 10)}
+func newAuth() (r *auth) {
+	if sys.Conf.Memlimit >= 1<<10 {
+		r = &auth{mm: hashmap.NewLimitFifoMapWithSegment[uint64, int64](1<<20, 1<<10), strlock: lock.NewStrlock(1 << 10)}
+	} else {
+		r = &auth{mm: hashmap.NewLimitFifoMap[uint64, int64](1 << 15), strlock: lock.NewStrlock(1 << 6)}
+	}
+	return
 }
 
 func (a *auth) Has(fnode, tnode string, domain *string, group bool) bool {
