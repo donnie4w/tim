@@ -36,7 +36,7 @@ func newNodeWare() (_r *nodeware) {
 	_r.tlMap = hashmap.NewMapL[*tlContext, int8]()
 	_r.csMap = hashmap.NewConsistenthash(1 << 10)
 	_r._cacheMap = hashmap.NewMap[int64, int8]()
-	_r.mux = lock.NewNumLock(1 << 7)
+	_r.mux = lock.NewNumLock(1 << 5)
 	go _r.csuTicker()
 	return
 }
