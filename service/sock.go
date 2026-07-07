@@ -24,11 +24,12 @@ import (
 	"time"
 )
 
-var strLock = lock.NewStrlock(64)
-var numLock = lock.NewNumLock(64)
-var await = lock.NewFastAwait[int8]()
-
-var wsware = newWsWare()
+var (
+	strLock = lock.NewStrlock(64)
+	numLock = lock.NewNumLock(64)
+	await   = lock.NewFastAwait[int8]()
+	wsware  = newWsWare()
+)
 
 type wswareHandle struct {
 	uMap  *hashmap.Map[string, []int64]
@@ -294,7 +295,7 @@ func (wsk *WsSock) _send(buf *buffer.Buffer) (err error) {
 }
 
 func (wsk *WsSock) pingTo() bool {
-	return wsk.pTime+int64(sys.Conf.PingTo*int64(time.Second)) < time.Now().UnixNano()
+	return wsk.pTime+sys.Conf.PingTo*int64(time.Second) < time.Now().UnixNano()
 }
 
 var syncIndex atomic.Int32
