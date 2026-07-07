@@ -10,6 +10,7 @@ package service
 import (
 	"bytes"
 	"github.com/donnie4w/gofer/base58"
+	"github.com/donnie4w/gofer/hashmap"
 	goutil "github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/amr"
 	"github.com/donnie4w/tim/cache"
@@ -72,31 +73,42 @@ func (tss *timservice) ack(bs []byte) (err errs.ERROR) {
 	return
 }
 
-func (tss *timservice) ostoken(nodeorname string, password, domain *string) (_r string, _n string, e errs.ERROR) {
+func (tss *timservice) ostoken(nodeorname string, password, domain *string, admtype int8) (_r string, _n string, e errs.ERROR) {
 	defer util.Recover()
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
-	if password != nil {
-		var node string
-		if node, e = data.Service.AuthNode(nodeorname, *password, domain); e == nil {
-			tid := &stub.Tid{Node: node, Domain: domain}
-			_r, _n = token(), node
-			amr.PutToken(_r, tid)
+	if admtype == 0 {
+		if _n, e = data.Service.AuthNode(nodeorname, *password, domain); e == nil {
+			tid := &stub.Tid{Node: _n, Domain: domain}
+			var hash string
+			_r, hash = token(nodeorname, domain)
+			amr.PutToken(hash, tid)
 		}
-	} else {
+	} else if admtype == 1 {
+		var hash string
 		switch sys.GetDBMOD() {
 		case sys.NODB, sys.EXTERNALDB:
-			_r, _n = token(), nodeorname
-		case sys.TLDB, sys.INLINEDB:
+			_n = nodeorname
+			_r, hash = token(nodeorname, domain)
+		case sys.TLDB, sys.INLINEDB, sys.MONGODB:
 			if !existUser(&stub.Tid{Node: nodeorname, Domain: domain}) {
 				return _r, "", errs.ERR_NOEXIST
 			}
-			_r, _n = token(), util.UUIDToNode(util.CreateUUID(nodeorname, domain))
+			_n = util.UUIDToNode(util.CreateUUID(nodeorname, domain))
+			_r, hash = token(nodeorname, domain)
 		default:
 			e = errs.ERR_DATABASE
 		}
+		if e == nil {
+			tid := &stub.Tid{Node: _n, Domain: domain}
+			cache.TokenCache.Put(hash, tid)
+		}
+	} else if admtype == 2 {
+		var hash string
+		_n = nodeorname
+		_r, hash = token(nodeorname, domain)
 		tid := &stub.Tid{Node: _n, Domain: domain}
-		cache.TokenCache.Put(_r, tid)
+		cache.TokenCache.Put(hash, tid)
 	}
 	return
 }
@@ -112,11 +124,14 @@ func (tss *timservice) token(bs []byte) (_r string, e errs.ERROR) {
 	var node string
 	if node, e = data.Service.AuthNode(ta.GetName(), ta.GetPwd(), ta.Domain); e == nil {
 		tid := &stub.Tid{Node: node, Domain: ta.Domain, Extend: ta.Extend}
-		_r = token()
-		cache.TokenCache.Put(_r, tid)
+		var hash string
+		_r, hash = token(ta.GetName(), ta.Domain)
+		cache.TokenCache.Put(hash, tid)
 	}
 	return
 }
+
+var authLastNode = hashmap.NewLimitFifoMap[string, int64](1 << 16)
 
 func (tss *timservice) auth(bs []byte, ws *tlnet.Websocket) (e errs.ERROR) {
 	defer util.Recover()
@@ -132,13 +147,15 @@ func (tss *timservice) auth(bs []byte, ws *tlnet.Websocket) (e errs.ERROR) {
 	}
 	isAuth := false
 	var tid *stub.Tid
+
 	if ta.GetToken() != "" {
 		if !util.CheckNode(ta.GetToken()) {
 			return errs.ERR_TOKEN
 		}
-		if tid = amr.GetToken(ta.GetToken()); tid != nil {
+		hash := hashByToken(ta.GetName(), ta.Domain, ta.GetToken())
+		if tid = amr.GetToken(hash); tid != nil {
+			amr.DelToken(hash)
 			tid.Resource, tid.Termtyp = ta.Resource, ta.Termtyp
-			amr.DelToken(ta.GetToken())
 			if !isblock(tid.Node) {
 				isAuth = true
 			}
@@ -173,10 +190,23 @@ func (tss *timservice) auth(bs []byte, ws *tlnet.Websocket) (e errs.ERROR) {
 				}
 			}
 		}
+		nowsec := time.Now().Unix()
 		if overentry {
-			return errs.ERR_OVERENTRY
+			if v, ok := authLastNode.Get(tid.GetNode()); ok {
+				if nowsec-v > sys.Conf.AuthMinUnix {
+					if prews, b := wsware.wsByNode(tid.GetNode()); b {
+						wsware.delws(prews)
+					}
+				} else {
+					return errs.ERR_OVERENTRY
+				}
+			} else {
+				return errs.ERR_OVERENTRY
+			}
 		}
+
 		wsware.AddTid(ws, tid)
+		authLastNode.Put(tid.GetNode(), nowsec)
 		if util.JTP(bs[0]) {
 			wsware.SetJsonOn(ws)
 		}
@@ -357,7 +387,7 @@ func (tss *timservice) messagehandle(tm *stub.TimMessage, auth bool) (_r errs.ER
 			} else {
 				return errs.ERR_PERM_DENIED
 			}
-		} else if tm.ToTid != nil && authUser(tm.FromTid, tm.ToTid, false) {
+		} else if tm.ToTid != nil && authRoster(tm.FromTid.GetNode(), tm.ToTid.GetNode(), tm.FromTid.Domain, false) {
 			return tss.messagehandler(tm, auth)
 		} else {
 			return errs.ERR_PERM_DENIED
@@ -383,7 +413,7 @@ func (tss *timservice) messagehandler(tm *stub.TimMessage, auth bool) (_r errs.E
 		if tm.GetMid() == 0 {
 			return errs.ERR_PARAMS
 		}
-		if auth && !authUser(tm.FromTid, tm.ToTid, true) {
+		if auth && !authRoster(tm.FromTid.GetNode(), tm.ToTid.GetNode(), tm.FromTid.Domain, true) {
 			return errs.ERR_PERM_DENIED
 		}
 		tid := util.ChatIdByNode(tm.FromTid.Node, tm.ToTid.Node, tm.FromTid.Domain)
@@ -407,7 +437,7 @@ func (tss *timservice) messagehandler(tm *stub.TimMessage, auth bool) (_r errs.E
 		if tm.GetMid() == 0 {
 			return errs.ERR_PARAMS
 		}
-		if auth && !authUser(tm.FromTid, tm.ToTid, true) {
+		if auth && !authRoster(tm.FromTid.GetNode(), tm.ToTid.GetNode(), tm.FromTid.Domain, true) {
 			return errs.ERR_PERM_DENIED
 		}
 		tid := util.ChatIdByNode(tm.FromTid.Node, tm.ToTid.Node, tm.FromTid.Domain)
@@ -487,7 +517,7 @@ func (tss *timservice) offlineMsg(ws *tlnet.Websocket) (err errs.ERROR) {
 	sys.Stat.TxDo()
 	defer sys.Stat.TxDone()
 	if wss, ok := wsware.Get(ws); ok {
-		if oblist, _ := data.Service.GetOfflineMessage(wss.tid.Node, 10); len(oblist) > 0 {
+		if oblist, _ := data.Service.GetOfflineMessage(wss.tid.Node, wss.tid.Domain, 10); len(oblist) > 0 {
 			tmList := make([]*stub.TimMessage, 0)
 			isOff := true
 			ids := make([]any, 0)
