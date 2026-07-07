@@ -37,9 +37,9 @@ const (
 	TIMREVOKEMESSAGE   TIMTYPE = 92
 	TIMBURNMESSAGE     TIMTYPE = 93
 	TIMSTREAM          TIMTYPE = 94
-	TIMBIGSTRING       TIMTYPE = 95
-	TIMBIGBINARY       TIMTYPE = 96
-	TIMBIGBINARYSTREAM TIMTYPE = 97
+	TIMBIGSTRING       TIMTYPE = 95 // timmessage string data
+	TIMBIGBINARY       TIMTYPE = 96 // timmessage stream data
+	TIMBIGBINARYSTREAM TIMTYPE = 97 // virtual room stream data
 )
 
 const (
@@ -126,7 +126,7 @@ var (
 	NodeInfoHandle        func([]byte, *tlnet.Websocket) errs.ERROR
 	AuthRoster            func(string, string, *string, bool) bool
 	AuthGroupuser         func(string, string, *string) bool
-	OsToken               func(string, *string, *string) (string, string, errs.ERROR)
+	OsToken               func(string, *string, *string, int8) (string, string, errs.ERROR)
 	OsRegister            func(string, string, *string) (string, errs.ERROR)
 	OsUserBean            func(string, *stub.TimUserBean) errs.ERROR
 	OsRoom                func(string, string, *string, int8) (string, errs.ERROR)
