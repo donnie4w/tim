@@ -67,6 +67,7 @@ const (
                     <a class="nav-link" href='/sysvar'>Cluster</a>
                     <a class="nav-link" href='/data'>DataMonitor</a>
                     <a class="nav-link" href='/monitor'>Performance</a>
+                    <a class="nav-link" href='/dashboard'>Dashboard</a>
                 </div>
                 <div class="navbar-nav ms-auto">
                     <a class="nav-link" href='/login'>Login</a>
@@ -139,6 +140,7 @@ const (
                     <a class="nav-link active" href='/sysvar'>Cluster</a>
                     <a class="nav-link" href='/data'>DataMonitor</a>
                     <a class="nav-link" href='/monitor'>Performance</a>
+                    <a class="nav-link" href='/dashboard'>Dashboard</a>
                 </div>
                 <div class="navbar-nav ms-auto">
                     <a class="nav-link" href='/login'>Login</a>
@@ -203,6 +205,7 @@ const (
                     <a class="nav-link" href='/sysvar'>Cluster</a>
                     <a class="nav-link active" href='/data'>DataMonitor</a>
                     <a class="nav-link" href='/monitor'>Performance</a>
+                    <a class="nav-link" href='/dashboard'>Dashboard</a>
                 </div>
                 <div class="navbar-nav ms-auto">
                     <a class="nav-link" href='/login'>Login</a>
@@ -324,6 +327,7 @@ const (
                     <a class="nav-link" href='/sysvar'>Cluster</a>
                     <a class="nav-link" href='/data'>DataMonitor</a>
                     <a class="nav-link active" href='/monitor'>Performance</a>
+                    <a class="nav-link" href='/dashboard'>Dashboard</a>
                 </div>
                 <div class="navbar-nav ms-auto">
                     <a class="nav-link" href='/login'>Login</a>
@@ -427,4 +431,340 @@ const (
 </script>
 </html>
     `
+
+	dashboardEnText = `
+<html>
+<head>
+    <title>tim</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="/bootstrap.css" rel="stylesheet">
+    <script src="/bootstrap.min.js" type="text/javascript"></script>
+</head>
+
+<body class="container">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                 class="bi bi-align-top" viewBox="0 0 16 16">
+                <rect width="4" height="12" rx="1" transform="matrix(1 0 0 -1 6 15)"/>
+                <path d="M1.5 2a.5.5 0 0 1 0-1v1zm13-1a.5.5 0 0 1 0 1V1zm-13 0h13v1h-13V1z"/>
+            </svg>
+        </a>
+        <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+
+            <div class="navbar-nav">
+                <a class="nav-link" href='/init'>Account</a>
+                <a class="nav-link" href='/sysvar'>Cluster</a>
+                <a class="nav-link" href='/data'>Data Monitor</a>
+                <a class="nav-link" href='/monitor'>Performance</a>
+                <a class="nav-link active" href='/dashboard'>Dashboard</a>
+            </div>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href='/login'>Login</a>
+                <a class="nav-link" href="/lang?lang=zh">[中文]</a>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="container mt-1 card small">
+    <div class="mb-5 p-2 overflow-y-auto">
+        <div class="m-1">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h4 mb-0">
+                    System Resource Monitor
+                </h1>
+                <div class="d-flex align-items-center">
+                    <span id="last-update" class="me-3">Last Update: Loading...</span>
+                    <div id="loading-indicator" class="loader d-none"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Cards -->
+        <div class="row row-cols-1 md:row-cols-2 lg:row-cols-4 g-2 mb-1">
+            <!-- CPU Usage -->
+            <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2 col-12 mb-1">
+                <div class="bg-white rounded-3 shadow-sm h-70">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div>
+                                <h5 class="card-title text-secondary mb-0">CPU Usage</h5>
+                                <p class="h3 fw-bold mt-1" id="cpu-usage">--%</p>
+                            </div>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div id="cpu-progress" class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Memory Usage -->
+            <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2 col-12 mb-1">
+                <div class="bg-white rounded-3 shadow-sm h-70">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div>
+                                <h5 class="card-title text-secondary mb-0">Memory Usage</h5>
+                                <p class="h3 fw-bold mt-1" id="mem-usage">--%</p>
+                            </div>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div id="mem-progress" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disk Usage -->
+            <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2 col-12 mb-1">
+                <div class="bg-white rounded-3 shadow-sm h-70">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h5 class="card-title text-secondary mb-0">Disk Usage</h5>
+                                <p class="h3 fw-bold mt-1" id="disk-usage">--%</p>
+                            </div>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div id="disk-progress" class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Load -->
+            <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2 col-12 mb-1">
+                <div class="bg-white rounded-3 shadow-sm h-70">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div>
+                                <h5 class="card-title text-secondary mb-0">System Load</h5>
+                                <p class="h3 fw-bold mt-1" id="load-1">--</p>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 text-sm">
+                            <span class="badge bg-info/20 text-info">1Min: <span id="load-1-min">--</span></span>
+                            <span class="badge bg-info/20 text-info">5Min: <span id="load-5-min">--</span></span>
+                            <span class="badge bg-info/20 text-info">15Min: <span id="load-15-min">--</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- App Tasks -->
+            <div class="col-sm-6 col-md-4 col-lg-3 col-xl-3 col-12 mb-1">
+                <div class="bg-white rounded-3 shadow-sm h-70">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div>
+                                <h5 class="card-title text-secondary mb-0">App Tasks Total</h5>
+                                <p class="h3 fw-bold mt-1" id="sdk-task">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <!-- Details -->
+        <div class="row g-1">
+            <!-- System Info Table -->
+            <div class="col-12 col-md-6 col-lg-4 col-xl-4">
+                <div class="card bg-white rounded-3 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">System Details</h5>
+                    </div>
+                    <div class="p-1">
+                        <table class="table table-hover">
+                            <tbody>
+                            <tr>
+                                <td class="text-secondary" style="width: 120px;">CPU Model</td>
+                                <td id="detail-cpu-model" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">CPU Cores</td>
+                                <td id="detail-cpu-cores" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">Total Memory</td>
+                                <td id="detail-mem-total" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">Used Memory</td>
+                                <td id="detail-mem-used" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">Mount Point</td>
+                                <td id="disk-mount" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">Total Disk</td>
+                                <td id="detail-disk-total" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">Free Disk</td>
+                                <td id="detail-disk-free" class="fw-bold">Loading...</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Go Runtime Info -->
+            <div class="col-12 col-md-6 col-lg-4 col-xl-4">
+                <div class="card bg-white rounded-3 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Go Runtime</h5>
+                    </div>
+                    <div class="p-1">
+                        <table class="table table-hover">
+                            <tbody>
+                            <tr>
+                                <td class="text-secondary" style="width: 150px;">Goroutines</td>
+                                <td id="go-goroutines" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">Threads</td>
+                                <td id="go-threads" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">Go Version</td>
+                                <td id="go-version" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">Heap Alloc</td>
+                                <td id="heap_alloc_mb" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">Total Alloc</td>
+                                <td id="alloc_bytes" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">Heap Free</td>
+                                <td id="free_bytes" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">GC Count</td>
+                                <td id="gc_count_total" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">Virtual Memory</td>
+                                <td id="heap_sys_mb" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">Total Alloc Objects</td>
+                                <td id="alloc_objects" class="fw-bold">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">Total Free Objects</td>
+                                <td id="free_objects" class="fw-bold">Loading...</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+<script type="text/javascript">
+
+    document.addEventListener('DOMContentLoaded', async function () {
+        const formatNumber = (num) => {
+            try {
+                return num.toFixed(2);
+            } catch (e) {
+                return 0
+            }
+        };
+
+        const updateValueWithAnimation = (elementId, value) => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = value;
+                element.classList.add('value-pulse');
+                setTimeout(() => {
+                    element.classList.remove('value-pulse');
+                }, 500);
+            }
+        };
+
+        const fetchSystemData = async () => {
+            const loadingIndicator = document.getElementById('loading-indicator');
+            loadingIndicator.classList.remove('d-none');
+            try {
+                const data = await getDashboardData()
+                if (data) {
+                    updateUI(data);
+                    document.getElementById('last-update').textContent = ` + "`" + `Last Update: ${data.collect_time}` + "`" + `;
+                }
+            } catch (error) {
+                console.error('Failed to get system data:', error);
+                alert('Failed to get system data, please retry later');
+            } finally {
+                loadingIndicator.classList.add('d-none');
+            }
+        };
+
+
+        async function getDashboardData() {
+            try {
+                const response = await fetch('/dashboardData');
+                if (response.ok) {
+                    return await response.json()
+                }
+            } catch (e) {
+                console.error(e)
+            }
+        }
+
+        const updateUI = (data) => {
+            updateValueWithAnimation('cpu-usage', ` + "`" + `${formatNumber(data.cpu.usage_percent)}%` + "`" + `);
+            document.getElementById('cpu-progress').style.width = ` + "`" + `${data.cpu.usage_percent}%` + "`" + `;
+            document.getElementById('detail-cpu-model').textContent = data.cpu.model_name || 'Unknown';
+            document.getElementById('detail-cpu-cores').textContent = data.cpu.logical_cores || 'Unknown';
+            document.getElementById('sdk-task').textContent = ` + "`" + `${data.task_number.sdk_task_num}` + "`" + `;
+            updateValueWithAnimation('mem-usage', ` + "`" + `${formatNumber(data.memory.used_percent)}%` + "`" + `);
+            document.getElementById('mem-progress').style.width = ` + "`" + `${data.memory.used_percent}%` + "`" + `;
+            document.getElementById('detail-mem-total').textContent = ` + "`" + `${formatNumber(data.memory.total_gb)} GB` + "`" + `;
+            document.getElementById('detail-mem-used').textContent = ` + "`" + `${formatNumber(data.memory.used_gb)} GB` + "`" + `;
+
+            updateValueWithAnimation('disk-usage', ` + "`" + `${formatNumber(data.disk.used_percent)}%` + "`" + `);
+            document.getElementById('disk-progress').style.width = ` + "`" + `${data.disk.used_percent}%` + "`" + `;
+            document.getElementById('disk-mount').textContent = ` + "`" + `${data.disk.mount_point || 'Unknown'}` + "`" + `;
+            document.getElementById('detail-disk-total').textContent = ` + "`" + `${formatNumber(data.disk.total_gb)} GB` + "`" + `;
+            document.getElementById('detail-disk-free').textContent = ` + "`" + `${formatNumber(data.disk.free_gb)} GB` + "`" + `;
+
+            updateValueWithAnimation('load-1', formatNumber(data.load_avg.load1));
+            updateValueWithAnimation('load-1-min', formatNumber(data.load_avg.load1));
+            updateValueWithAnimation('load-5-min', formatNumber(data.load_avg.load5));
+            updateValueWithAnimation('load-15-min', formatNumber(data.load_avg.load15));
+
+            updateValueWithAnimation('go-goroutines', data.go_runtime.goroutines || '--');
+            updateValueWithAnimation('go-threads', data.go_runtime.threads || '--');
+            updateValueWithAnimation('go-version', data.go_runtime.go_version || 'Unknown');
+
+            updateValueWithAnimation('heap_alloc_mb', ` + "`" + `${formatNumber(data.go_runtime.heap_alloc_mb)} MB` + "`" + `);
+            updateValueWithAnimation('alloc_bytes', ` + "`" + `${formatNumber(data.go_runtime.alloc_bytes >> 20)} MB` + "`" + `);
+            updateValueWithAnimation('free_bytes', ` + "`" + `${formatNumber(data.go_runtime.free_bytes >> 20)} MB` + "`" + `);
+            updateValueWithAnimation('gc_count_total', data.go_runtime.gc_count_total || '--');
+            updateValueWithAnimation('heap_sys_mb', ` + "`" + `${formatNumber(data.go_runtime.heap_sys_mb)} MB` + "`" + ` || '--');
+            updateValueWithAnimation('alloc_objects', ` + "`" + `${data.go_runtime.alloc_objects}` + "`" + ` || '--');
+            updateValueWithAnimation('free_objects', ` + "`" + `${data.go_runtime.free_objects}` + "`" + ` || '--')
+        };
+
+        fetchSystemData();
+        setInterval(fetchSystemData, 10000);
+    });
+
+</script>
+</html>
+`
 )
