@@ -30,9 +30,10 @@ const (
 	SYSVAR
 	DATA
 	MONITOR
+	DASHBOARD
 )
 
-var mod = 1 //0debug，1release
+var mod = 1 //0:debug，1:release
 
 func tplToHtml(lang LANG, flag TXTYPE, v any, hc *tlnet.HttpContext) {
 	dir, _ := os.Getwd()
@@ -47,6 +48,8 @@ func tplToHtml(lang LANG, flag TXTYPE, v any, hc *tlnet.HttpContext) {
 		tpl(lang, dir+"/tc/html/data.html", dataText, dir+"/tc/html/dataEn.html", dataEnText, v, hc)
 	case MONITOR:
 		tpl(lang, dir+"/tc/html/monitor.html", monitorText, dir+"/tc/html/monitorEn.html", monitorEnText, v, hc)
+	case DASHBOARD:
+		tpl(lang, dir+"/tc/html/dashboard.html", dashboardText, dir+"/tc/html/dashboardEn.html", dashboardEnText, v, hc)
 	}
 }
 
