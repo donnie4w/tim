@@ -37,8 +37,8 @@ type ConfBean struct {
 	ExternalDB           *externalDB    `json:"externaldb"`
 	AdminAccount         *AdminAccount  `json:"admin_account_init"`
 	NoDB                 *bool          `json:"nodb"`
+	ExternalAccount      bool           `json:"external_account"`
 	Security             *security      `json:"security"`
-	PprofAddr            string         `json:"pprof_addr"`
 	UuidBits             int            `json:"uuid_bits"`
 	ClientListen         string         `json:"client_listen"`
 	Ssl_crt              string         `json:"ssl_certificate"`
@@ -55,6 +55,7 @@ type ConfBean struct {
 	AdmListen            *string        `json:"server_api_listen"`
 	NoInit               bool           `json:"noinit"`
 	PingTo               int64          `json:"ping_timeout"`
+	AuthMinUnix          int64          `json:"auth_min_unix"`
 	KsDir                string         `json:"ks_dir"`
 	MaxBackup            *int           `json:"maxbackup"`
 	RequestRate          int64          `json:"request_rate"`
@@ -64,8 +65,8 @@ type ConfBean struct {
 	PresenceOfflineBlock bool           `json:"presence_offline_block"`
 	UseTimDomain         bool           `json:"useTimDomain"`
 	TTL                  uint64         `json:"ttl"`
-	TokenTimeout         int64          `json:"tokenTimeout"`
-	DeactivateApi        *deactivateApi `json:"deactivate_api"`
+	TokenTimeout         int64          `json:"tokenTimeout"`   //token过期时间
+	DeactivateApi        *deactivateApi `json:"deactivate_api"` //禁止的API
 	Raftx                *Raftx         `json:"raftx"`
 	Rax                  *Rax           `json:"rax"`
 	Etcd                 *Etcd          `json:"etcd"`
