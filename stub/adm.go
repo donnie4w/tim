@@ -671,11 +671,13 @@ func (p *AdmTid) Validate() error {
 //  - Name
 //  - Password
 //  - Domain
+//  - Admtype
 // 
 type AdmToken struct {
 	Name *string `thrift:"name,1" db:"name" json:"name,omitempty"`
 	Password *string `thrift:"password,2" db:"password" json:"password,omitempty"`
 	Domain *string `thrift:"domain,3" db:"domain" json:"domain,omitempty"`
+	Admtype *int8 `thrift:"admtype,4" db:"admtype" json:"admtype,omitempty"`
 }
 
 func NewAdmToken() *AdmToken {
@@ -709,6 +711,15 @@ func (p *AdmToken) GetDomain() string {
 	return *p.Domain
 }
 
+var AdmToken_Admtype_DEFAULT int8
+
+func (p *AdmToken) GetAdmtype() int8 {
+	if !p.IsSetAdmtype() {
+		return AdmToken_Admtype_DEFAULT
+	}
+	return *p.Admtype
+}
+
 func (p *AdmToken) IsSetName() bool {
 	return p.Name != nil
 }
@@ -719,6 +730,10 @@ func (p *AdmToken) IsSetPassword() bool {
 
 func (p *AdmToken) IsSetDomain() bool {
 	return p.Domain != nil
+}
+
+func (p *AdmToken) IsSetAdmtype() bool {
+	return p.Admtype != nil
 }
 
 func (p *AdmToken) Read(ctx context.Context, iprot thrift.TProtocol) error {
@@ -759,6 +774,16 @@ func (p *AdmToken) Read(ctx context.Context, iprot thrift.TProtocol) error {
 		case 3:
 			if fieldTypeId == thrift.STRING {
 				if err := p.ReadField3(ctx, iprot); err != nil {
+					return err
+				}
+			} else {
+				if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+					return err
+				}
+			}
+		case 4:
+			if fieldTypeId == thrift.BYTE {
+				if err := p.ReadField4(ctx, iprot); err != nil {
 					return err
 				}
 			} else {
@@ -808,6 +833,16 @@ func (p *AdmToken) ReadField3(ctx context.Context, iprot thrift.TProtocol) error
 	return nil
 }
 
+func (p *AdmToken) ReadField4(ctx context.Context, iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadByte(ctx); err != nil {
+		return thrift.PrependError("error reading field 4: ", err)
+	} else {
+		temp := int8(v)
+		p.Admtype = &temp
+	}
+	return nil
+}
+
 func (p *AdmToken) Write(ctx context.Context, oprot thrift.TProtocol) error {
 	if err := oprot.WriteStructBegin(ctx, "AdmToken"); err != nil {
 		return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
@@ -816,6 +851,7 @@ func (p *AdmToken) Write(ctx context.Context, oprot thrift.TProtocol) error {
 		if err := p.writeField1(ctx, oprot); err != nil { return err }
 		if err := p.writeField2(ctx, oprot); err != nil { return err }
 		if err := p.writeField3(ctx, oprot); err != nil { return err }
+		if err := p.writeField4(ctx, oprot); err != nil { return err }
 	}
 	if err := oprot.WriteFieldStop(ctx); err != nil {
 		return thrift.PrependError("write field stop error: ", err)
@@ -871,6 +907,21 @@ func (p *AdmToken) writeField3(ctx context.Context, oprot thrift.TProtocol) (err
 	return err
 }
 
+func (p *AdmToken) writeField4(ctx context.Context, oprot thrift.TProtocol) (err error) {
+	if p.IsSetAdmtype() {
+		if err := oprot.WriteFieldBegin(ctx, "admtype", thrift.BYTE, 4); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 4:admtype: ", p), err)
+		}
+		if err := oprot.WriteByte(ctx, int8(*p.Admtype)); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T.admtype (4) field write error: ", p), err)
+		}
+		if err := oprot.WriteFieldEnd(ctx); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 4:admtype: ", p), err)
+		}
+	}
+	return err
+}
+
 func (p *AdmToken) Equals(other *AdmToken) bool {
 	if p == other {
 		return true
@@ -894,6 +945,12 @@ func (p *AdmToken) Equals(other *AdmToken) bool {
 			return false
 		}
 		if (*p.Domain) != (*other.Domain) { return false }
+	}
+	if p.Admtype != other.Admtype {
+		if p.Admtype == nil || other.Admtype == nil {
+			return false
+		}
+		if (*p.Admtype) != (*other.Admtype) { return false }
 	}
 	return true
 }
