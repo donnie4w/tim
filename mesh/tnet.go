@@ -9,8 +9,8 @@ package mesh
 
 import (
 	"errors"
-	. "github.com/donnie4w/gofer/hashmap"
-	. "github.com/donnie4w/gofer/lock"
+	"github.com/donnie4w/gofer/hashmap"
+	"github.com/donnie4w/gofer/lock"
 	"github.com/donnie4w/tim/log"
 	. "github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tim/sys"
@@ -21,18 +21,19 @@ import (
 	"time"
 )
 
-var clientLinkCache = NewMapL[string, int8]()
-var await = NewAwait[int8](1 << 8)
-var awaitCsBean = NewAwait[*CsBean](1 << 8)
-var strLock = NewStrlock(1 << 8)
-var once = &sync.Once{}
-var tnetservice = &tnetService{ok: []byte{5}}
-var chapTxTemp = NewLimitHashMap[int64, int8](1 << 15)
-var reTx = NewLimitHashMap[int64, int8](1 << 18)
-var reStream = NewLimitHashMap[int64, int8](1 << 18)
-var reStreamUUID = NewLimitHashMap[uint64, int32](1 << 18)
-
-var nodeCache = NewLimitHashMap[string, []int64](1 << 15)
+var (
+	clientLinkCache *hashmap.MapL[string, int8]
+	await           *lock.Await[int8]
+	awaitCsBean     *lock.Await[*CsBean]
+	strLock         *lock.Strlock
+	once            *sync.Once
+	tnetservice     *tnetService
+	chapTxTemp      *hashmap.LimitFifoMap[int64, int8]
+	reTx            *hashmap.LimitFifoMap[int64, int8]
+	reStream        *hashmap.LimitFifoMap[int64, int8]
+	reStreamUUID    *hashmap.LimitFifoMap[uint64, int32]
+	nodeCache       *hashmap.LimitFifoMap[string, []int64]
+)
 
 func init() {
 	//sys.Client2Serve = client2Serve
@@ -53,6 +54,17 @@ type tnetService struct {
 }
 
 func (this *tnetService) Serve() (err error) {
+	clientLinkCache = hashmap.NewMapL[string, int8]()
+	await = lock.NewAwait[int8]()
+	awaitCsBean = lock.NewAwait[*CsBean]()
+	strLock = lock.NewStrlock(1 << 8)
+	once = &sync.Once{}
+	tnetservice = &tnetService{ok: []byte{5}}
+	chapTxTemp = hashmap.NewLimitFifoMap[int64, int8](1 << 15)
+	reTx = hashmap.NewLimitFifoMap[int64, int8](1 << 18)
+	reStream = hashmap.NewLimitFifoMap[int64, int8](1 << 18)
+	reStreamUUID = hashmap.NewLimitFifoMap[uint64, int32](1 << 18)
+	nodeCache = hashmap.NewLimitFifoMap[string, []int64](1 << 15)
 	if sys.Conf.CsListen != "" {
 		err = this._serve(sys.Conf.CsListen)
 	}
@@ -61,7 +73,7 @@ func (this *tnetService) Serve() (err error) {
 
 func (this *tnetService) _serve(addr string) (err error) {
 	tnetserver := &tnetServer{ok: this.ok}
-	tnetserver.handle(&itnetServ{NewNumLock(64)}, myServer2ClientHandler, mySecvErrorHandler)
+	tnetserver.handle(&itnetServ{lock.NewNumLock(64)}, myServer2ClientHandler, mySecvErrorHandler)
 	go once.Do(heardbeat)
 	return tnetserver.Serve(addr)
 }
@@ -81,7 +93,7 @@ func (this *tnetService) Connect(addr string, async bool) (err1, err2 error) {
 	}
 	log.Debug("conn:", addr)
 	tnetserver := new(tnetServer)
-	tnetserver.handle(&itnetServ{NewNumLock(64)}, myClient2ServerHandler, myCliErrorHandler)
+	tnetserver.handle(&itnetServ{lock.NewNumLock(64)}, myClient2ServerHandler, myCliErrorHandler)
 	err2 = tnetserver.Connect(addr, async)
 	return
 }
