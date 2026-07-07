@@ -21,7 +21,7 @@ func init() {
 }
 
 func SetFile(filepath string) {
-	log.SetOption(&logger.Option{CallDepth: 1, FileOption: &logger.FileSizeMode{Filename: filepath, Maxsize: 1 << 30, Maxbuckup: 30, IsCompress: true}})
+	log.SetOption(&logger.Option{CallDepth: 1, FileOption: &logger.FileSizeMode{Filename: filepath, Maxsize: 1 << 30, Maxbackup: 30, IsCompress: true}})
 	log.SetLevelOption(logger.LEVEL_WARN, &logger.LevelOption{Format: logger.FORMAT_NANO})
 	log.SetConsole(true).SetFormat(logger.FORMAT_DATE | logger.FORMAT_TIME)
 }
