@@ -17,7 +17,9 @@ import (
 	"github.com/donnie4w/tim/sys"
 	"github.com/donnie4w/tim/util"
 	"github.com/donnie4w/tlnet"
+	"net/http/pprof"
 	"os"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -38,10 +40,6 @@ func newAdminService() *adminService {
 }
 
 func (t *adminService) Serve() (err error) {
-	if strings.TrimSpace(sys.Conf.PprofAddr) != "" {
-		go tlDebug()
-		<-time.After(500 * time.Millisecond)
-	}
 	if sys.Conf.WebAdminListen != "" {
 		if !sys.Conf.NoInit {
 			initAccount()
@@ -106,9 +104,21 @@ func (t *adminService) _serve(addr string, serverCrt, serverKey string) (err err
 	t.server.HandleWithFilter("/monitor", loginFilter(), monitorHtml)
 	t.server.HandleWebSocketBindConfig("/monitorData", mntHandler, mntConfig())
 	t.server.HandleWithFilter("/data", loginFilter(), dataMonitorHtml)
+	t.server.HandleWithFilter("/dashboard", loginFilter(), dashboardHtml)
+	t.server.HandleWithFilter("/dashboardData", loginFilter(), dashboardData)
+
 	t.server.HandleWebSocketBindConfig("/ddmonitorData", ddmntHandler, ddmntConfig())
 
 	t.server.HandleWebSocketBindConfig("/tim", wsAdmHandler, wsAdmConfig())
+
+	t.server.HandleFunc("/debug/pprof/", loginFilter(), pprof.Index)
+	t.server.HandleFunc("/debug/pprof/cmdline", loginFilter(), pprof.Cmdline)
+	t.server.HandleFunc("/debug/pprof/profile", loginFilter(), pprof.Profile)
+	t.server.HandleFunc("/debug/pprof/symbol", loginFilter(), pprof.Symbol)
+	t.server.HandleFunc("/debug/pprof/trace", loginFilter(), pprof.Trace)
+
+	runtime.SetMutexProfileFraction(50)
+	runtime.SetBlockProfileRate(1000000)
 
 	if !sys.Conf.WebAdminNoTls && serverCrt != "" && serverKey != "" {
 		log.FmtPrint("WebAdmin service start TLS[", addr, "]")
@@ -409,6 +419,10 @@ func sysvar() (s *SysVar) {
 /**********************************************************/
 func dataMonitorHtml(hc *tlnet.HttpContext) {
 	tplToHtml(getLang(hc), DATA, nil, hc)
+}
+
+func dashboardHtml(hc *tlnet.HttpContext) {
+	tplToHtml(getLang(hc), DASHBOARD, nil, hc)
 }
 
 func ddmntConfig() (wc *tlnet.WebsocketConfig) {
