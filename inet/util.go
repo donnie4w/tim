@@ -79,8 +79,8 @@ func connectAuth(bs []byte) (_r bool) {
 	defer util.Recover()
 	if sys.Conf.Security != nil && sys.Conf.Security.ConnectAuthUrl != nil {
 		if ta := newAuth(bs); ta != nil {
-			if bs, err := httpclient.Post2(goutil.JsonEncode(ta), true, *sys.Conf.Security.ConnectAuthUrl); err == nil && bs != nil {
-				_r = bs[0] == 1
+			if bss, err := httpclient.Post(*sys.Conf.Security.ConnectAuthUrl, goutil.JsonEncode(ta)); err == nil && bss != nil {
+				_r = bss[0] == 1
 			}
 		}
 	} else {
@@ -96,13 +96,13 @@ type bm struct {
 	length int
 }
 
-func (this *bm) addData(bs []byte) (_bs []byte, ok bool) {
-	if l := this.length - this.buf.Len() - len(bs); l > 0 {
-		this.buf.Write(bs)
+func (t *bm) addData(bs []byte) (_bs []byte, ok bool) {
+	if l := t.length - t.buf.Len() - len(bs); l > 0 {
+		t.buf.Write(bs)
 		return nil, false
 	} else if l == 0 {
-		this.buf.Write(bs)
-		return this.buf.Bytes(), true
+		t.buf.Write(bs)
+		return t.buf.Bytes(), true
 	} else if l < 0 {
 		return bs, true
 	}
