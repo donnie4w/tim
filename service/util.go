@@ -20,8 +20,10 @@ import (
 	"time"
 )
 
-var userCache = gocache.NewBloomFilter(1<<21, 0.0001)
-var groupCache = gocache.NewBloomFilter(1<<20, 0.0001)
+var (
+	userCache  *gocache.BloomFilter
+	groupCache *gocache.BloomFilter
+)
 
 func init() {
 	sys.PingHandle = service.ping
@@ -69,16 +71,56 @@ func init() {
 	sys.SendWs = wsware.SendWs
 	sys.OsBlockUser = blockNode
 	sys.Detect = detect
+	sys.Service(sys.INIT_SERVICE, serv(1))
 }
 
-func token() (r string) {
-	return util.UUIDToNode(util.CreateUUID(uuid.NewUUID().String(), nil))
+type serv byte
+
+func (serv) Serve() error {
+	if sys.Conf.Memlimit >= 1<<10 {
+		userCache = gocache.NewBloomFilter(1<<21, 0.0001)
+		groupCache = gocache.NewBloomFilter(1<<20, 0.0001)
+	} else if sys.Conf.Memlimit >= 1<<9 {
+		userCache = gocache.NewBloomFilter(1<<20, 0.001)
+		groupCache = gocache.NewBloomFilter(1<<19, 0.001)
+	} else {
+		userCache = gocache.NewBloomFilter(1<<13, 0.001)
+		groupCache = gocache.NewBloomFilter(1<<13, 0.001)
+	}
+	return nil
+}
+
+func (serv) Close() error {
+	return nil
+}
+
+func token(name string, domain *string) (_token, hash string) {
+	name = name + sys.Conf.Salt
+	if domain != nil {
+		name = name + *domain
+	}
+	_token = util.UUIDToNode(util.CreateUUID(uuid.NewUUID().String(), nil))
+	hash = string(goutil.SHA1([]byte(name + sys.Conf.Salt + _token)))
+	return
+}
+
+func hashByToken(name string, domain *string, token string) string {
+	name = name + sys.Conf.Salt
+	if domain != nil {
+		name = name + *domain
+	}
+	return string(goutil.SHA1([]byte(name + sys.Conf.Salt + token)))
 }
 
 func existUser(tid *Tid) (b bool) {
 	if tid == nil {
 		return false
 	}
+
+	if sys.Conf.ExternalAccount {
+		return true
+	}
+
 	if sys.UseBuiltInData() {
 		if b = userCache.Contains([]byte(tid.GetNode())); !b {
 			if b = data.Service.ExistUser(tid.GetNode()); b {
@@ -95,6 +137,11 @@ func existList(ls []string) (b bool) {
 	if ls == nil {
 		return false
 	}
+
+	if sys.Conf.ExternalAccount {
+		return true
+	}
+
 	if sys.UseBuiltInData() {
 		for _, node := range ls {
 			if b = userCache.Contains([]byte(node)); !b {
@@ -110,9 +157,15 @@ func existList(ls []string) (b bool) {
 }
 
 func existGroup(tid *Tid) (_r bool) {
+
 	if tid == nil {
 		return false
 	}
+
+	if sys.Conf.ExternalAccount {
+		return true
+	}
+
 	if _r = groupCache.Contains([]byte(tid.GetNode())); !_r {
 		if _r = data.Service.ExistGroup(tid.GetNode()); _r {
 			groupCache.Add([]byte(tid.GetNode()))
@@ -121,15 +174,13 @@ func existGroup(tid *Tid) (_r bool) {
 	return
 }
 
-func authUser(fTid, tTid *Tid, readtime bool) (ok bool) {
-	if sys.Conf.MessageNoAuth {
-		return true
-	}
-	return authRoster(fTid.Node, tTid.Node, fTid.Domain, false)
-}
-
 func authRoster(fnode, tnode string, domain *string, readtime bool) (ok bool) {
 	defer util.Recover()
+
+	if sys.Conf.MessageNoAuth || sys.Conf.ExternalAccount {
+		return true
+	}
+
 	if sys.Conf.CacheAuthExpire > 0 && !readtime {
 		if cache.AuthCache.Has(fnode, tnode, domain, false) {
 			return true
@@ -145,7 +196,7 @@ func authRoster(fnode, tnode string, domain *string, readtime bool) (ok bool) {
 }
 
 func AuthGroup(gnode, unode string, domain *string) (ok bool) {
-	if sys.Conf.MessageNoAuth {
+	if sys.Conf.MessageNoAuth || sys.Conf.ExternalAccount {
 		return true
 	}
 	return authGroupuser(gnode, unode, domain)
@@ -153,6 +204,9 @@ func AuthGroup(gnode, unode string, domain *string) (ok bool) {
 
 func authGroupuser(gnode, unode string, domain *string) (ok bool) {
 	defer util.Recover()
+	if sys.Conf.ExternalAccount {
+		return true
+	}
 	if sys.Conf.CacheAuthExpire > 0 {
 		if cache.AuthCache.Has(gnode, unode, domain, true) {
 			return true
@@ -223,6 +277,10 @@ func newTimPresence(bs []byte) (tp *TimPresence) {
 }
 
 func checkTid(tid *Tid) (_r bool) {
+	if sys.Conf.ExternalAccount {
+		return true
+	}
+
 	if sys.UseBuiltInData() && tid != nil {
 		return util.CheckNode(tid.Node)
 	}
@@ -234,6 +292,10 @@ func checkTid(tid *Tid) (_r bool) {
 }
 
 func checkNode(node string) (_r bool) {
+	if sys.Conf.ExternalAccount {
+		return true
+	}
+
 	if sys.UseBuiltInData() && node != "" {
 		return util.CheckNode(node)
 	}
@@ -244,6 +306,10 @@ func checkNode(node string) (_r bool) {
 }
 
 func checkList(ls []string) (_r bool) {
+	if sys.Conf.ExternalAccount {
+		return true
+	}
+
 	if sys.UseBuiltInData() && ls != nil {
 		for _, u := range ls {
 			if len(u) > sys.NodeMaxSize {
