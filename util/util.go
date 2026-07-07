@@ -15,7 +15,7 @@ import (
 	"github.com/donnie4w/gofer/keystore"
 	goutil "github.com/donnie4w/gofer/util"
 	"github.com/donnie4w/tim/log"
-	. "github.com/donnie4w/tim/stub"
+	"github.com/donnie4w/tim/stub"
 	"github.com/donnie4w/tim/sys"
 	"golang.org/x/crypto/bcrypt"
 	"strings"
@@ -25,7 +25,7 @@ import (
 //var GoPoolTx = gopool.NewPool(int64(runtime.NumCPU()), int64(runtime.NumCPU())<<2)
 //var GoPoolTx2 = gopool.NewPool(int64(runtime.NumCPU()), int64(runtime.NumCPU())<<3)
 
-func CreateUUIDByTid(tid *Tid) uint64 {
+func CreateUUIDByTid(tid *stub.Tid) uint64 {
 	return CreateUUID(tid.Node, tid.Domain)
 }
 
@@ -59,6 +59,14 @@ func NameToNode(name string, domain *string) string {
 func NodeToUUID(node string) (_r uint64) {
 	_r, _ = base58.DecodeForInt64([]byte(node))
 	return
+}
+
+func ExtantNodeToUUID(node string, domain *string) (_r uint64) {
+	s := node + sys.Conf.Salt
+	if domain != nil {
+		s += *domain
+	}
+	return goutil.FNVHash64([]byte(s))
 }
 
 func UUIDToNode(uuid uint64) string {
@@ -184,7 +192,7 @@ func MaskStr(s string) (_r string) {
 	return string(Mask([]byte(s)))
 }
 
-func MaskTid(tid *Tid) {
+func MaskTid(tid *stub.Tid) {
 	if tid != nil {
 		tid.Node = MaskStr(tid.Node)
 	}
