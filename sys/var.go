@@ -39,10 +39,11 @@ var (
 	service                = hashmap.NewTreeMap[int, Server](5)
 	defaultAdminAccount    = &stub.AdminAccount{Username: "admin", Password: "123"}
 	defaultPingTimeot      = int64(600) // 600 second
+	defaultAuthMinUnix     = int64(10)
 	defaultPwd             = "tim20171212"
 	defaultAesencryptkey   = "ie8*&(I984){bW{@a@#￥%H'"
 	defaultConnectLimit    = int64(1 << 24)
-	defaultMemlimit        = 1 << 10
+	defaultMemlimit        = 1 << 8
 	defaultSalt            = "#@*=+-<>?:|$&()%$#{]aQkLIPM79643028U'TRKF_}"
 	defaultLimitRate       = int64(1 << 8)
 	defaultTTL             = uint64(24 * 60 * 60) // 1 day
