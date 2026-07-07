@@ -7,16 +7,7 @@
 
 package tc
 
-import (
-	"github.com/donnie4w/tim/log"
-	"github.com/donnie4w/tim/sys"
-	"github.com/donnie4w/tim/util"
-	"net/http"
-	_ "net/http/pprof"
-	"runtime"
-)
-
-func tlDebug() {
+/*func tlDebug() {
 	defer util.Recover()
 	if sys.Conf.PprofAddr != "" {
 		runtime.SetMutexProfileFraction(1)
@@ -29,4 +20,4 @@ func tlDebug() {
 			}
 		}
 	}
-}
+}*/
