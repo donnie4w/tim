@@ -66,6 +66,7 @@ const (
                     <a class="nav-link" href='/sysvar'>集群环境</a>
                     <a class="nav-link" href='/data'>数据监控</a>
                     <a class="nav-link" href='/monitor'>性能监控</a>
+ 					<a class="nav-link" href='/dashboard'>性能看板</a>
                 </div>
                 <div class="navbar-nav ms-auto">
                     <a class="nav-link" href='/login'>登录</a>
@@ -138,6 +139,7 @@ const (
                     <a class="nav-link active" href='/sysvar'>集群环境</a>
                     <a class="nav-link" href='/data'>数据监控</a>
                     <a class="nav-link" href='/monitor'>性能监控</a>
+ 					<a class="nav-link" href='/dashboard'>性能看板</a>
                 </div>
                 <div class="navbar-nav ms-auto">
                     <a class="nav-link" href='/login'>登录</a>
@@ -203,6 +205,7 @@ const (
                     <a class="nav-link" href='/sysvar'>集群环境</a>
                     <a class="nav-link active" href='/data'>数据监控</a>
                     <a class="nav-link" href='/monitor'>性能监控</a>
+ 					<a class="nav-link" href='/dashboard'>性能看板</a>
                 </div>
                 <div class="navbar-nav ms-auto">
                     <a class="nav-link" href='/login'>登录</a>
@@ -324,6 +327,7 @@ const (
                     <a class="nav-link" href='/sysvar'>集群环境</a>
                     <a class="nav-link" href='/data'>数据监控</a>
                     <a class="nav-link active" href='/monitor'>性能监控</a>
+ 					<a class="nav-link" href='/dashboard'>性能看板</a>
                 </div>
                 <div class="navbar-nav ms-auto">
                     <a class="nav-link" href='/login'>登录</a>
@@ -427,4 +431,338 @@ const (
 </script>
 </html>
     `
+
+	dashboardText = `<html>
+<head>
+    <title>tim</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="/bootstrap.css" rel="stylesheet">
+    <script src="/bootstrap.min.js" type="text/javascript"></script>
+</head>
+
+<body class="container">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                 class="bi bi-align-top" viewBox="0 0 16 16">
+                <rect width="4" height="12" rx="1" transform="matrix(1 0 0 -1 6 15)"/>
+                <path d="M1.5 2a.5.5 0 0 1 0-1v1zm13-1a.5.5 0 0 1 0 1V1zm-13 0h13v1h-13V1z"/>
+            </svg>
+        </a>
+        <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+
+            <div class="navbar-nav">
+                <a class="nav-link" href='/init'>账号管理</a>
+                <a class="nav-link" href='/sysvar'>集群环境</a>
+                <a class="nav-link" href='/data'>数据监控</a>
+                <a class="nav-link" href='/monitor'>性能监控</a>
+                <a class="nav-link active" href='/dashboard'>性能看板</a>
+            </div>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href='/login'>登录</a>
+                <a class="nav-link" href="/lang?lang=en">[EN]</a>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="container mt-1 card small">
+    <div class="mb-5 p-2 overflow-y-auto">
+        <div class="m-1">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h4 mb-0">
+                    系统资源监控面板
+                </h1>
+                <div class="d-flex align-items-center">
+                    <span id="last-update" class="me-3">最后更新：加载中...</span>
+                    <div id="loading-indicator" class="loader d-none"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 状态卡片行 -->
+        <div class="row row-cols-1 md:row-cols-2 lg:row-cols-4 g-2 mb-1">
+            <!-- CPU使用率卡片 -->
+            <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2 col-12 mb-1">
+                <div class="bg-white rounded-3 shadow-sm h-70">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div>
+                                <h5 class="card-title text-secondary mb-0">CPU使用率</h5>
+                                <p class="h3 fw-bold mt-1" id="cpu-usage">--%</p>
+                            </div>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div id="cpu-progress" class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 内存使用率卡片 -->
+            <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2 col-12 mb-1">
+                <div class="bg-white rounded-3 shadow-sm h-70">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div>
+                                <h5 class="card-title text-secondary mb-0">内存使用率</h5>
+                                <p class="h3 fw-bold mt-1" id="mem-usage">--%</p>
+                            </div>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div id="mem-progress" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 磁盘使用率卡片 -->
+            <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2 col-12 mb-1">
+                <div class="bg-white rounded-3 shadow-sm h-70">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h5 class="card-title text-secondary mb-0">磁盘使用率</h5>
+                                <p class="h3 fw-bold mt-1" id="disk-usage">--%</p>
+                            </div>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div id="disk-progress" class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 系统负载卡片 -->
+            <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2 col-12 mb-1">
+                <div class="bg-white rounded-3 shadow-sm h-70">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div>
+                                <h5 class="card-title text-secondary mb-0">系统负载</h5>
+                                <p class="h3 fw-bold mt-1" id="load-1">--</p>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 text-sm">
+                            <span class="badge bg-info/20 text-info">1分钟: <span id="load-1-min">--</span></span>
+                            <span class="badge bg-info/20 text-info">5分钟: <span id="load-5-min">--</span></span>
+                            <span class="badge bg-info/20 text-info">15分钟: <span id="load-15-min">--</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- APP 任务卡片 -->
+            <div class="col-sm-6 col-md-4 col-lg-3 col-xl-3 col-12 mb-1">
+                <div class="bg-white rounded-3 shadow-sm h-70">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div>
+                                <h5 class="card-title text-secondary mb-0">APP当前任务总数</h5>
+                                <p class="h3 fw-bold mt-1" id="sdk-task">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <!-- 详细信息行 -->
+        <div class="row g-1">
+            <!-- 系统详情表格 -->
+            <div class="col-12 col-md-6 col-lg-4 col-xl-4">
+                <div class="card bg-white rounded-3 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">系统资源详情</h5>
+                    </div>
+                    <div class="p-1">
+                        <table class="table table-hover">
+                            <tbody>
+                            <tr>
+                                <td class="text-secondary" style="width: 120px;">CPU型号</td>
+                                <td id="detail-cpu-model" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">CPU核心数</td>
+                                <td id="detail-cpu-cores" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">总内存</td>
+                                <td id="detail-mem-total" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">已用内存</td>
+                                <td id="detail-mem-used" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">挂载点</td>
+                                <td id="disk-mount" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">磁盘总容量</td>
+                                <td id="detail-disk-total" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">磁盘可用空间</td>
+                                <td id="detail-disk-free" class="fw-bold">加载中...</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Go运行时信息 -->
+            <div class="col-12 col-md-6 col-lg-4 col-xl-4">
+                <div class="card bg-white rounded-3 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Go运行时信息</h5>
+                    </div>
+                    <div class="p-1">
+                        <table class="table table-hover">
+                            <tbody>
+                            <tr>
+                                <td class="text-secondary" style="width: 150px;">协程数</td>
+                                <td id="go-goroutines" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">线程数</td>
+                                <td id="go-threads" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">Go版本</td>
+                                <td id="go-version" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">当前堆内存</td>
+                                <td id="heap_alloc_mb" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">累计内存占用</td>
+                                <td id="alloc_bytes" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">堆内存释放</td>
+                                <td id="free_bytes" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">GC次数</td>
+                                <td id="gc_count_total" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">虚拟内存总量</td>
+                                <td id="heap_sys_mb" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">累计分配的对象数</td>
+                                <td id="alloc_objects" class="fw-bold">加载中...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary">累计释放的对象数</td>
+                                <td id="free_objects" class="fw-bold">加载中...</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+<script type="text/javascript">
+
+    document.addEventListener('DOMContentLoaded', async function () {
+        const formatNumber = (num) => {
+            try {
+                return num.toFixed(2);
+            } catch (e) {
+                return 0
+            }
+        };
+
+        const updateValueWithAnimation = (elementId, value) => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = value;
+                element.classList.add('value-pulse');
+                setTimeout(() => {
+                    element.classList.remove('value-pulse');
+                }, 500);
+            }
+        };
+
+        const fetchSystemData = async () => {
+            const loadingIndicator = document.getElementById('loading-indicator');
+            loadingIndicator.classList.remove('d-none');
+            try {
+                const data = await getDashboardData()
+                if (data) {
+                    updateUI(data);
+                    document.getElementById('last-update').textContent = ` + "`" + `最后更新：${data.collect_time}` + "`" + `;
+                }
+            } catch (error) {
+                console.error('获取系统数据失败:', error);
+                alert('获取系统数据失败，请稍后重试');
+            } finally {
+                loadingIndicator.classList.add('d-none');
+            }
+        };
+
+
+        async function getDashboardData() {
+            try {
+                const response = await fetch('/dashboardData');
+                if (response.ok) {
+                    return await response.json()
+                }
+            } catch (e) {
+                console.error(e)
+            }
+        }
+
+        const updateUI = (data) => {
+            updateValueWithAnimation('cpu-usage', ` + "`" + `${formatNumber(data.cpu.usage_percent)}%` + "`" + `);
+            document.getElementById('cpu-progress').style.width = ` + "`" + `${data.cpu.usage_percent}%` + "`" + `;
+            document.getElementById('detail-cpu-model').textContent = data.cpu.model_name || '未知';
+            document.getElementById('detail-cpu-cores').textContent = data.cpu.logical_cores || '未知';
+            document.getElementById('sdk-task').textContent = ` + "`" + `${data.task_number.sdk_task_num}` + "`" + `;
+            updateValueWithAnimation('mem-usage', ` + "`" + `${formatNumber(data.memory.used_percent)}%` + "`" + `);
+            document.getElementById('mem-progress').style.width = ` + "`" + `${data.memory.used_percent}%` + "`" + `;
+            document.getElementById('detail-mem-total').textContent = ` + "`" + `${formatNumber(data.memory.total_gb)} GB` + "`" + `;
+            document.getElementById('detail-mem-used').textContent = ` + "`" + `${formatNumber(data.memory.used_gb)} GB` + "`" + `;
+
+            updateValueWithAnimation('disk-usage', ` + "`" + `${formatNumber(data.disk.used_percent)}%` + "`" + `);
+            document.getElementById('disk-progress').style.width = ` + "`" + `${data.disk.used_percent}%` + "`" + `;
+            document.getElementById('disk-mount').textContent = ` + "`" + `${data.disk.mount_point || '未知'}` + "`" + `;
+            document.getElementById('detail-disk-total').textContent = ` + "`" + `${formatNumber(data.disk.total_gb)} GB` + "`" + `;
+            document.getElementById('detail-disk-free').textContent = ` + "`" + `${formatNumber(data.disk.free_gb)} GB` + "`" + `;
+
+            updateValueWithAnimation('load-1', formatNumber(data.load_avg.load1));
+            updateValueWithAnimation('load-1-min', formatNumber(data.load_avg.load1));
+            updateValueWithAnimation('load-5-min', formatNumber(data.load_avg.load5));
+            updateValueWithAnimation('load-15-min', formatNumber(data.load_avg.load15));
+
+            updateValueWithAnimation('go-goroutines', data.go_runtime.goroutines || '--');
+            updateValueWithAnimation('go-threads', data.go_runtime.threads || '--');
+            updateValueWithAnimation('go-version', data.go_runtime.go_version || '未知');
+
+            updateValueWithAnimation('heap_alloc_mb', ` + "`" + `${formatNumber(data.go_runtime.heap_alloc_mb)} MB` + "`" + `);
+            updateValueWithAnimation('alloc_bytes', ` + "`" + `${formatNumber(data.go_runtime.alloc_bytes >> 20)} MB` + "`" + `);
+            updateValueWithAnimation('free_bytes', ` + "`" + `${formatNumber(data.go_runtime.free_bytes >> 20)} MB` + "`" + `);
+            updateValueWithAnimation('gc_count_total', data.go_runtime.gc_count_total || '--');
+            updateValueWithAnimation('heap_sys_mb', ` + "`" + `${formatNumber(data.go_runtime.heap_sys_mb)} MB` + "`" + ` || '--');
+            updateValueWithAnimation('alloc_objects', ` + "`" + `${data.go_runtime.alloc_objects}` + "`" + ` || '--');
+            updateValueWithAnimation('free_objects', ` + "`" + `${data.go_runtime.free_objects}` + "`" + ` || '--')
+        };
+
+        fetchSystemData();
+        setInterval(fetchSystemData, 10000);
+    });
+
+</script>
+</html>`
 )
