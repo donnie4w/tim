@@ -44,6 +44,9 @@ func praseflag() {
 	if Conf.PingTo <= 0 {
 		Conf.PingTo = defaultPingTimeot
 	}
+	if Conf.AuthMinUnix <= 0 {
+		Conf.AuthMinUnix = defaultAuthMinUnix
+	}
 	if Conf.MaxBackup != nil {
 		MaxBackup = *Conf.MaxBackup
 	}
